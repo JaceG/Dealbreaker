@@ -1,15 +1,17 @@
 import { StyleSheet, Text, View, TextInput, Button } from 'react-native';
 import RadioGroup from 'react-native-radio-buttons-group';
 import { color } from 'react-native-reanimated';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useContext } from 'react';
 import { showToast } from '../../utils/functions';
 import { set } from 'react-native-reanimated';
+import StoreContext from '../../store';
 
 export default function CreateFlags({ navigation }) {
+	const { dealbreaker, setDealbreaker } = useContext(StoreContext);
 	const radioButtons = useMemo(
 		() => [
 			{
-				id: '1', // acts as primary key, should be unique and non-empty string
+				id: '1',
 				label: 'Flag',
 				value: 'flag',
 				color: '#fff',
@@ -34,6 +36,14 @@ export default function CreateFlags({ navigation }) {
 	});
 	function handleSubmit() {
 		if (validate()) {
+			const type = selectedId === '1' ? 'flag' : 'dealbreaker';
+			setDealbreaker({
+				...dealbreaker,
+				main: {
+					...dealbreaker.main,
+					[type]: [...dealbreaker.main[type], { title, description }],
+				},
+			});
 			showToast('success', 'Flag created successfully');
 			setTitle('');
 			setDescription('');
