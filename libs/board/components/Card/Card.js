@@ -11,7 +11,7 @@ import {
 	Paragraph,
 	RowWrapper,
 } from './Card.styled';
-
+const NEGATIVE_SPACE = 90;
 const Card = ({
 	cardBackground,
 	cardBorderRadius,
@@ -38,7 +38,9 @@ const Card = ({
 	return (
 		<CardWrapper
 			onPressIn={(evt) =>
-				onPressIn ? onPressIn(evt.nativeEvent.pageY) : {}
+				onPressIn
+					? onPressIn(evt.nativeEvent.pageY - NEGATIVE_SPACE)
+					: {}
 			}
 			onPress={onPress}
 			collapsable={false}>
