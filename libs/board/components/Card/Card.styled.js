@@ -10,8 +10,8 @@ import { colors } from '../../constants'
 const CardContainer = styled.View`
   ${borderRadius}
   marginHorizontal: 8;
-  paddingHorizontal: 0;
-  paddingVertical: 0;
+  paddingHorizontal: 10;
+  paddingVertical: 15;
   width: 94.5%;
   shadow-radius: 15px;
   shadow-color: ${colors.black};

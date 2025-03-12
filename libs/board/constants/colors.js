@@ -7,6 +7,7 @@ const colors = {
   fallingStar: '#FAFAFA',
   officer: '#2C3A47',
   wildWatermelon: '#ff6b81',
+  chiGong: '#d63031',
   white: '#FFFFFF'
 }
 

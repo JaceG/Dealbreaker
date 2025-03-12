@@ -18,7 +18,7 @@ export default function App() {
 		},
 	});
 
-	const [profile, setProfile] = useState([]);
+	const [profile, setProfile] = useState(['main']);
 	const [currentProfile, setCurrentProfile] = useState('main');
 
 	return (

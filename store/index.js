@@ -7,7 +7,7 @@ const StoreContext = createContext({
 			dealbreaker: [],
 		},
 	},
-	profile: [],
+	profile: ['main'],
 });
 
 export default StoreContext;
