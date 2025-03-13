@@ -24,21 +24,26 @@ export default function Lists({ navigation }) {
   const { dealbreaker, currentProfile, setDealbreaker } =
     useContext(StoreContext)
   const [visible, setVisible] = useState(false)
-  const listIndexRef = useRef(new Map())
+  const flagListIndexRef = useRef(new Map())
   const skipUpdateRef = useRef(false)
+  const dealbreakerListIndexRef = useRef(new Map())
+  const isMountRef = useRef(false)
 
   useEffect(() => {
     if (
       dealbreaker &&
       (dealbreaker[currentProfile].dealbreaker?.length ||
         dealbreaker[currentProfile].flag?.length) &&
-      !skipUpdateRef.current
+      !skipUpdateRef.current &&
+      isMountRef.current
     ) {
+      console.log('updateBoard')
       setTimeout(() => {
         updateBoard()
       }, 100)
     } else {
       skipUpdateRef.current = false
+      isMountRef.current = true
     }
   }, [dealbreaker])
 
@@ -48,11 +53,12 @@ export default function Lists({ navigation }) {
       return
     }
     const { flag, dealbreaker: dealbreakerList } = dealbreaker[currentProfile]
-    listIndexRef.current = new Map()
+    flagListIndexRef.current = new Map()
+    dealbreakerListIndexRef.current = new Map()
     const newData = JSON.parse(JSON.stringify(data))
     newData[0].rows =
       flag.map((data, index) => {
-        listIndexRef.current.set(data.id, index)
+        flagListIndexRef.current.set(data.id, index)
         return {
           id: index,
           name: data.title,
@@ -61,6 +67,7 @@ export default function Lists({ navigation }) {
       }) || []
     newData[1].rows =
       dealbreakerList.map((data, index) => {
+        dealbreakerListIndexRef.current.set(data.id, index)
         return {
           id: index,
           name: data.title,
@@ -69,22 +76,55 @@ export default function Lists({ navigation }) {
       }) || []
     setList(new BoardRepository(newData))
   }
-  const updateListOrder = (newIndex, oldIndex) => {
+  const updateListOrder = (newIndex, oldIndex, id, isDealbreaker) => {
     const { flag, dealbreaker: dealbreakerList } = dealbreaker[currentProfile]
-    const newList = JSON.parse(JSON.stringify(flag))
-    const oldItem = { ...newList[oldIndex] }
-    newList.splice(oldIndex, 1)
+    const processList = isDealbreaker ? dealbreakerList : flag
+    let unprocessedList = null
+    const newList = JSON.parse(JSON.stringify(processList))
+    let oldItem = null
+    if (
+      (isDealbreaker && dealbreakerListIndexRef.current.get(id)) ||
+      (!isDealbreaker && flagListIndexRef.current.get(id))
+    ) {
+      oldItem = { ...newList[oldIndex] }
+      newList.splice(oldIndex, 1)
+    } else if (isDealbreaker) {
+      unprocessedList = JSON.parse(JSON.stringify(flag))
+      oldItem = { ...unprocessedList[oldIndex] }
+      unprocessedList.splice(oldIndex, 1)
+    } else {
+      unprocessedList = JSON.parse(JSON.stringify(dealbreakerList))
+      oldItem = { ...unprocessedList[oldIndex] }
+      unprocessedList.splice(oldIndex, 1)
+    }
     newList.splice(newIndex, 0, oldItem)
-    const type = 'flag'
+    const type = isDealbreaker ? 'dealbreaker' : 'flag'
     skipUpdateRef.current = true
-    listIndexRef.current = new Map()
+    flagListIndexRef.current = new Map()
+    dealbreakerListIndexRef.current = new Map()
     newList?.forEach((item, index) => {
-      listIndexRef.current.set(item.id, index)
+      if (isDealbreaker) {
+        dealbreakerListIndexRef.current.set(item.id, index)
+      } else {
+        flagListIndexRef.current.set(item.id, index)
+      }
     })
+    if (unprocessedList) {
+      unprocessedList.forEach((item, index) => {
+        if (isDealbreaker) {
+          flagListIndexRef.current.set(item.id, index)
+        } else {
+          dealbreakerListIndexRef.current.set(item.id, index)
+        }
+      })
+    }
     setDealbreaker({
       ...dealbreaker,
       [currentProfile]: {
         ...dealbreaker[currentProfile],
+        [isDealbreaker ? 'flag' : 'dealbreaker']: unprocessedList
+          ? unprocessedList
+          : dealbreaker[currentProfile][isDealbreaker ? 'flag' : 'dealbreaker'],
         [type]: newList
       }
     })
@@ -93,7 +133,8 @@ export default function Lists({ navigation }) {
   var Styles = StyleSheet.create({ container: { height: ScreenHeight } })
 
   const [list, setList] = useState(null)
-
+  console.log('flag: ', dealbreaker[currentProfile].flag)
+  console.log('dealbreaker: ', dealbreaker[currentProfile].dealbreaker)
   return (
     <View style={styles.container}>
       <SwitchProfileModal visible={visible} onClose={() => setVisible(false)} />
@@ -115,10 +156,26 @@ export default function Lists({ navigation }) {
               boardRepository={list}
               open={() => {}}
               onDragEnd={(boardItemOne, boardItemTwo, draggedItem) => {
-                const oldIndex = listIndexRef.current.get(
-                  draggedItem.attributes.row.id
-                )
-                updateListOrder(draggedItem.attributes.index, oldIndex)
+                // let isDealbreaker = false
+                // if (draggedItem.attributes.columnId === 2) {
+                //   isDealbreaker = true
+                // }
+                // let oldIndex = flagListIndexRef.current.get(
+                //   draggedItem.attributes.row.id
+                // )
+                // console.log('oldIndex: ', oldIndex)
+                // console.log('draggedItem: ', draggedItem.attributes.row.id)
+                // if (!oldIndex && oldIndex !== 0) {
+                //   oldIndex = dealbreakerListIndexRef.current.get(
+                //     draggedItem.attributes.row.id
+                //   )
+                // }
+                // updateListOrder(
+                //   draggedItem.attributes.index,
+                //   oldIndex,
+                //   draggedItem.attributes.row.id,
+                //   isDealbreaker
+                // )
               }}
               isWithCountBadge={false}
               cardNameTextColor='white'
