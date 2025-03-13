@@ -5,6 +5,7 @@ import { Board, BoardRepository } from '../../libs/board/components'
 import StoreContext from '../../store'
 import AppButton from '../../components/AppButton'
 import SwitchProfileModal from '../../components/SwitchProfileModal'
+import React, { createContext } from 'react'
 
 const data = [
   {
@@ -18,6 +19,8 @@ const data = [
     rows: []
   }
 ]
+
+export const BoardRepositoryContext = createContext(null)
 
 export default function Lists({ navigation }) {
   let ScreenHeight = Dimensions.get('window').height - 150
@@ -60,7 +63,7 @@ export default function Lists({ navigation }) {
       flag.map((data, index) => {
         flagListIndexRef.current.set(data.id, index)
         return {
-          id: index,
+          id: data.id,
           name: data.title,
           description: data.description
         }
@@ -69,19 +72,36 @@ export default function Lists({ navigation }) {
       dealbreakerList.map((data, index) => {
         dealbreakerListIndexRef.current.set(data.id, index)
         return {
-          id: index,
+          id: data.id,
           name: data.title,
           description: data.description
         }
       }) || []
-    setList(new BoardRepository(newData))
+    console.log('Initializing boardRepository with newData:', newData)
+    const boardRepo = new BoardRepository(newData)
+    console.log('boardRepository initialized:', boardRepo)
+    setList(boardRepo)
   }
   const updateListOrder = (newIndex, oldIndex, id, isDealbreaker) => {
+    console.log('updateListOrder called with:', {
+      newIndex,
+      oldIndex,
+      id,
+      isDealbreaker
+    })
     const { flag, dealbreaker: dealbreakerList } = dealbreaker[currentProfile]
+    console.log('Current flag and dealbreaker lists:', {
+      flag,
+      dealbreakerList
+    })
+
     const processList = isDealbreaker ? dealbreakerList : flag
     let unprocessedList = null
     const newList = JSON.parse(JSON.stringify(processList))
     let oldItem = null
+
+    console.log('Initial newList:', newList)
+
     if (
       (isDealbreaker && dealbreakerListIndexRef.current.get(id)) ||
       (!isDealbreaker && flagListIndexRef.current.get(id))
@@ -97,11 +117,15 @@ export default function Lists({ navigation }) {
       oldItem = { ...unprocessedList[oldIndex] }
       unprocessedList.splice(oldIndex, 1)
     }
+
+    console.log('Old item:', oldItem)
+
     newList.splice(newIndex, 0, oldItem)
     const type = isDealbreaker ? 'dealbreaker' : 'flag'
     skipUpdateRef.current = true
     flagListIndexRef.current = new Map()
     dealbreakerListIndexRef.current = new Map()
+
     newList?.forEach((item, index) => {
       if (isDealbreaker) {
         dealbreakerListIndexRef.current.set(item.id, index)
@@ -109,6 +133,7 @@ export default function Lists({ navigation }) {
         flagListIndexRef.current.set(item.id, index)
       }
     })
+
     if (unprocessedList) {
       unprocessedList.forEach((item, index) => {
         if (isDealbreaker) {
@@ -118,6 +143,9 @@ export default function Lists({ navigation }) {
         }
       })
     }
+
+    console.log('Updated lists:', { newList, unprocessedList })
+
     setDealbreaker({
       ...dealbreaker,
       [currentProfile]: {
@@ -136,66 +164,108 @@ export default function Lists({ navigation }) {
   console.log('flag: ', dealbreaker[currentProfile].flag)
   console.log('dealbreaker: ', dealbreaker[currentProfile].dealbreaker)
   return (
-    <View style={styles.container}>
-      <SwitchProfileModal visible={visible} onClose={() => setVisible(false)} />
-      <View>
-        {list ? (
-          <View>
-            <View style={styles.profileButtonContainer}>
-              <View style={styles.innerProfileButtonContainer}>
-                <AppButton
-                  title={`Switch Profile`}
-                  onPress={() => {
-                    setVisible(true)
-                  }}
-                />
-                <Text style={styles.profileText}>{currentProfile}</Text>
+    <BoardRepositoryContext.Provider value={list}>
+      <View style={styles.container}>
+        <SwitchProfileModal
+          visible={visible}
+          onClose={() => setVisible(false)}
+        />
+        <View>
+          {list ? (
+            <View>
+              <View style={styles.profileButtonContainer}>
+                <View style={styles.innerProfileButtonContainer}>
+                  <AppButton
+                    title={`Switch Profile`}
+                    onPress={() => {
+                      setVisible(true)
+                    }}
+                  />
+                  <Text style={styles.profileText}>{currentProfile}</Text>
+                </View>
               </View>
-            </View>
-            <Board
-              boardRepository={list}
-              open={() => {}}
-              onDragEnd={(boardItemOne, boardItemTwo, draggedItem) => {
-                // let isDealbreaker = false
-                // if (draggedItem.attributes.columnId === 2) {
-                //   isDealbreaker = true
-                // }
-                // let oldIndex = flagListIndexRef.current.get(
-                //   draggedItem.attributes.row.id
-                // )
-                // console.log('oldIndex: ', oldIndex)
-                // console.log('draggedItem: ', draggedItem.attributes.row.id)
-                // if (!oldIndex && oldIndex !== 0) {
-                //   oldIndex = dealbreakerListIndexRef.current.get(
-                //     draggedItem.attributes.row.id
-                //   )
-                // }
-                // updateListOrder(
-                //   draggedItem.attributes.index,
-                //   oldIndex,
-                //   draggedItem.attributes.row.id,
-                //   isDealbreaker
-                // )
-              }}
-              isWithCountBadge={false}
-              cardNameTextColor='white'
-            />
-          </View>
-        ) : (
-          <View style={styles.noDealbreakerContainer}>
-            <View style={styles.noDealbreakerInContainer}>
-              <Text style={styles.noDealbreakerText}>No Flags Yet</Text>
-              <AppButton
-                title='Create Flag'
-                onPress={() => {
-                  navigation.navigate('Create Flag')
+              <Board
+                boardRepository={list}
+                open={() => {}}
+                onDragEnd={(boardItemOne, boardItemTwo, draggedItem) => {
+                  console.log('onDragEnd called with boardRepository:', list)
+                  try {
+                    if (!list) {
+                      console.error('boardRepository is undefined at onDragEnd')
+                      return
+                    }
+
+                    if (
+                      !draggedItem ||
+                      !draggedItem.attributes ||
+                      !draggedItem.attributes.row
+                    ) {
+                      console.error(
+                        'Dragged item or its attributes are undefined:',
+                        draggedItem
+                      )
+                      return
+                    }
+
+                    const isDealbreaker = draggedItem.attributes.columnId === 2
+                    let oldIndex = flagListIndexRef.current.get(
+                      draggedItem.attributes.row.id
+                    )
+                    if (oldIndex === undefined) {
+                      oldIndex = dealbreakerListIndexRef.current.get(
+                        draggedItem.attributes.row.id
+                      )
+                    }
+
+                    const newIndex = draggedItem.attributes.index
+
+                    console.log(
+                      'oldIndex:',
+                      oldIndex,
+                      'newIndex:',
+                      newIndex,
+                      'isDealbreaker:',
+                      isDealbreaker
+                    )
+
+                    if (oldIndex === undefined || newIndex === undefined) {
+                      console.error('Invalid indices detected:', {
+                        oldIndex,
+                        newIndex
+                      })
+                      return
+                    }
+
+                    updateListOrder(
+                      newIndex,
+                      oldIndex,
+                      draggedItem.attributes.row.id,
+                      isDealbreaker
+                    )
+                  } catch (error) {
+                    console.error('Error in onDragEnd:', error)
+                  }
                 }}
+                isWithCountBadge={false}
+                cardNameTextColor='white'
               />
             </View>
-          </View>
-        )}
+          ) : (
+            <View style={styles.noDealbreakerContainer}>
+              <View style={styles.noDealbreakerInContainer}>
+                <Text style={styles.noDealbreakerText}>No Flags Yet</Text>
+                <AppButton
+                  title='Create Flag'
+                  onPress={() => {
+                    navigation.navigate('Create Flag')
+                  }}
+                />
+              </View>
+            </View>
+          )}
+        </View>
       </View>
-    </View>
+    </BoardRepositoryContext.Provider>
   )
 }
 

@@ -7,44 +7,76 @@ class Mover {
   }
 
   move = (boardRepository, registry, draggedItem, x, y, columnId) => {
-   try {
-    const fromColumnId = draggedItem.columnId()
-    const columns = boardRepository.columns()
-    const columnAtPosition = this.positionCalculator.columnAtPosition(columns, columnId)
+    try {
+      if (!boardRepository || !registry || !draggedItem) {
+        console.error('Undefined parameters detected:', {
+          boardRepository,
+          registry,
+          draggedItem
+        })
+        return
+      }
 
-    if (!columnAtPosition) {
-      return
-    }
+      const fromColumnId = draggedItem.columnId()
+      const columns = boardRepository.columns()
+      const columnAtPosition = this.positionCalculator.columnAtPosition(
+        columns,
+        columnId
+      )
 
-    const toColumnId = columnId + 1
-    if (toColumnId !== fromColumnId) {
-      this.moveToOtherColumn(boardRepository, registry, fromColumnId, toColumnId, draggedItem)
-    }
+      if (!columnAtPosition) {
+        return
+      }
 
-    const items = boardRepository.visibleItems(toColumnId)
-    const itemAtPosition = this.positionCalculator
-      .itemAtPosition(items, toColumnId, y, draggedItem)
-    if (!itemAtPosition) {
+      const toColumnId = columnId + 1
+      if (toColumnId !== fromColumnId) {
+        this.moveToOtherColumn(
+          boardRepository,
+          registry,
+          fromColumnId,
+          toColumnId,
+          draggedItem
+        )
+      }
+
+      const items = boardRepository.visibleItems(toColumnId)
+      const itemAtPosition = this.positionCalculator.itemAtPosition(
+        items,
+        toColumnId,
+        y,
+        draggedItem
+      )
+      if (!itemAtPosition) {
+        return columnAtPosition
+      }
+
+      const draggedId = draggedItem.id()
+      const itemAtPositionId = itemAtPosition.id()
+
+      if (draggedItem.id() === itemAtPosition.id()) {
+        return columnAtPosition
+      }
+
+      this.switchItemsBetween(
+        boardRepository,
+        draggedItem,
+        itemAtPosition,
+        toColumnId
+      )
+
       return columnAtPosition
+    } catch (error) {
+      console.error('Error in move method:', error)
     }
-
-    const draggedId = draggedItem.id()
-    const itemAtPositionId = itemAtPosition.id()
-
-    if (draggedItem.id() === itemAtPosition.id()) {
-      return columnAtPosition
-    }
-
-    this.switchItemsBetween(boardRepository, draggedItem, itemAtPosition, toColumnId)
-
-    return columnAtPosition
-     
-   } catch (error) {
-     console.log("move ",error)
-   }
   }
 
-  moveToOtherColumn = (boardRepository, registry, fromColumnId, toColumnId, item) => {
+  moveToOtherColumn = (
+    boardRepository,
+    registry,
+    fromColumnId,
+    toColumnId,
+    item
+  ) => {
     registry.move(fromColumnId, toColumnId, item)
 
     boardRepository.notify(fromColumnId, 'reload')
@@ -58,8 +90,9 @@ class Mover {
     const visibleItems = boardRepository.visibleItems(toColumnId)
     const rangeVisibleItems = range(0, visibleItems.length - 1)
 
-    rangeVisibleItems
-      .forEach(i => visibleItems[i].setLayout({ ...visibleItems[i + 1].layout() }))
+    rangeVisibleItems.forEach(i =>
+      visibleItems[i].setLayout({ ...visibleItems[i + 1].layout() })
+    )
 
     const lastItem = visibleItems[visibleItems.length - 1]
     const lastLayout = lastItem.layout()
@@ -70,12 +103,19 @@ class Mover {
     column.updateLastItemVisibility()
   }
 
-  switchItemsBetween = (boardRepository, draggedItem, itemAtPosition, toColumnId) => {
+  switchItemsBetween = (
+    boardRepository,
+    draggedItem,
+    itemAtPosition,
+    toColumnId
+  ) => {
     draggedItem.setVisible(true)
 
     let items = boardRepository.visibleItems(toColumnId)
-    const draggedItemI = (items).findIndex(item => item.id() === draggedItem.id())
-    const itemAtPositionI = (items).findIndex(item => item.id() === itemAtPosition.id())
+    const draggedItemI = items.findIndex(item => item.id() === draggedItem.id())
+    const itemAtPositionI = items.findIndex(
+      item => item.id() === itemAtPosition.id()
+    )
     let itemsRange
     if (draggedItem.index() < itemAtPosition.index()) {
       itemsRange = range(draggedItemI, itemAtPositionI)
@@ -83,7 +123,7 @@ class Mover {
       itemsRange = range(itemAtPositionI, draggedItemI)
     }
 
-    itemsRange.forEach((i) => {
+    itemsRange.forEach(i => {
       const firstItem = items[i]
       const secondItem = items[i + 1]
       this.switchItems(toColumnId, firstItem, secondItem)
@@ -110,7 +150,9 @@ class Mover {
     firstItem.setIndex(secondIndex)
     secondItem.setIndex(firstIndex)
 
-    firstItem.setLayout(Object.assign(firstItem.layout(), { y: firstY + secondHeight }))
+    firstItem.setLayout(
+      Object.assign(firstItem.layout(), { y: firstY + secondHeight })
+    )
     secondItem.setLayout(Object.assign(secondItem.layout(), { y: firstY }))
 
     firstItem.setRef(secondRef)
