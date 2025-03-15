@@ -28,8 +28,17 @@ export default function Lists({ navigation }) {
   const skipUpdateRef = useRef(false)
   const dealbreakerListIndexRef = useRef(new Map())
   const isMountRef = useRef(false)
+  const [isRemount, setIsRemount] = useState(false)
 
   useEffect(() => {
+    setIsRemount(true)
+    setTimeout(() => {
+      reloadBoard()
+      setIsRemount(false)
+    }, 1000)
+  }, [currentProfile])
+
+  const reloadBoard = () => {
     if (
       dealbreaker &&
       (dealbreaker[currentProfile].dealbreaker?.length ||
@@ -45,6 +54,9 @@ export default function Lists({ navigation }) {
       skipUpdateRef.current = false
       isMountRef.current = true
     }
+  }
+  useEffect(() => {
+    reloadBoard()
   }, [dealbreaker])
 
   const updateBoard = () => {
@@ -60,7 +72,7 @@ export default function Lists({ navigation }) {
       flag.map((data, index) => {
         flagListIndexRef.current.set(data.id, index)
         return {
-          id: index,
+          id: data.id,
           name: data.title,
           description: data.description
         }
@@ -69,7 +81,7 @@ export default function Lists({ navigation }) {
       dealbreakerList.map((data, index) => {
         dealbreakerListIndexRef.current.set(data.id, index)
         return {
-          id: index,
+          id: data.id,
           name: data.title,
           description: data.description
         }
@@ -83,8 +95,9 @@ export default function Lists({ navigation }) {
     const newList = JSON.parse(JSON.stringify(processList))
     let oldItem = null
     if (
-      (isDealbreaker && dealbreakerListIndexRef.current.get(id)) ||
-      (!isDealbreaker && flagListIndexRef.current.get(id))
+      (isDealbreaker &&
+        dealbreakerListIndexRef.current.get(id) !== undefined) ||
+      (!isDealbreaker && flagListIndexRef.current.get(id) !== undefined)
     ) {
       oldItem = { ...newList[oldIndex] }
       newList.splice(oldIndex, 1)
@@ -152,34 +165,37 @@ export default function Lists({ navigation }) {
                 <Text style={styles.profileText}>{currentProfile}</Text>
               </View>
             </View>
-            <Board
-              boardRepository={list}
-              open={() => {}}
-              onDragEnd={(boardItemOne, boardItemTwo, draggedItem) => {
-                // let isDealbreaker = false
-                // if (draggedItem.attributes.columnId === 2) {
-                //   isDealbreaker = true
-                // }
-                // let oldIndex = flagListIndexRef.current.get(
-                //   draggedItem.attributes.row.id
-                // )
-                // console.log('oldIndex: ', oldIndex)
-                // console.log('draggedItem: ', draggedItem.attributes.row.id)
-                // if (!oldIndex && oldIndex !== 0) {
-                //   oldIndex = dealbreakerListIndexRef.current.get(
-                //     draggedItem.attributes.row.id
-                //   )
-                // }
-                // updateListOrder(
-                //   draggedItem.attributes.index,
-                //   oldIndex,
-                //   draggedItem.attributes.row.id,
-                //   isDealbreaker
-                // )
-              }}
-              isWithCountBadge={false}
-              cardNameTextColor='white'
-            />
+            {!isRemount && (
+              <Board
+                boardRepository={list}
+                open={() => {}}
+                onDragEnd={(boardItemOne, boardItemTwo, draggedItem) => {
+                  debugger
+                  let isDealbreaker = false
+                  if (draggedItem.attributes.columnId === 2) {
+                    isDealbreaker = true
+                  }
+                  let oldIndex = flagListIndexRef.current.get(
+                    draggedItem.attributes.row.id
+                  )
+                  console.log('oldIndex: ', oldIndex)
+                  console.log('draggedItem: ', draggedItem.attributes.row.id)
+                  if (!oldIndex && oldIndex !== 0) {
+                    oldIndex = dealbreakerListIndexRef.current.get(
+                      draggedItem.attributes.row.id
+                    )
+                  }
+                  updateListOrder(
+                    draggedItem.attributes.index,
+                    oldIndex,
+                    draggedItem.attributes.row.id,
+                    isDealbreaker
+                  )
+                }}
+                isWithCountBadge={false}
+                cardNameTextColor='white'
+              />
+            )}
           </View>
         ) : (
           <View style={styles.noDealbreakerContainer}>

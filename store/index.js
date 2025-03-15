@@ -1,13 +1,13 @@
-import { createContext } from 'react';
+import { createContext } from 'react'
 
 const StoreContext = createContext({
-	dealbreaker: {
-		main: {
-			flag: [],
-			dealbreaker: [],
-		},
-	},
-	profile: ['main'],
-});
+  dealbreaker: {
+    main: {
+      flag: [],
+      dealbreaker: []
+    }
+  },
+  profile: ['main']
+})
 
-export default StoreContext;
+export default StoreContext

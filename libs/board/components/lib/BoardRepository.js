@@ -11,49 +11,52 @@ class BoardRepository {
     this.listeners = {}
   }
   updateData(data) {
-    this.registry.updateData(data);
-    this.updateColumnsLayoutAfterVisibilityChanged();
+    this.registry.updateData(data)
+    this.updateColumnsLayoutAfterVisibilityChanged()
   }
-  columns = () => this.registry.columns();
+  columns = () => this.registry.columns()
 
-  column = columnId => this.registry.column(columnId);
+  column = columnId => this.registry.column(columnId)
 
-  items = columnId => this.registry.items(columnId);
+  items = columnId => this.registry.items(columnId)
 
-  visibleItems = columnId => this.registry.visibleItems(columnId);
+  visibleItems = columnId => this.registry.visibleItems(columnId)
 
   addListener = (columnId, event, callback) => {
     const forColumn = this.listeners[columnId]
     this.listeners[columnId] = Object.assign(forColumn || {}, {
       [event]: callback
     })
-  };
+  }
 
-  notify = (columnId, event) => this.listeners[columnId][event]();
-
+  notify = (columnId, event) => {
+    if (this.listeners[columnId]) {
+      this.listeners[columnId][event]()
+    }
+  }
   setScrollOffset = (columnId, scrollOffset) => {
     const column = this.registry.column(columnId)
     column.setScrollOffset(scrollOffset)
-  };
+  }
 
   setContentHeight = (columnId, contentHeight) => {
     const column = this.registry.column(columnId)
     column.setContentHeight(contentHeight)
-  };
+  }
 
   setItemRef = (columnId, item, ref) => {
     item.setRef(ref)
-  };
+  }
 
   setListView = (columnId, listView) => {
     const column = this.registry.column(columnId)
 
     return column && column.setListView(listView)
-  };
+  }
 
   updateItemWithLayout = (columnId, item, previousItem) => {
     item.measureAndSaveLayout(previousItem)
-  };
+  }
 
   updateLayoutAfterVisibilityChanged = columnId => {
     const items = this.items(columnId)
@@ -62,7 +65,7 @@ class BoardRepository {
     rangeArr.forEach(i => {
       this.updateItemWithLayout(columnId, items[i], items[i - 1])
     })
-  };
+  }
 
   updateItemsVisibility = (columnId, visibleItemsInSections) => {
     const visibleItems = visibleItemsInSections.s1
@@ -71,26 +74,25 @@ class BoardRepository {
     this.updateLayoutAfterVisibilityChanged(columnId)
 
     return items.forEach(
-      item => visibleItems && item.setVisible(visibleItems[item.index()]),
+      item => visibleItems && item.setVisible(visibleItems[item.index()])
     )
-  };
+  }
 
   setColumnRef = (columnId, ref) => {
     const column = this.registry.column(columnId)
 
     return column && column.setRef(ref)
-  };
+  }
 
   updateColumnWithLayout = columnId => {
     const column = this.registry.column(columnId)
 
     return column && column.measureAndSaveLayout()
-  };
-
-  scrollingPosition = (columnAtPosition, x, y, columnId) => {
-    this.positionCalculator.scrollingPosition(columnAtPosition, x, y, columnId);
   }
 
+  scrollingPosition = (columnAtPosition, x, y, columnId) => {
+    this.positionCalculator.scrollingPosition(columnAtPosition, x, y, columnId)
+  }
 
   updateColumnsLayoutAfterVisibilityChanged = () => {
     const columns = this.columns()
@@ -100,15 +102,15 @@ class BoardRepository {
       this.updateColumnWithLayout(columnId)
       this.updateLayoutAfterVisibilityChanged(columnId)
     })
-  };
+  }
 
   hide = (columnId, item) => {
     item.setHidden(true)
-  };
+  }
 
   show = (columnId, item) => {
     item.setHidden(false)
-  };
+  }
 
   showAll = () => {
     const columns = this.columns()
@@ -117,10 +119,10 @@ class BoardRepository {
 
       return items.forEach(item => this.show(column.id(), item))
     })
-  };
+  }
 
   move = (draggedItem, x, y, columnId) => {
-    this.mover.move(this, this.registry, draggedItem, x, y, columnId);
+    this.mover.move(this, this.registry, draggedItem, x, y, columnId)
   }
 }
 
