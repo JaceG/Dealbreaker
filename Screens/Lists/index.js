@@ -74,7 +74,8 @@ export default function Lists({ navigation }) {
         return {
           id: data.id,
           name: data.title,
-          description: data.description
+          description: data.description,
+          flag: data.flag
         }
       }) || []
     newData[1].rows =
@@ -83,7 +84,8 @@ export default function Lists({ navigation }) {
         return {
           id: data.id,
           name: data.title,
-          description: data.description
+          description: data.description,
+          flag: data.flag
         }
       }) || []
     setList(new BoardRepository(newData))
@@ -94,6 +96,7 @@ export default function Lists({ navigation }) {
     let unprocessedList = null
     const newList = JSON.parse(JSON.stringify(processList))
     let oldItem = null
+
     if (
       (isDealbreaker &&
         dealbreakerListIndexRef.current.get(id) !== undefined) ||
@@ -169,8 +172,23 @@ export default function Lists({ navigation }) {
               <Board
                 boardRepository={list}
                 open={() => {}}
+                onFlagClicked={(newFlag, item) => {
+                  const { flag } = dealbreaker[currentProfile]
+                  const newFlags = JSON.parse(JSON.stringify(flag))
+                  const rowId = item.attributes.row.id
+                  console.log('newFlag', newFlag)
+                  const flagItem = newFlags.find(flag => flag.id === rowId)
+                  flagItem.flag = newFlag
+                  setDealbreaker({
+                    ...dealbreaker,
+                    [currentProfile]: {
+                      ...dealbreaker[currentProfile],
+                      flag: newFlags
+                    }
+                  })
+                  console.log('this is my flag', flag)
+                }}
                 onDragEnd={(boardItemOne, boardItemTwo, draggedItem) => {
-                  debugger
                   let isDealbreaker = false
                   if (draggedItem.attributes.columnId === 2) {
                     isDealbreaker = true

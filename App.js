@@ -75,9 +75,9 @@ export default function App() {
   useEffect(() => {
     handleCurrentProfile()
   }, [currentProfile])
-  //   useEffect(() => {
-  //     clearStorage()
-  //   }, [])
+  // useEffect(() => {
+  //   clearStorage()
+  // }, [])
 
   return (
     <StoreContext.Provider

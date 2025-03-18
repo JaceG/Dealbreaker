@@ -43,7 +43,7 @@ export default function CreateFlags({ navigation }) {
           ...dealbreaker.main,
           [type]: [
             ...dealbreaker.main[type],
-            { id: Math.random() * 1000, title, description }
+            { id: Math.random() * 1000, title, description, flag: 'white' }
           ]
         }
       })

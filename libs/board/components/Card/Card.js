@@ -28,7 +28,8 @@ const Card = ({
   isCardWithShadow,
   onPress,
   onPressIn,
-  style
+  style,
+  onFlagClicked
 }) => {
   const styles = [style]
   if (hidden) {
@@ -70,7 +71,13 @@ const Card = ({
 									</Paragraph> */}
                 </ColumnWrapper>
               </IconRowWrapper>
-              {item?.columnId() === 2 ? null : <Flag color={cardIconColor} />}
+              {item?.columnId() === 2 ? null : (
+                <Flag
+                  color={cardIconColor}
+                  onFlagClicked={onFlagClicked}
+                  item={item}
+                />
+              )}
             </RowWrapper>
           </CardContainer>
         )}
