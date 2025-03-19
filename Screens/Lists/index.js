@@ -1,12 +1,20 @@
 import { StatusBar } from 'expo-status-bar'
 import { useState, useContext, useEffect, useRef, useCallback } from 'react'
-import { StyleSheet, Text, View, Dimensions, Button } from 'react-native'
+import {
+  StyleSheet,
+  Text,
+  View,
+  Dimensions,
+  Button,
+  TouchableOpacity
+} from 'react-native'
 import { Board, BoardRepository } from '../../libs/board/components'
 import StoreContext from '../../store'
 import AppButton from '../../components/AppButton'
 import SwitchProfileModal from '../../components/SwitchProfileModal'
 import ConfirmationModal from '../../components/ConfirmationModal'
 import EditItemModal from '../../components/EditItemModal'
+import EditProfileModal from '../../components/EditProfileModal'
 import { showToast } from '../../utils/functions'
 import { useFocusEffect } from '@react-navigation/native'
 
@@ -29,6 +37,8 @@ export default function Lists({ navigation, route }) {
     dealbreaker,
     currentProfile,
     setDealbreaker,
+    profile,
+    renameProfile,
     removeItemFromAllProfiles
   } = useContext(StoreContext)
   const [visible, setVisible] = useState(false)
@@ -36,6 +46,7 @@ export default function Lists({ navigation, route }) {
   const [itemToDelete, setItemToDelete] = useState(null)
   const [editModalVisible, setEditModalVisible] = useState(false)
   const [itemToEdit, setItemToEdit] = useState(null)
+  const [editProfileModalVisible, setEditProfileModalVisible] = useState(false)
   const flagListIndexRef = useRef(new Map())
   const skipUpdateRef = useRef(false)
   const dealbreakerListIndexRef = useRef(new Map())
@@ -396,6 +407,7 @@ export default function Lists({ navigation, route }) {
     }
   }
 
+  // Check if we need to add the handleSaveEdit function if it's missing
   const handleSaveEdit = updatedItem => {
     if (!updatedItem || !updatedItem.id) return
 
@@ -441,6 +453,37 @@ export default function Lists({ navigation, route }) {
 
     // Force UI update
     setRefreshKey(Date.now())
+  }
+
+  // Handle profile edit button click
+  const handleEditProfile = () => {
+    // Don't allow editing main profile
+    if (currentProfile === 'main') {
+      showToast('error', 'The main profile cannot be renamed')
+      return
+    }
+
+    setEditProfileModalVisible(true)
+  }
+
+  // Handle saving edited profile name
+  const handleSaveProfileEdit = (oldName, newName) => {
+    // Close edit modal
+    setEditProfileModalVisible(false)
+
+    // Rename the profile
+    const success = renameProfile(oldName, newName)
+
+    if (success) {
+      // Show success message
+      showToast('success', `Profile renamed to "${newName}" successfully`)
+
+      // Force UI refresh
+      setRefreshKey(Date.now())
+    } else {
+      // Show error message
+      showToast('error', 'Failed to rename profile. Please try again.')
+    }
   }
 
   // Add useFocusEffect to reset and refresh when screen is focused
@@ -499,6 +542,13 @@ export default function Lists({ navigation, route }) {
         onSave={handleSaveEdit}
         item={itemToEdit}
       />
+      <EditProfileModal
+        visible={editProfileModalVisible}
+        onClose={() => setEditProfileModalVisible(false)}
+        onSave={handleSaveProfileEdit}
+        profileName={currentProfile}
+        existingProfiles={profile}
+      />
 
       <View>
         {list &&
@@ -515,7 +565,16 @@ export default function Lists({ navigation, route }) {
                     setVisible(true)
                   }}
                 />
-                <Text style={styles.profileText}>{currentProfile}</Text>
+                <Text style={styles.profileText}>
+                  {currentProfile}
+                  {currentProfile !== 'main' && (
+                    <TouchableOpacity
+                      style={styles.editProfileButton}
+                      onPress={handleEditProfile}>
+                      <Text style={styles.editProfileButtonText}> ✏️</Text>
+                    </TouchableOpacity>
+                  )}
+                </Text>
               </View>
             </View>
             <Board
@@ -623,16 +682,22 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center'
   },
+  innerProfileButtonContainer: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 5
+  },
   profileText: {
     fontSize: 16,
     fontWeight: 'bold',
     justifyContent: 'center',
     alignItems: 'center'
   },
-  innerProfileButtonContainer: {
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 5
+  editProfileButton: {
+    padding: 2
+  },
+  editProfileButtonText: {
+    fontSize: 16
   }
 })

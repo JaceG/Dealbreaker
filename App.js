@@ -265,6 +265,54 @@ export default function App() {
     return true
   }
 
+  // Function to rename a profile
+  const renameProfile = (oldName, newName) => {
+    // Don't allow renaming main profile
+    if (oldName === 'main') {
+      console.log('Cannot rename the main profile')
+      return false
+    }
+
+    // Don't allow renaming to "main"
+    if (newName.toLowerCase() === 'main') {
+      console.log('Cannot rename a profile to "main"')
+      return false
+    }
+
+    // Check if old profile exists
+    if (!profile.includes(oldName)) {
+      console.log('Profile does not exist:', oldName)
+      return false
+    }
+
+    // Check if new name already exists
+    if (profile.some(p => p.toLowerCase() === newName.toLowerCase())) {
+      console.log('Profile name already exists:', newName)
+      return false
+    }
+
+    console.log('Renaming profile from', oldName, 'to', newName)
+
+    // Create a copy of the current profiles array with the renamed profile
+    const updatedProfiles = profile.map(p => (p === oldName ? newName : p))
+
+    // Create a copy of the dealbreaker state with the renamed profile
+    const updatedDealbreaker = JSON.parse(JSON.stringify(dealbreaker))
+    updatedDealbreaker[newName] = updatedDealbreaker[oldName]
+    delete updatedDealbreaker[oldName]
+
+    // If we're renaming the current profile, update the current profile
+    if (currentProfile === oldName) {
+      setCurrentProfile(newName)
+    }
+
+    // Update the profiles array and dealbreaker state
+    setProfile(updatedProfiles)
+    setDealbreaker(updatedDealbreaker)
+
+    return true
+  }
+
   return (
     <StoreContext.Provider
       value={{
@@ -277,7 +325,8 @@ export default function App() {
         addItemToAllProfiles,
         removeItemFromAllProfiles,
         ensureProfileExists,
-        deleteProfile
+        deleteProfile,
+        renameProfile
       }}>
       <NavigationContainer>
         <Drawer.Navigator>
