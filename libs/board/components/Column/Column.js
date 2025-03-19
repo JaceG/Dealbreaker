@@ -65,14 +65,16 @@ class Column extends React.Component {
       return null
     }
 
-    const { renderWrapperRow, onFlagClicked, onDeleteItem } = this.props
+    const { renderWrapperRow, onFlagClicked, onDeleteItem, onEditItem } =
+      this.props
     const props = {
       onPressIn: y => this.onPressIn(item, y),
       onPress: this.onPress(item),
       hidden: item.isHidden(),
       item,
       onFlagClicked,
-      onDeleteItem
+      onDeleteItem,
+      onEditItem
     }
     return (
       <RowWrapper
@@ -172,7 +174,8 @@ class Column extends React.Component {
       boardRepository,
       columnWidth,
       onFlagClicked,
-      onDeleteItem
+      onDeleteItem,
+      onEditItem
     } = this.props
 
     const colElements = boardRepository.items(column.id()).length - 1
@@ -304,7 +307,8 @@ Column.propTypes = {
   boardRepository: object,
   unsubscribeFromMovingMode: func.isRequired,
   onFlagClicked: func,
-  onDeleteItem: func
+  onDeleteItem: func,
+  onEditItem: func
 }
 
 export default Column

@@ -30,11 +30,28 @@ const Card = ({
   onPressIn,
   style,
   onFlagClicked,
-  onDeleteItem
+  onDeleteItem,
+  onEditItem
 }) => {
   const styles = [style]
   if (hidden) {
     styles.push({ opacity: 0 })
+  }
+
+  const iconStyles = {
+    iconContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginRight: 5
+    },
+    iconButton: {
+      padding: 5,
+      marginRight: 5
+    },
+    iconText: {
+      fontSize: 18,
+      color: '#fff'
+    }
   }
 
   return (
@@ -57,13 +74,22 @@ const Card = ({
             shadowOpacity={isCardWithShadow ? 0.1 : 0}>
             <RowWrapper>
               <IconRowWrapper>
-                {item && onDeleteItem && (
-                  <TouchableOpacity
-                    onPress={() => onDeleteItem(item)}
-                    style={{ marginRight: 10, padding: 5 }}>
-                    <Text style={{ fontSize: 20, color: '#fff' }}>🗑️</Text>
-                  </TouchableOpacity>
-                )}
+                <View style={iconStyles.iconContainer}>
+                  {item && onDeleteItem && (
+                    <TouchableOpacity
+                      onPress={() => onDeleteItem(item)}
+                      style={iconStyles.iconButton}>
+                      <Text style={iconStyles.iconText}>🗑️</Text>
+                    </TouchableOpacity>
+                  )}
+                  {item && onEditItem && (
+                    <TouchableOpacity
+                      onPress={() => onEditItem(item)}
+                      style={iconStyles.iconButton}>
+                      <Text style={iconStyles.iconText}>✏️</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
                 <ColumnWrapper>
                   <Paragraph
                     fontSize={cardNameFontSize}
@@ -99,7 +125,8 @@ Card.defaultProps = {
   cardNameFontSize: 18,
   cardNameFontFamily: '',
   isCardWithShadow: true,
-  onDeleteItem: null
+  onDeleteItem: null,
+  onEditItem: null
 }
 
 Card.propTypes = {
@@ -119,7 +146,8 @@ Card.propTypes = {
   onPress: func,
   onPressIn: func,
   style: shape({ string }),
-  onDeleteItem: func
+  onDeleteItem: func,
+  onEditItem: func
 }
 
 export default Card

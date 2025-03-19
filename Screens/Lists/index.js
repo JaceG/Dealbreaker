@@ -6,6 +6,7 @@ import StoreContext from '../../store'
 import AppButton from '../../components/AppButton'
 import SwitchProfileModal from '../../components/SwitchProfileModal'
 import ConfirmationModal from '../../components/ConfirmationModal'
+import EditItemModal from '../../components/EditItemModal'
 import { showToast } from '../../utils/functions'
 import { useFocusEffect } from '@react-navigation/native'
 
@@ -33,6 +34,8 @@ export default function Lists({ navigation, route }) {
   const [visible, setVisible] = useState(false)
   const [deleteModalVisible, setDeleteModalVisible] = useState(false)
   const [itemToDelete, setItemToDelete] = useState(null)
+  const [editModalVisible, setEditModalVisible] = useState(false)
+  const [itemToEdit, setItemToEdit] = useState(null)
   const flagListIndexRef = useRef(new Map())
   const skipUpdateRef = useRef(false)
   const dealbreakerListIndexRef = useRef(new Map())
@@ -373,6 +376,73 @@ export default function Lists({ navigation, route }) {
     }, 300)
   }
 
+  const handleEditItem = item => {
+    // Extract the raw item data from the board item
+    if (item && item.attributes && item.attributes.row) {
+      const rowData = item.attributes.row
+      // Find the actual item in the dealbreaker state
+      const isDealbreaker = item.attributes.columnId === 2
+      const type = isDealbreaker ? 'dealbreaker' : 'flag'
+
+      const items = dealbreaker[currentProfile][type]
+      const foundItem = items.find(i => i.id === rowData.id)
+
+      if (foundItem) {
+        setItemToEdit(foundItem)
+        setEditModalVisible(true)
+      } else {
+        showToast('error', 'Item not found')
+      }
+    }
+  }
+
+  const handleSaveEdit = updatedItem => {
+    if (!updatedItem || !updatedItem.id) return
+
+    // Determine the type (flag or dealbreaker)
+    const isFlagItem = dealbreaker[currentProfile].flag.some(
+      item => item.id === updatedItem.id
+    )
+    const type = isFlagItem ? 'flag' : 'dealbreaker'
+
+    // Create a copy of the dealbreaker state
+    const updatedDealbreaker = JSON.parse(JSON.stringify(dealbreaker))
+
+    // Update the item in all profiles
+    Object.keys(updatedDealbreaker).forEach(profileName => {
+      if (
+        updatedDealbreaker[profileName] &&
+        updatedDealbreaker[profileName][type]
+      ) {
+        updatedDealbreaker[profileName][type] = updatedDealbreaker[profileName][
+          type
+        ].map(item => {
+          if (item.id === updatedItem.id) {
+            return {
+              ...item,
+              title: updatedItem.title,
+              description: updatedItem.description
+            }
+          }
+          return item
+        })
+      }
+    })
+
+    // Update the state
+    setDealbreaker(updatedDealbreaker)
+
+    // Close the modal
+    setEditModalVisible(false)
+    setItemToEdit(null)
+
+    // Show a success message
+    showToast('success', 'Item updated successfully')
+
+    // Force UI update
+    setRefreshKey(Date.now())
+  }
+
   // Add useFocusEffect to reset and refresh when screen is focused
   useFocusEffect(
     useCallback(() => {
@@ -419,6 +489,15 @@ export default function Lists({ navigation, route }) {
         onConfirm={confirmDeleteItem}
         title='Delete Item'
         message='This will delete the item from all profiles. Are you sure you want to delete it?'
+      />
+      <EditItemModal
+        visible={editModalVisible}
+        onClose={() => {
+          setEditModalVisible(false)
+          setItemToEdit(null)
+        }}
+        onSave={handleSaveEdit}
+        item={itemToEdit}
       />
 
       <View>
@@ -488,6 +567,7 @@ export default function Lists({ navigation, route }) {
                 )
               }}
               onDeleteItem={handleDeleteItem}
+              onEditItem={handleEditItem}
               isWithCountBadge={false}
               cardNameTextColor='white'
             />
