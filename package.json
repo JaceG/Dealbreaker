@@ -17,6 +17,7 @@
     "dotenv": "^16.4.7",
     "expo": "~52.0.28",
     "expo-dev-client": "~5.0.14",
+    "expo-image-picker": "~16.0.6",
     "expo-status-bar": "~2.0.1",
     "lodash": "^4.17.15",
     "mongoose": "^8.12.1",
@@ -33,7 +34,8 @@
     "react-native-toast-message": "^2.1.7",
     "react-timeout": "^1.2.0",
     "styled-components": "^4.4.1",
-    "styled-system": "^5.1.5"
+    "styled-system": "^5.1.5",
+    "expo-av": "~15.0.2"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

@@ -218,10 +218,39 @@ export const syncPendingChanges = async () => {
 // Add attachment to history
 export const addAttachmentToHistory = async (historyId, attachment) => {
   try {
+    console.log(`Adding attachment to history entry ${historyId}:`, attachment)
+
+    // For easier debugging
+    if (!historyId) {
+      console.error('No historyId provided to addAttachmentToHistory')
+      return false
+    }
+
+    if (!attachment || !attachment.url) {
+      console.error('Invalid attachment object:', attachment)
+      return false
+    }
+
+    // Create a formData object if this is a file that needs uploading
+    let requestData = { attachment }
+
+    // Try to get the file info for better naming
+    const fileInfo = {
+      name:
+        attachment.name ||
+        `${attachment.type}-${Date.now()}.${attachment.type === 'video' ? 'mp4' : 'jpg'}`,
+      type: attachment.type === 'video' ? 'video/mp4' : 'image/jpeg',
+      size: attachment.size || 0
+    }
+
+    // Add file info to the log
+    console.log('Attachment file info:', fileInfo)
+
     // Send to API
-    const response = await api.post(`/flagHistory/${historyId}/attachment`, {
-      attachment
-    })
+    const response = await api.post(
+      `/flagHistory/${historyId}/attachment`,
+      requestData
+    )
     console.log('Attachment added successfully:', response.data)
 
     // Update local cache
@@ -230,12 +259,16 @@ export const addAttachmentToHistory = async (historyId, attachment) => {
     return true
   } catch (error) {
     console.error('Error adding attachment to API:', error)
+    if (error.response) {
+      console.error('Server response:', error.response.data)
+      console.error('Status code:', error.response.status)
+    }
 
     // Store locally and queue for sync
     try {
       await updateLocalAttachment(historyId, attachment)
       await storePendingChange('addAttachment', { historyId, attachment })
-
+      console.log('Attachment stored locally for later sync')
       return true
     } catch (storageError) {
       console.error('Failed to store attachment locally:', storageError)

@@ -20,7 +20,7 @@ import FlagHistoryModal from '../../components/FlagHistoryModal'
 import ReasonInputModal from '../../components/ReasonInputModal'
 import { showToast } from '../../utils/functions'
 import { useFocusEffect } from '@react-navigation/native'
-import { addFlagHistory } from '../../utils/mongodb'
+import { addFlagHistory, addAttachmentToHistory } from '../../utils/mongodb'
 
 const data = [
   {
@@ -75,6 +75,10 @@ export default function Lists({ navigation, route }) {
 
   // Create a reference to track if an operation is a user drag
   const isDragOperationRef = useRef(false)
+
+  // Add state for additional reason modal
+  const [additionalReasonModalVisible, setAdditionalReasonModalVisible] =
+    useState(false)
 
   // Add this debug function to help track what's happening with flag colors
   const logProfileFlags = label => {
@@ -241,7 +245,8 @@ export default function Lists({ navigation, route }) {
         name: item.title,
         description: item.description,
         flag: item.flag || 'white', // Preserve the original flag color but default to white if missing
-        onLongPress: () => handleViewFlagHistory(item)
+        // Make viewHistory a direct property instead
+        onLongPress: () => handleViewFlagHistory(item) // The board component will expose this through item.row().onLongPress
       }
     })
 
@@ -253,7 +258,8 @@ export default function Lists({ navigation, route }) {
         name: item.title,
         description: item.description,
         flag: item.flag || 'white', // Preserve the original flag color but default to white if missing
-        onLongPress: () => handleViewFlagHistory(item)
+        // Make viewHistory a direct property instead
+        onLongPress: () => handleViewFlagHistory(item) // The board component will expose this through item.row().onLongPress
       }
     })
 
@@ -586,9 +592,36 @@ export default function Lists({ navigation, route }) {
 
   // Function to handle viewing flag history
   const handleViewFlagHistory = item => {
-    console.log('Viewing history for flag:', item)
-    setSelectedFlag(item)
+    console.log('handleViewFlagHistory called with item:', item)
+
+    // Extract the actual data from the board item if needed
+    let flagData = item
+
+    // Check if this is a board item with attributes structure
+    if (item && item.attributes && item.attributes.row) {
+      console.log('Converting board item to flag data')
+      // Extract the row data which has the id, name, etc.
+      const rowData = item.attributes.row
+
+      // Determine if it's a flag or dealbreaker
+      const isDealbreaker = item.attributes.columnId === 2
+      const type = isDealbreaker ? 'dealbreaker' : 'flag'
+
+      // Find the complete item data in the current profile's state
+      const items = dealbreaker[currentProfileId][type] || []
+      flagData = items.find(i => i.id === rowData.id) || rowData
+    }
+
+    // Log what we're about to set
+    console.log('Setting selectedFlag to:', flagData)
+
+    // Set the flag data first
+    setSelectedFlag(flagData)
+
+    // Then immediately set the modal to visible
     setHistoryModalVisible(true)
+
+    console.log('Modal should now be visible')
   }
 
   // Modify the flag click handler to immediately apply changes and then prompt for reason
@@ -638,7 +671,7 @@ export default function Lists({ navigation, route }) {
   }
 
   // Handle completing the flag change after getting reason - only for history recording now
-  const handleFlagChangeWithReason = async reason => {
+  const handleFlagChangeWithReason = async (reason, attachments = []) => {
     // Close the reason modal
     setReasonModalVisible(false)
 
@@ -655,7 +688,7 @@ export default function Lists({ navigation, route }) {
       }
 
       // Record the flag status change in history with profile name
-      await addFlagHistory(
+      const historyEntry = await addFlagHistory(
         currentProfileId,
         rowId,
         item.attributes.row.name, // Use name instead of title to match the board data structure
@@ -664,6 +697,25 @@ export default function Lists({ navigation, route }) {
         reason,
         currentProfile.name // Add profile name to history
       )
+
+      // Add attachments if any were provided
+      if (
+        attachments &&
+        attachments.length > 0 &&
+        historyEntry &&
+        historyEntry._id
+      ) {
+        console.log('Adding attachments to history entry:', attachments)
+
+        // Process each attachment
+        for (const attachment of attachments) {
+          try {
+            await addAttachmentToHistory(historyEntry._id, attachment)
+          } catch (attachError) {
+            console.error('Error adding attachment:', attachError)
+          }
+        }
+      }
 
       // Check if this should auto-transition to dealbreaker
       if (
@@ -779,9 +831,128 @@ export default function Lists({ navigation, route }) {
     return profile ? profile.name : currentProfileId
   }
 
+  // Add this function to check modal state visibility
+  const debugModalState = () => {
+    console.log('MODAL STATE CHECK:')
+    console.log('- additionalReasonModalVisible:', additionalReasonModalVisible)
+    console.log('- selectedFlag:', !!selectedFlag)
+    console.log('- historyModalVisible:', historyModalVisible)
+  }
+
+  // Handler for adding additional reasons to flag history
+  const handleAddAdditionalReason = async (reason, attachments = []) => {
+    console.log('handleAddAdditionalReason called with reason:', reason)
+    console.log('Attachments:', attachments)
+
+    // Close the modal first for better UX
+    setAdditionalReasonModalVisible(false)
+
+    // Debug state
+    debugModalState()
+
+    if (!selectedFlag || !reason.trim()) {
+      console.log('Early return: selectedFlag or reason missing', {
+        selectedFlag: !!selectedFlag,
+        reasonEmpty: !reason.trim()
+      })
+      return
+    }
+
+    try {
+      // Get current profile name
+      const currentProfile = profiles.find(p => p.id === currentProfileId)
+      if (!currentProfile) {
+        showToast('error', 'Current profile not found')
+        return
+      }
+
+      // Get current flag status
+      const status = selectedFlag.flag || 'white'
+
+      // Show loading toast
+      showToast('info', 'Saving additional reason...')
+
+      // Add to flag history - using same status for previous and new
+      // This indicates it's just an additional reason, not a color change
+      const historyEntry = await addFlagHistory(
+        currentProfileId,
+        selectedFlag.id,
+        selectedFlag.title || selectedFlag.name,
+        status, // Same status for previous
+        status, // Same status for new (no change)
+        reason,
+        currentProfile.name
+      )
+
+      // Add attachments if any were provided
+      if (
+        attachments &&
+        attachments.length > 0 &&
+        historyEntry &&
+        historyEntry._id
+      ) {
+        console.log('Adding attachments to history entry:', attachments)
+
+        // Process each attachment
+        for (const attachment of attachments) {
+          try {
+            await addAttachmentToHistory(historyEntry._id, attachment)
+          } catch (attachError) {
+            console.error('Error adding attachment:', attachError)
+          }
+        }
+      }
+
+      showToast('success', 'Reason added to history')
+
+      // Reopen the history modal after a short delay
+      setTimeout(() => {
+        setHistoryModalVisible(true)
+      }, 300)
+    } catch (error) {
+      console.error('Error adding additional reason:', error)
+      showToast('error', 'Failed to add reason to history')
+    }
+  }
+
+  // Modify onAddReason handler to add debugging
+  const handleOpenAddReasonModal = () => {
+    console.log('Opening add reason modal. selectedFlag:', selectedFlag)
+
+    // Close the history modal first
+    setHistoryModalVisible(false)
+
+    // Add a delay to ensure the history modal closes completely before opening the reason modal
+    setTimeout(() => {
+      // Now open the reason modal
+      setAdditionalReasonModalVisible(true)
+      console.log('additionalReasonModalVisible set to true')
+
+      // Add timeout to check if state was updated
+      setTimeout(() => {
+        debugModalState()
+      }, 100)
+    }, 300) // 300ms delay to allow modal animation to complete
+  }
+
   return (
     <View style={styles.container}>
       <SwitchProfileModal visible={visible} onClose={() => setVisible(false)} />
+
+      {/* Move the additional reason modal outside conditional rendering */}
+      <ReasonInputModal
+        visible={additionalReasonModalVisible}
+        onClose={() => {
+          console.log('Closing additional reason modal')
+          setAdditionalReasonModalVisible(false)
+        }}
+        onSubmit={handleAddAdditionalReason}
+        flagTitle={selectedFlag?.title || selectedFlag?.name || 'Flag'}
+        prevStatus={selectedFlag?.flag || 'white'}
+        newStatus={selectedFlag?.flag || 'white'}
+        modalTitle='Add Additional Context'
+      />
+
       <ConfirmationModal
         visible={deleteModalVisible}
         onClose={() => {
@@ -818,13 +989,7 @@ export default function Lists({ navigation, route }) {
         onUndo={handleUndoTransition}
         itemTitle={transitionedItem?.title || ''}
       />
-      <FlagHistoryModal
-        visible={historyModalVisible}
-        onClose={() => setHistoryModalVisible(false)}
-        profileId={currentProfileId}
-        flagId={selectedFlag?.id}
-        flagTitle={selectedFlag?.title}
-      />
+
       {pendingFlagChange && (
         <ReasonInputModal
           visible={reasonModalVisible}
@@ -833,6 +998,21 @@ export default function Lists({ navigation, route }) {
           flagTitle={pendingFlagChange.item?.attributes?.row?.title || ''}
           prevStatus={pendingFlagChange.previousStatus}
           newStatus={pendingFlagChange.newFlag}
+        />
+      )}
+
+      {/* Move the FlagHistoryModal to the very end so it renders on top of everything else */}
+      {selectedFlag && (
+        <FlagHistoryModal
+          visible={historyModalVisible}
+          onClose={() => {
+            console.log('Closing history modal')
+            setHistoryModalVisible(false)
+          }}
+          profileId={currentProfileId}
+          flagId={selectedFlag?.id}
+          flagTitle={selectedFlag?.title || selectedFlag?.name || ''}
+          onAddReason={handleOpenAddReasonModal}
         />
       )}
 

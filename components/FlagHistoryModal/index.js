@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Modal, View, StyleSheet, TouchableOpacity, Text } from 'react-native'
 import FlagHistoryTimeline from '../FlagHistoryTimeline'
 
@@ -7,8 +7,22 @@ const FlagHistoryModal = ({
   onClose,
   profileId,
   flagId,
-  flagTitle
+  flagTitle,
+  onAddReason
 }) => {
+  // Add console logs for debugging
+  useEffect(() => {
+    console.log('FlagHistoryModal visibility changed:', visible)
+    console.log('FlagHistoryModal props:', { profileId, flagId, flagTitle })
+  }, [visible, profileId, flagId, flagTitle])
+
+  // Return early if no flagId
+  if (!flagId && visible) {
+    console.log('FlagHistoryModal has no flagId but is visible, closing')
+    onClose()
+    return null
+  }
+
   return (
     <Modal
       animationType='slide'
@@ -20,8 +34,9 @@ const FlagHistoryModal = ({
           <FlagHistoryTimeline
             profileId={profileId}
             flagId={flagId}
-            flagTitle={flagTitle}
+            flagTitle={flagTitle || 'Unknown Item'}
             onClose={onClose}
+            onAddReason={onAddReason}
           />
         </View>
       </View>
@@ -34,14 +49,20 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)'
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    zIndex: 999
   },
   modalContent: {
     width: '90%',
     height: '80%',
     backgroundColor: 'white',
     borderRadius: 10,
-    overflow: 'hidden'
+    overflow: 'hidden',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84
   }
 })
 
