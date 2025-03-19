@@ -6,12 +6,18 @@ export const Flag = ({ color, onFlagClicked, item }) => {
   const yellowFlag = 'yellow'
   const redFlag = 'red'
   const [flagColor, setFlagColor] = useState(whiteFlag)
+
+  // Update flag color whenever item changes or when the component rerenders
   useEffect(() => {
     if (item) {
       const selectedItem = item.row()
-      setFlagColor(selectedItem.flag)
+      // Make sure we're using the latest flag value from the item
+      if (selectedItem && selectedItem.flag) {
+        setFlagColor(selectedItem.flag)
+      }
     }
   }, [item])
+
   return (
     <View>
       <Pressable

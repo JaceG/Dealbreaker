@@ -15,6 +15,7 @@ import SwitchProfileModal from '../../components/SwitchProfileModal'
 import ConfirmationModal from '../../components/ConfirmationModal'
 import EditItemModal from '../../components/EditItemModal'
 import EditProfileModal from '../../components/EditProfileModal'
+import DealbreakerAlert from '../../components/DealbreakerAlert'
 import { showToast } from '../../utils/functions'
 import { useFocusEffect } from '@react-navigation/native'
 
@@ -53,6 +54,10 @@ export default function Lists({ navigation, route }) {
   const isMountRef = useRef(false)
   const [isRemount, setIsRemount] = useState(false)
   const [refreshKey, setRefreshKey] = useState(Date.now())
+
+  // New state for dealbreaker alert
+  const [dealbreakerAlertVisible, setDealbreakerAlertVisible] = useState(false)
+  const [transitionedItem, setTransitionedItem] = useState(null)
 
   // Helper function to ensure current profile exists
   const ensureCurrentProfileExists = () => {
@@ -221,105 +226,92 @@ export default function Lists({ navigation, route }) {
     // Safety check
     if (!dealbreaker?.[currentProfile]) return
 
-    const { flag = [], dealbreaker: dealbreakerList = [] } =
-      dealbreaker[currentProfile]
-    const processList = isDealbreaker ? dealbreakerList : flag
+    // Create a deep copy of the current state
+    const updatedDealbreaker = JSON.parse(JSON.stringify(dealbreaker))
 
-    // More safety checks
-    if (!processList || !Array.isArray(processList)) return
+    // Get references to the current profile's lists
+    const flagsList = updatedDealbreaker[currentProfile].flag || []
+    const dealbreakersList =
+      updatedDealbreaker[currentProfile].dealbreaker || []
 
-    let unprocessedList = null
-    const newList = JSON.parse(JSON.stringify(processList))
-    let oldItem = null
+    let movedItem = null
 
+    // Case 1: Moving within the same list (reordering)
     if (
       (isDealbreaker &&
         dealbreakerListIndexRef.current.get(id) !== undefined) ||
       (!isDealbreaker && flagListIndexRef.current.get(id) !== undefined)
     ) {
-      oldItem = { ...newList[oldIndex] }
-      newList.splice(oldIndex, 1)
-    } else if (isDealbreaker) {
-      unprocessedList = JSON.parse(JSON.stringify(flag))
-      if (oldIndex >= 0 && oldIndex < unprocessedList.length) {
-        oldItem = { ...unprocessedList[oldIndex] }
-        unprocessedList.splice(oldIndex, 1)
-      } else {
-        return // Invalid index
-      }
-    } else {
-      unprocessedList = JSON.parse(JSON.stringify(dealbreakerList))
-      if (oldIndex >= 0 && oldIndex < unprocessedList.length) {
-        oldItem = { ...unprocessedList[oldIndex] }
-        unprocessedList.splice(oldIndex, 1)
-      } else {
-        return // Invalid index
+      // Get the source list
+      const sourceList = isDealbreaker ? dealbreakersList : flagsList
+
+      // Find the item to move
+      if (oldIndex >= 0 && oldIndex < sourceList.length) {
+        movedItem = { ...sourceList[oldIndex] }
+        // Remove from current position
+        sourceList.splice(oldIndex, 1)
+        // Insert at new position
+        sourceList.splice(newIndex, 0, movedItem)
       }
     }
+    // Case 2: Moving from flags to dealbreakers
+    else if (isDealbreaker) {
+      // Find the item in the flags list
+      if (oldIndex >= 0 && oldIndex < flagsList.length) {
+        movedItem = { ...flagsList[oldIndex] }
+        // Remove from flags list
+        flagsList.splice(oldIndex, 1)
+        // Add to dealbreakers list at the specified position
+        dealbreakersList.splice(newIndex, 0, movedItem)
+      }
+    }
+    // Case 3: Moving from dealbreakers to flags
+    else {
+      // Find the item in the dealbreakers list
+      if (oldIndex >= 0 && oldIndex < dealbreakersList.length) {
+        movedItem = { ...dealbreakersList[oldIndex] }
+        // Remove from dealbreakers list
+        dealbreakersList.splice(oldIndex, 1)
 
-    // Safety check
-    if (!oldItem) return
-
-    newList.splice(newIndex, 0, oldItem)
-    const type = isDealbreaker ? 'dealbreaker' : 'flag'
-    skipUpdateRef.current = true
-    flagListIndexRef.current = new Map()
-    dealbreakerListIndexRef.current = new Map()
-
-    newList?.forEach((item, index) => {
-      if (item && item.id) {
-        if (isDealbreaker) {
-          dealbreakerListIndexRef.current.set(item.id, index)
+        // Check if this item is a dealbreaker on the main profile
+        if (
+          currentProfile !== 'main' &&
+          isItemOnMainDealbreakerList(movedItem.id)
+        ) {
+          // Make the flag yellow when it's a dealbreaker on main profile
+          movedItem.flag = 'yellow'
         } else {
-          flagListIndexRef.current.set(item.id, index)
+          // Otherwise, reset to a white flag
+          movedItem.flag = 'white'
         }
-      }
-    })
 
-    if (unprocessedList) {
-      unprocessedList.forEach((item, index) => {
-        if (item && item.id) {
-          if (isDealbreaker) {
-            flagListIndexRef.current.set(item.id, index)
-          } else {
-            dealbreakerListIndexRef.current.set(item.id, index)
-          }
-        }
-      })
+        // Add to flags list at the specified position
+        flagsList.splice(newIndex, 0, movedItem)
+      }
     }
 
-    // Update state with clean arrays (filter out any invalid items)
-    const cleanNewList = newList.filter(
-      item =>
-        item &&
-        typeof item === 'object' &&
-        Object.keys(item).length > 0 &&
-        item.id !== undefined
-    )
+    // Safety check - if we didn't move anything, exit
+    if (!movedItem) return
 
-    const cleanUnprocessedList = unprocessedList
-      ? unprocessedList.filter(
-          item =>
-            item &&
-            typeof item === 'object' &&
-            Object.keys(item).length > 0 &&
-            item.id !== undefined
-        )
-      : dealbreaker[currentProfile][isDealbreaker ? 'flag' : 'dealbreaker']
+    // Update the state with the modified lists
+    updatedDealbreaker[currentProfile].flag = flagsList
+    updatedDealbreaker[currentProfile].dealbreaker = dealbreakersList
 
-    setDealbreaker({
-      ...dealbreaker,
-      [currentProfile]: {
-        ...dealbreaker[currentProfile],
-        [isDealbreaker ? 'flag' : 'dealbreaker']: cleanUnprocessedList,
-        [type]: cleanNewList
-      }
-    })
+    // Set the updated state
+    setDealbreaker(updatedDealbreaker)
 
-    // Force UI to update
+    // Force a complete UI refresh to ensure changes are visible
     setIsRemount(true)
     setTimeout(() => {
       setIsRemount(false)
+      setList(null)
+      updateBoard()
+      setRefreshKey(Date.now())
+
+      // Force a navigation update to ensure state is current everywhere
+      if (navigation && navigation.setParams) {
+        navigation.setParams({ forceRefresh: Date.now() })
+      }
     }, 300)
   }
 
@@ -520,6 +512,119 @@ export default function Lists({ navigation, route }) {
     }, [currentProfile, dealbreaker]) // Include both in dependencies for proper updates
   )
 
+  // Check if an item is on the main profile's dealbreaker list
+  const isItemOnMainDealbreakerList = itemId => {
+    if (!dealbreaker?.main?.dealbreaker) return false
+
+    return dealbreaker.main.dealbreaker.some(item => item.id === itemId)
+  }
+
+  // Handler for the flag click with auto-transition feature
+  const handleFlagClick = (newFlag, item) => {
+    // If not current profile or item data is missing, exit early
+    if (!dealbreaker?.[currentProfile]?.flag || !item?.attributes?.row) return
+
+    const rowId = item.attributes.row.id
+    const flagsList = dealbreaker[currentProfile].flag
+
+    // Prepare to update the flag
+    const newFlags = JSON.parse(JSON.stringify(flagsList))
+    const flagItem = newFlags.find(flag => flag.id === rowId)
+
+    if (!flagItem) return
+
+    // Check if this should auto-transition to dealbreaker
+    if (
+      newFlag === 'red' &&
+      currentProfile !== 'main' &&
+      isItemOnMainDealbreakerList(rowId)
+    ) {
+      // This is a match for auto-transition!
+      console.log('Auto-transitioning item to dealbreaker:', flagItem.title)
+
+      // Move the item from flag list to dealbreaker list
+      const updatedDealbreaker = JSON.parse(JSON.stringify(dealbreaker))
+
+      // Remove item from flags list
+      updatedDealbreaker[currentProfile].flag = updatedDealbreaker[
+        currentProfile
+      ].flag.filter(f => f.id !== rowId)
+
+      // Add item to dealbreakers list
+      updatedDealbreaker[currentProfile].dealbreaker = [
+        ...updatedDealbreaker[currentProfile].dealbreaker,
+        { ...flagItem, flag: newFlag }
+      ]
+
+      // Update state
+      setDealbreaker(updatedDealbreaker)
+
+      // Store the transitioned item for potential undo
+      setTransitionedItem(flagItem)
+
+      // Show the alert
+      setDealbreakerAlertVisible(true)
+    } else {
+      // Regular flag update (no transition)
+      flagItem.flag = newFlag
+      setDealbreaker({
+        ...dealbreaker,
+        [currentProfile]: {
+          ...dealbreaker[currentProfile],
+          flag: newFlags
+        }
+      })
+    }
+  }
+
+  // Handler for undoing a dealbreaker transition
+  const handleUndoTransition = () => {
+    if (!transitionedItem) return
+
+    // Copy the current state
+    const updatedDealbreaker = JSON.parse(JSON.stringify(dealbreaker))
+
+    // Remove the item from dealbreaker list
+    updatedDealbreaker[currentProfile].dealbreaker = updatedDealbreaker[
+      currentProfile
+    ].dealbreaker.filter(item => item.id !== transitionedItem.id)
+
+    // Determine the flag color - yellow if it's a dealbreaker on main profile
+    const flagColor = isItemOnMainDealbreakerList(transitionedItem.id)
+      ? 'yellow'
+      : 'white'
+
+    // Add the item back to flag list with appropriate flag color
+    updatedDealbreaker[currentProfile].flag = [
+      ...updatedDealbreaker[currentProfile].flag,
+      { ...transitionedItem, flag: flagColor }
+    ]
+
+    // Update state
+    setDealbreaker(updatedDealbreaker)
+
+    // Close the alert
+    setDealbreakerAlertVisible(false)
+    setTransitionedItem(null)
+
+    // Show feedback
+    showToast('success', 'Transition undone. Item moved back to flags list.')
+
+    // Force a complete UI refresh
+    setIsRemount(true)
+    setTimeout(() => {
+      setIsRemount(false)
+      setList(null)
+      updateBoard()
+      setRefreshKey(Date.now())
+
+      // Force navigation update
+      if (navigation && navigation.setParams) {
+        navigation.setParams({ forceRefresh: Date.now() })
+      }
+    }, 300)
+  }
+
   return (
     <View style={styles.container}>
       <SwitchProfileModal visible={visible} onClose={() => setVisible(false)} />
@@ -548,6 +653,15 @@ export default function Lists({ navigation, route }) {
         onSave={handleSaveProfileEdit}
         profileName={currentProfile}
         existingProfiles={profile}
+      />
+      <DealbreakerAlert
+        visible={dealbreakerAlertVisible}
+        onClose={() => {
+          setDealbreakerAlertVisible(false)
+          setTransitionedItem(null)
+        }}
+        onUndo={handleUndoTransition}
+        itemTitle={transitionedItem?.title || ''}
       />
 
       <View>
@@ -581,26 +695,7 @@ export default function Lists({ navigation, route }) {
               key={`board-${currentProfile}-${refreshKey}`}
               boardRepository={list}
               open={() => {}}
-              onFlagClicked={(newFlag, item) => {
-                if (!dealbreaker?.[currentProfile]?.flag) return
-
-                const { flag } = dealbreaker[currentProfile]
-                const newFlags = JSON.parse(JSON.stringify(flag))
-                const rowId = item.attributes.row.id
-                console.log('newFlag', newFlag)
-                const flagItem = newFlags.find(flag => flag.id === rowId)
-                if (flagItem) {
-                  flagItem.flag = newFlag
-                  setDealbreaker({
-                    ...dealbreaker,
-                    [currentProfile]: {
-                      ...dealbreaker[currentProfile],
-                      flag: newFlags
-                    }
-                  })
-                }
-                console.log('this is my flag', flag)
-              }}
+              onFlagClicked={handleFlagClick}
               onDragEnd={(boardItemOne, boardItemTwo, draggedItem) => {
                 if (!dealbreaker?.[currentProfile]) return
 
@@ -624,6 +719,11 @@ export default function Lists({ navigation, route }) {
                   draggedItem.attributes.row.id,
                   isDealbreaker
                 )
+
+                // Force a complete UI refresh after drag operation
+                setTimeout(() => {
+                  setRefreshKey(Date.now())
+                }, 50)
               }}
               onDeleteItem={handleDeleteItem}
               onEditItem={handleEditItem}
