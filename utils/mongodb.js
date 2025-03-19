@@ -16,7 +16,8 @@ export const addFlagHistory = async (
   flagTitle,
   previousStatus,
   newStatus,
-  reason = ''
+  reason = '',
+  profileName = 'Unknown Profile'
 ) => {
   return apiAddFlagHistory(
     profileId,
@@ -24,7 +25,8 @@ export const addFlagHistory = async (
     flagTitle,
     previousStatus,
     newStatus,
-    reason
+    reason,
+    profileName
   )
 }
 

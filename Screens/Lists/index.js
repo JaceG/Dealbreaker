@@ -39,9 +39,10 @@ export default function Lists({ navigation, route }) {
   let ScreenHeight = Dimensions.get('window').height - 150
   const {
     dealbreaker,
-    currentProfile,
     setDealbreaker,
-    profile,
+    currentProfileId,
+    profiles,
+    ensureProfileExists,
     renameProfile,
     removeItemFromAllProfiles,
     isOnline,
@@ -72,40 +73,54 @@ export default function Lists({ navigation, route }) {
   const [reasonModalVisible, setReasonModalVisible] = useState(false)
   const [pendingFlagChange, setPendingFlagChange] = useState(null)
 
+  // Create a reference to track if an operation is a user drag
+  const isDragOperationRef = useRef(false)
+
+  // Add this debug function to help track what's happening with flag colors
+  const logProfileFlags = label => {
+    if (!dealbreaker || !currentProfileId || !dealbreaker[currentProfileId])
+      return
+
+    console.log(`--- ${label} ---`)
+    console.log(`Current Profile: ${currentProfileId}`)
+
+    if (
+      dealbreaker[currentProfileId].flag &&
+      dealbreaker[currentProfileId].flag.length > 0
+    ) {
+      console.log(
+        'Flags:',
+        dealbreaker[currentProfileId].flag.map(
+          f => `${f.title} - ${f.flag || 'white'}`
+        )
+      )
+    }
+  }
+
+  useEffect(() => {
+    // Log flag colors whenever currentProfileId changes
+    logProfileFlags(`Profile changed to ${currentProfileId}`)
+  }, [currentProfileId])
+
+  // Modify this effect to log flags after dealbreaker state updates
+  useEffect(() => {
+    logProfileFlags('Dealbreaker state updated')
+    reloadBoard()
+  }, [dealbreaker])
+
   // Helper function to ensure current profile exists
   const ensureCurrentProfileExists = () => {
     // Safety checks for initial render
     if (!dealbreaker) return false
-    if (!currentProfile) return false
+    if (!currentProfileId) return false
 
     // Check if the profile already exists
-    if (dealbreaker[currentProfile]) return false
+    if (dealbreaker[currentProfileId]) return false
 
-    console.log('Creating missing profile in Lists:', currentProfile)
+    console.log('Creating missing profile in Lists:', currentProfileId)
 
-    try {
-      // Create a clean copy of the state
-      const updatedDealbreaker = JSON.parse(JSON.stringify(dealbreaker))
-
-      // If main profile exists, copy items from there
-      const mainFlags =
-        updatedDealbreaker.main?.flag?.map(item => ({ ...item })) || []
-      const mainDealbreakers =
-        updatedDealbreaker.main?.dealbreaker?.map(item => ({ ...item })) || []
-
-      // Initialize with items from main profile
-      updatedDealbreaker[currentProfile] = {
-        flag: mainFlags,
-        dealbreaker: mainDealbreakers
-      }
-
-      // Update state once
-      setDealbreaker(updatedDealbreaker)
-      return true
-    } catch (error) {
-      console.error('Error creating profile:', error)
-      return false
-    }
+    // Use the store's ensureProfileExists function
+    return ensureProfileExists(currentProfileId)
   }
 
   useEffect(() => {
@@ -120,7 +135,7 @@ export default function Lists({ navigation, route }) {
       reloadBoard()
       setIsRemount(false)
     }, 1000)
-  }, [currentProfile])
+  }, [currentProfileId])
 
   // Handle navigation params for forced refreshes
   useEffect(() => {
@@ -140,10 +155,10 @@ export default function Lists({ navigation, route }) {
     setRefreshKey(Date.now())
 
     // Check if we have data to show
-    if (dealbreaker?.[currentProfile]) {
+    if (dealbreaker?.[currentProfileId]) {
       const hasItems =
-        dealbreaker[currentProfile].flag?.length > 0 ||
-        dealbreaker[currentProfile].dealbreaker?.length > 0
+        dealbreaker[currentProfileId].flag?.length > 0 ||
+        dealbreaker[currentProfileId].dealbreaker?.length > 0
 
       if (hasItems) {
         // Has items - update board
@@ -156,15 +171,15 @@ export default function Lists({ navigation, route }) {
   }, [
     route.params?.refresh,
     route.params?.forceRefresh,
-    currentProfile,
+    currentProfileId,
     dealbreaker
   ])
 
   const reloadBoard = () => {
     // Check if we have items to display
     const hasItems =
-      dealbreaker?.[currentProfile]?.flag?.length > 0 ||
-      dealbreaker?.[currentProfile]?.dealbreaker?.length > 0
+      dealbreaker?.[currentProfileId]?.flag?.length > 0 ||
+      dealbreaker?.[currentProfileId]?.dealbreaker?.length > 0
 
     // Only update board if we have items and required conditions are met
     if (hasItems && !skipUpdateRef.current && isMountRef.current) {
@@ -192,14 +207,20 @@ export default function Lists({ navigation, route }) {
     }
 
     // Ensure the current profile exists
-    if (!dealbreaker[currentProfile]) {
+    if (!dealbreaker[currentProfileId]) {
       ensureCurrentProfileExists()
       return
     }
 
     // Get data from current profile with defaults for safety
     const { flag = [], dealbreaker: dealbreakerList = [] } =
-      dealbreaker[currentProfile]
+      dealbreaker[currentProfileId]
+
+    // Add logging to track flag colors
+    console.log(
+      `Profile ${currentProfileId} flag colors:`,
+      flag.map(f => ({ id: f.id, title: f.title, flag: f.flag }))
+    )
 
     // Filter out any invalid items
     const cleanFlag = flag.filter(item => item && item.id)
@@ -210,14 +231,16 @@ export default function Lists({ navigation, route }) {
     flagListIndexRef.current = new Map()
     dealbreakerListIndexRef.current = new Map()
 
-    // Map flags to board rows
+    // Map flags to board rows while preserving the original flag colors
     newData[0].rows = cleanFlag.map((item, index) => {
       flagListIndexRef.current.set(item.id, index)
+
+      // Create a row object with the original flag value
       return {
         id: item.id,
         name: item.title,
         description: item.description,
-        flag: item.flag,
+        flag: item.flag || 'white', // Preserve the original flag color but default to white if missing
         onLongPress: () => handleViewFlagHistory(item)
       }
     })
@@ -229,7 +252,7 @@ export default function Lists({ navigation, route }) {
         id: item.id,
         name: item.title,
         description: item.description,
-        flag: item.flag,
+        flag: item.flag || 'white', // Preserve the original flag color but default to white if missing
         onLongPress: () => handleViewFlagHistory(item)
       }
     })
@@ -237,17 +260,26 @@ export default function Lists({ navigation, route }) {
     // Set the board with the processed data
     setList(new BoardRepository(newData))
   }
+
   const updateListOrder = (newIndex, oldIndex, id, isDealbreaker) => {
     // Safety check
-    if (!dealbreaker?.[currentProfile]) return
+    if (!dealbreaker?.[currentProfileId]) return
+
+    // Set flag to indicate this is a user-initiated drag operation
+    const isDragOperation = isDragOperationRef.current
+    // Reset the flag for next time
+    isDragOperationRef.current = false
+
+    // Log before making changes
+    logProfileFlags('Before updateListOrder')
 
     // Create a deep copy of the current state
     const updatedDealbreaker = JSON.parse(JSON.stringify(dealbreaker))
 
     // Get references to the current profile's lists
-    const flagsList = updatedDealbreaker[currentProfile].flag || []
+    const flagsList = updatedDealbreaker[currentProfileId].flag || []
     const dealbreakersList =
-      updatedDealbreaker[currentProfile].dealbreaker || []
+      updatedDealbreaker[currentProfileId].dealbreaker || []
 
     let movedItem = null
 
@@ -288,17 +320,23 @@ export default function Lists({ navigation, route }) {
         // Remove from dealbreakers list
         dealbreakersList.splice(oldIndex, 1)
 
-        // Check if this item is a dealbreaker on the main profile
-        if (
-          currentProfile !== 'main' &&
-          isItemOnMainDealbreakerList(movedItem.id)
-        ) {
-          // Make the flag yellow when it's a dealbreaker on main profile
-          movedItem.flag = 'yellow'
-        } else {
-          // Otherwise, reset to a white flag
-          movedItem.flag = 'white'
+        // IMPORTANT FIX: Only reset the flag if it's actually being moved by the user
+        // and not during a profile switch or other automatic operation.
+        // We'll detect this by checking if we were triggered by a real drag operation
+        if (isDragOperation) {
+          // Check if this item is a dealbreaker on the main profile
+          if (
+            currentProfileId !== 'main' &&
+            isItemOnMainDealbreakerList(movedItem.id)
+          ) {
+            // Make the flag yellow when it's a dealbreaker on main profile
+            movedItem.flag = 'yellow'
+          } else {
+            // Otherwise, reset to a white flag
+            movedItem.flag = 'white'
+          }
         }
+        // Keep the original flag color if this is not a user-initiated drag
 
         // Add to flags list at the specified position
         flagsList.splice(newIndex, 0, movedItem)
@@ -309,8 +347,16 @@ export default function Lists({ navigation, route }) {
     if (!movedItem) return
 
     // Update the state with the modified lists
-    updatedDealbreaker[currentProfile].flag = flagsList
-    updatedDealbreaker[currentProfile].dealbreaker = dealbreakersList
+    updatedDealbreaker[currentProfileId].flag = flagsList
+    updatedDealbreaker[currentProfileId].dealbreaker = dealbreakersList
+
+    // Log after making changes
+    console.log(
+      'After updateListOrder - about to update state with:',
+      updatedDealbreaker[currentProfileId].flag.map(
+        f => `${f.title} - ${f.flag || 'white'}`
+      )
+    )
 
     // Set the updated state
     setDealbreaker(updatedDealbreaker)
@@ -335,8 +381,11 @@ export default function Lists({ navigation, route }) {
   const [list, setList] = useState(null)
 
   // Add safety checks to prevent accessing properties of undefined
-  console.log('flag: ', dealbreaker?.[currentProfile]?.flag || [])
-  console.log('dealbreaker: ', dealbreaker?.[currentProfile]?.dealbreaker || [])
+  console.log('flag: ', dealbreaker?.[currentProfileId]?.flag || [])
+  console.log(
+    'dealbreaker: ',
+    dealbreaker?.[currentProfileId]?.dealbreaker || []
+  )
 
   const handleDeleteItem = item => {
     setItemToDelete(item)
@@ -380,7 +429,7 @@ export default function Lists({ navigation, route }) {
     // Give state update time to complete, then refresh the board
     setTimeout(() => {
       // Only try to update the board if we still have a valid state
-      if (dealbreaker && currentProfile && dealbreaker[currentProfile]) {
+      if (dealbreaker && currentProfileId && dealbreaker[currentProfileId]) {
         updateBoard()
       }
 
@@ -402,7 +451,7 @@ export default function Lists({ navigation, route }) {
       const isDealbreaker = item.attributes.columnId === 2
       const type = isDealbreaker ? 'dealbreaker' : 'flag'
 
-      const items = dealbreaker[currentProfile][type]
+      const items = dealbreaker[currentProfileId][type]
       const foundItem = items.find(i => i.id === rowData.id)
 
       if (foundItem) {
@@ -419,7 +468,7 @@ export default function Lists({ navigation, route }) {
     if (!updatedItem || !updatedItem.id) return
 
     // Determine the type (flag or dealbreaker)
-    const isFlagItem = dealbreaker[currentProfile].flag.some(
+    const isFlagItem = dealbreaker[currentProfileId].flag.some(
       item => item.id === updatedItem.id
     )
     const type = isFlagItem ? 'flag' : 'dealbreaker'
@@ -465,7 +514,7 @@ export default function Lists({ navigation, route }) {
   // Handle profile edit button click
   const handleEditProfile = () => {
     // Don't allow editing main profile
-    if (currentProfile === 'main') {
+    if (currentProfileId === 'main') {
       showToast('error', 'The main profile cannot be renamed')
       return
     }
@@ -473,23 +522,24 @@ export default function Lists({ navigation, route }) {
     setEditProfileModalVisible(true)
   }
 
-  // Handle saving edited profile name
-  const handleSaveProfileEdit = (oldName, newName) => {
-    // Close edit modal
-    setEditProfileModalVisible(false)
-
-    // Rename the profile
-    const success = renameProfile(oldName, newName)
+  // Handle save profile edit
+  const handleSaveProfileEdit = (profileId, newName) => {
+    // Call the store context function to rename the profile
+    const success = renameProfile(profileId, newName)
 
     if (success) {
-      // Show success message
-      showToast('success', `Profile renamed to "${newName}" successfully`)
+      showToast('success', 'Profile renamed successfully')
 
-      // Force UI refresh
+      // Find the updated profile name to display
+      const updatedProfile = profiles.find(p => p.id === profileId)
+      if (updatedProfile) {
+        console.log(`Profile renamed: ${profileId} -> ${updatedProfile.name}`)
+      }
+
+      // Force a UI refresh
       setRefreshKey(Date.now())
     } else {
-      // Show error message
-      showToast('error', 'Failed to rename profile. Please try again.')
+      showToast('error', 'Failed to rename profile')
     }
   }
 
@@ -510,8 +560,8 @@ export default function Lists({ navigation, route }) {
 
       // Check if we have items to show
       const hasItems =
-        dealbreaker?.[currentProfile]?.flag?.length > 0 ||
-        dealbreaker?.[currentProfile]?.dealbreaker?.length > 0
+        dealbreaker?.[currentProfileId]?.flag?.length > 0 ||
+        dealbreaker?.[currentProfileId]?.dealbreaker?.length > 0
 
       if (!hasItems) {
         // No items - show empty state
@@ -524,7 +574,7 @@ export default function Lists({ navigation, route }) {
       return () => {
         // Clean up when screen is unfocused
       }
-    }, [currentProfile, dealbreaker]) // Include both in dependencies for proper updates
+    }, [currentProfileId, dealbreaker]) // Include both in dependencies for proper updates
   )
 
   // Check if an item is on the main profile's dealbreaker list
@@ -541,13 +591,13 @@ export default function Lists({ navigation, route }) {
     setHistoryModalVisible(true)
   }
 
-  // Modify the flag click handler to prompt for reason
+  // Modify the flag click handler to immediately apply changes and then prompt for reason
   const handleFlagClick = (newFlag, item) => {
     // If not current profile or item data is missing, exit early
-    if (!dealbreaker?.[currentProfile]?.flag || !item?.attributes?.row) return
+    if (!dealbreaker?.[currentProfileId]?.flag || !item?.attributes?.row) return
 
     const rowId = item.attributes.row.id
-    const flagsList = dealbreaker[currentProfile].flag
+    const flagsList = dealbreaker[currentProfileId].flag
 
     // Get the current flag item to determine previous status
     const existingFlags = JSON.parse(JSON.stringify(flagsList))
@@ -558,22 +608,36 @@ export default function Lists({ navigation, route }) {
     // Save the previous status
     const previousStatus = flagItem.flag || 'white'
 
-    // Only prompt for reason if the status is actually changing
-    if (previousStatus !== newFlag) {
-      // Store the pending change
-      setPendingFlagChange({
-        item,
-        rowId,
-        previousStatus,
-        newFlag
-      })
+    // If status isn't changing, just exit
+    if (previousStatus === newFlag) return
 
-      // Show reason input modal
-      setReasonModalVisible(true)
-    }
+    // IMPORTANT: Apply the flag change IMMEDIATELY to the state so it persists
+    // even if the user cancels entering a reason
+    const updatedFlagsList = flagsList.map(flag =>
+      flag.id === rowId ? { ...flag, flag: newFlag } : flag
+    )
+
+    setDealbreaker({
+      ...dealbreaker,
+      [currentProfileId]: {
+        ...dealbreaker[currentProfileId],
+        flag: updatedFlagsList
+      }
+    })
+
+    // Now store the change details and prompt for reason to record history
+    setPendingFlagChange({
+      item,
+      rowId,
+      previousStatus,
+      newFlag
+    })
+
+    // Show reason input modal
+    setReasonModalVisible(true)
   }
 
-  // Handle completing the flag change after getting reason
+  // Handle completing the flag change after getting reason - only for history recording now
   const handleFlagChangeWithReason = async reason => {
     // Close the reason modal
     setReasonModalVisible(false)
@@ -583,27 +647,28 @@ export default function Lists({ navigation, route }) {
     const { item, rowId, previousStatus, newFlag } = pendingFlagChange
 
     try {
-      // Record the flag status change in history
+      // Get the current profile name
+      const currentProfile = profiles.find(p => p.id === currentProfileId)
+      if (!currentProfile) {
+        showToast('error', 'Current profile not found')
+        return
+      }
+
+      // Record the flag status change in history with profile name
       await addFlagHistory(
-        currentProfile,
+        currentProfileId,
         rowId,
-        item.attributes.row.title,
+        item.attributes.row.name, // Use name instead of title to match the board data structure
         previousStatus,
         newFlag,
-        reason
+        reason,
+        currentProfile.name // Add profile name to history
       )
-
-      // Now proceed with the actual flag change
-      const flagsList = dealbreaker[currentProfile].flag
-      const newFlags = JSON.parse(JSON.stringify(flagsList))
-      const updatedFlagItem = newFlags.find(flag => flag.id === rowId)
-
-      if (!updatedFlagItem) return
 
       // Check if this should auto-transition to dealbreaker
       if (
         newFlag === 'red' &&
-        currentProfile !== 'main' &&
+        currentProfileId !== 'main' &&
         isItemOnMainDealbreakerList(rowId)
       ) {
         // This is a match for auto-transition!
@@ -615,15 +680,22 @@ export default function Lists({ navigation, route }) {
         // Move the item from flag list to dealbreaker list
         const updatedDealbreaker = JSON.parse(JSON.stringify(dealbreaker))
 
+        // Find the updated item (that already has the new flag color)
+        const updatedFlagItem = updatedDealbreaker[currentProfileId].flag.find(
+          f => f.id === rowId
+        )
+
+        if (!updatedFlagItem) return
+
         // Remove item from flags list
-        updatedDealbreaker[currentProfile].flag = updatedDealbreaker[
-          currentProfile
+        updatedDealbreaker[currentProfileId].flag = updatedDealbreaker[
+          currentProfileId
         ].flag.filter(f => f.id !== rowId)
 
         // Add item to dealbreakers list
-        updatedDealbreaker[currentProfile].dealbreaker = [
-          ...updatedDealbreaker[currentProfile].dealbreaker,
-          { ...updatedFlagItem, flag: newFlag }
+        updatedDealbreaker[currentProfileId].dealbreaker = [
+          ...updatedDealbreaker[currentProfileId].dealbreaker,
+          updatedFlagItem
         ]
 
         // Update state
@@ -634,30 +706,23 @@ export default function Lists({ navigation, route }) {
 
         // Show the alert
         setDealbreakerAlertVisible(true)
-      } else {
-        // Regular flag update (no transition)
-        updatedFlagItem.flag = newFlag
-        setDealbreaker({
-          ...dealbreaker,
-          [currentProfile]: {
-            ...dealbreaker[currentProfile],
-            flag: newFlags
-          }
-        })
       }
     } catch (error) {
-      console.error('Error updating flag with reason:', error)
-      showToast('error', 'Failed to update flag status')
+      console.error('Error updating flag history with reason:', error)
+      showToast('error', 'Flag updated but failed to record history')
     } finally {
       // Clear pending flag change
       setPendingFlagChange(null)
     }
   }
 
-  // Handle cancelling the flag change
+  // Handle cancelling the flag change - now just cancels history recording
   const handleCancelFlagChange = () => {
     setReasonModalVisible(false)
     setPendingFlagChange(null)
+
+    // Note: The flag change itself has already been applied to the state,
+    // we're just not recording the history entry
   }
 
   // Keep the existing handleUndoTransition function
@@ -668,8 +733,8 @@ export default function Lists({ navigation, route }) {
     const updatedDealbreaker = JSON.parse(JSON.stringify(dealbreaker))
 
     // Remove the item from dealbreaker list
-    updatedDealbreaker[currentProfile].dealbreaker = updatedDealbreaker[
-      currentProfile
+    updatedDealbreaker[currentProfileId].dealbreaker = updatedDealbreaker[
+      currentProfileId
     ].dealbreaker.filter(item => item.id !== transitionedItem.id)
 
     // Determine the flag color - yellow if it's a dealbreaker on main profile
@@ -678,8 +743,8 @@ export default function Lists({ navigation, route }) {
       : 'white'
 
     // Add the item back to flag list with appropriate flag color
-    updatedDealbreaker[currentProfile].flag = [
-      ...updatedDealbreaker[currentProfile].flag,
+    updatedDealbreaker[currentProfileId].flag = [
+      ...updatedDealbreaker[currentProfileId].flag,
       { ...transitionedItem, flag: flagColor }
     ]
 
@@ -708,6 +773,12 @@ export default function Lists({ navigation, route }) {
     }, 300)
   }
 
+  // Get current profile name
+  const getCurrentProfileName = () => {
+    const profile = profiles.find(p => p.id === currentProfileId)
+    return profile ? profile.name : currentProfileId
+  }
+
   return (
     <View style={styles.container}>
       <SwitchProfileModal visible={visible} onClose={() => setVisible(false)} />
@@ -734,8 +805,9 @@ export default function Lists({ navigation, route }) {
         visible={editProfileModalVisible}
         onClose={() => setEditProfileModalVisible(false)}
         onSave={handleSaveProfileEdit}
-        profileName={currentProfile}
-        existingProfiles={profile}
+        profileId={currentProfileId}
+        profileName={getCurrentProfileName()}
+        existingProfiles={profiles}
       />
       <DealbreakerAlert
         visible={dealbreakerAlertVisible}
@@ -749,7 +821,7 @@ export default function Lists({ navigation, route }) {
       <FlagHistoryModal
         visible={historyModalVisible}
         onClose={() => setHistoryModalVisible(false)}
-        profileId={currentProfile}
+        profileId={currentProfileId}
         flagId={selectedFlag?.id}
         flagTitle={selectedFlag?.title}
       />
@@ -767,9 +839,9 @@ export default function Lists({ navigation, route }) {
       <View>
         {list &&
         !isRemount &&
-        dealbreaker?.[currentProfile] &&
-        (dealbreaker[currentProfile]?.flag?.length > 0 ||
-          dealbreaker[currentProfile]?.dealbreaker?.length > 0) ? (
+        dealbreaker?.[currentProfileId] &&
+        (dealbreaker[currentProfileId]?.flag?.length > 0 ||
+          dealbreaker[currentProfileId]?.dealbreaker?.length > 0) ? (
           <View>
             <View style={styles.profileButtonContainer}>
               <View style={styles.innerProfileButtonContainer}>
@@ -792,25 +864,33 @@ export default function Lists({ navigation, route }) {
                     />
                   )}
                 </View>
-                <Text style={styles.profileText}>
-                  {currentProfile}
-                  {currentProfile !== 'main' && (
-                    <TouchableOpacity
-                      style={styles.editProfileButton}
-                      onPress={handleEditProfile}>
-                      <Text style={styles.editProfileButtonText}> ✏️</Text>
-                    </TouchableOpacity>
-                  )}
-                </Text>
+                <View style={styles.profileSwitchTextContainer}>
+                  <Text style={styles.profileLabel}>Profile: </Text>
+                  <View style={styles.profileNameContainer}>
+                    <Text style={styles.profileText}>
+                      {getCurrentProfileName()}
+                    </Text>
+                    {currentProfileId !== 'main' && (
+                      <TouchableOpacity
+                        style={styles.editProfileButton}
+                        onPress={handleEditProfile}>
+                        <Text style={styles.editProfileText}>✏️</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                </View>
               </View>
             </View>
             <Board
-              key={`board-${currentProfile}-${refreshKey}`}
+              key={`board-${currentProfileId}-${refreshKey}`}
               boardRepository={list}
               open={() => {}}
               onFlagClicked={handleFlagClick}
               onDragEnd={(boardItemOne, boardItemTwo, draggedItem) => {
-                if (!dealbreaker?.[currentProfile]) return
+                if (!dealbreaker?.[currentProfileId]) return
+
+                // Set the flag to indicate this is a user drag operation
+                isDragOperationRef.current = true
 
                 let isDealbreaker = false
                 if (draggedItem.attributes.columnId === 2) {
@@ -907,16 +987,29 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10
   },
-  profileText: {
-    fontSize: 16,
-    fontWeight: 'bold',
+  profileSwitchTextContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'center',
+    marginTop: 5,
+    marginBottom: 5
+  },
+  profileNameContainer: {
+    flexDirection: 'row',
     alignItems: 'center'
   },
-  editProfileButton: {
-    padding: 2
+  profileLabel: {
+    fontSize: 16,
+    fontWeight: 'bold'
   },
-  editProfileButtonText: {
+  profileText: {
+    fontSize: 16,
+    fontWeight: 'bold'
+  },
+  editProfileButton: {
+    marginLeft: 5
+  },
+  editProfileText: {
     fontSize: 16
   }
 })

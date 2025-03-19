@@ -24,6 +24,7 @@ router.post('/', async (req, res) => {
     // Extract data with defaults
     const {
       profileId = '',
+      profileName = '',
       flagId = '',
       flagTitle = '',
       previousStatus = '',
@@ -36,6 +37,11 @@ router.post('/', async (req, res) => {
     if (!profileId) {
       console.log('Validation error: Missing profileId')
       return res.status(400).json({ message: 'profileId is required' })
+    }
+
+    if (!profileName) {
+      console.log('Validation error: Missing profileName')
+      return res.status(400).json({ message: 'profileName is required' })
     }
 
     if (!flagId) {
@@ -71,6 +77,7 @@ router.post('/', async (req, res) => {
     // Create a sanitized document
     const cleanData = {
       profileId: String(profileId),
+      profileName: String(profileName),
       flagId: String(flagId),
       flagTitle: String(flagTitle),
       previousStatus: cleanPreviousStatus,
@@ -156,6 +163,7 @@ router.post('/sync', async (req, res) => {
           // Extract and validate required fields
           const {
             profileId,
+            profileName,
             flagId,
             flagTitle,
             previousStatus,
@@ -167,6 +175,7 @@ router.post('/sync', async (req, res) => {
           // Create a sanitized object with validated fields
           const safeData = {
             profileId: String(profileId || ''),
+            profileName: String(profileName || 'Unknown Profile'),
             flagId: String(flagId || ''),
             flagTitle: String(flagTitle || title || `Flag ${flagId}`), // Try both flagTitle and title
             previousStatus: String(previousStatus || 'white'),

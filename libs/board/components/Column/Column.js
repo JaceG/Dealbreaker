@@ -19,6 +19,10 @@ const ONE_COLUMN_WIDTH = deviceWidth - PADDING
 class Column extends React.Component {
   constructor(props) {
     super(props)
+
+    this.viewabilityConfig = {
+      itemVisiblePercentThreshold: 50
+    }
   }
 
   componentDidMount() {
@@ -139,16 +143,16 @@ class Column extends React.Component {
     boardRepository.setContentHeight(column.id(), contentHeight)
   }
 
-  handleChangeVisibleItems = visibleItems => {
-    const { column, boardRepository } = this.props
-
-    boardRepository.updateItemsVisibility(column.id(), visibleItems)
-  }
-
   setListView = ref => {
     const { column, boardRepository } = this.props
 
     boardRepository.setListView(column.id(), ref)
+  }
+
+  handleViewableItemsChanged = ({ viewableItems }) => {
+    const { column, boardRepository } = this.props
+    const visibleItems = viewableItems.map(({ item }) => item)
+    boardRepository.updateItemsVisibility(column.id(), visibleItems)
   }
 
   render() {
@@ -237,10 +241,11 @@ class Column extends React.Component {
             scrollEventThrottle={0}
             onMomentumScrollEnd={this.onMomentumScrollEnd}
             onScrollEndDrag={this.onScrollEndDrag}
-            onChangeVisibleRows={this.handleChangeVisibleItems}
             renderItem={item =>
               item.item ? this.renderWrapperRow(item.item) : null
             }
+            onViewableItemsChanged={this.handleViewableItemsChanged}
+            viewabilityConfig={this.viewabilityConfig}
             keyExtractor={item => {
               if (!item || !item.row || typeof item.row !== 'function')
                 return Math.random().toString()
@@ -252,7 +257,6 @@ class Column extends React.Component {
             scrollEnabled={!movingMode}
             onContentSizeChange={this.onContentSizeChange}
             showsVerticalScrollIndicator={false}
-            enableEmptySections
           />
         )}
       </ColumnWrapper>

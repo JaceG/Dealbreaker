@@ -28,8 +28,10 @@ export default function App() {
     }
   })
 
-  const [profile, setProfile] = useState(['main'])
-  const [currentProfile, setCurrentProfile] = useState('main')
+  const [profiles, setProfiles] = useState([
+    { id: 'main', name: 'Main Profile' }
+  ])
+  const [currentProfileId, setCurrentProfileId] = useState('main')
   const [isLoaded, setIsLoaded] = useState(false)
   const isProfileMountRef = useRef(false)
   const isCurrentProfileMountRef = useRef(false)
@@ -52,25 +54,25 @@ export default function App() {
           console.log('No saved dealbreaker data found, using defaults')
         }
 
-        // Load profile list
-        const savedProfile = await getList('profile')
-        if (savedProfile && savedProfile.length > 0) {
-          console.log('Loaded profile list from storage:', savedProfile)
-          setProfile(savedProfile)
+        // Load profiles list
+        const savedProfiles = await getList('profiles')
+        if (savedProfiles && savedProfiles.length > 0) {
+          console.log('Loaded profiles list from storage:', savedProfiles)
+          setProfiles(savedProfiles)
         } else {
-          console.log('No saved profile list found, using defaults')
+          console.log('No saved profiles list found, using defaults')
         }
 
-        // Load current profile
-        const savedCurrentProfile = await getAtomicValue('currentProfile')
-        if (savedCurrentProfile) {
+        // Load current profile ID
+        const savedCurrentProfileId = await getAtomicValue('currentProfileId')
+        if (savedCurrentProfileId) {
           console.log(
-            'Loaded current profile from storage:',
-            savedCurrentProfile
+            'Loaded current profile ID from storage:',
+            savedCurrentProfileId
           )
-          setCurrentProfile(savedCurrentProfile)
+          setCurrentProfileId(savedCurrentProfileId)
         } else {
-          console.log('No saved current profile found, using main')
+          console.log('No saved current profile ID found, using main')
         }
 
         setIsLoaded(true)
@@ -155,23 +157,23 @@ export default function App() {
     }
   }, [dealbreaker, isLoaded])
 
-  // Save profile list whenever it changes
+  // Save profiles list whenever it changes
   useEffect(() => {
     // Only save if the app has finished initial loading
     if (isLoaded) {
-      console.log('Saving profile list to storage')
-      setList('profile', profile)
+      console.log('Saving profiles list to storage')
+      setList('profiles', profiles)
     }
-  }, [profile, isLoaded])
+  }, [profiles, isLoaded])
 
-  // Save current profile whenever it changes
+  // Save current profile ID whenever it changes
   useEffect(() => {
     // Only save if the app has finished initial loading
     if (isLoaded) {
-      console.log('Saving current profile to storage')
-      setAtomicValue('currentProfile', currentProfile)
+      console.log('Saving current profile ID to storage')
+      setAtomicValue('currentProfileId', currentProfileId)
     }
-  }, [currentProfile, isLoaded])
+  }, [currentProfileId, isLoaded])
 
   // Create a function to safely update dealbreaker state
   const updateDealbreaker = newState => {
@@ -180,20 +182,35 @@ export default function App() {
   }
 
   // Create a unified function to ensure profile exists with proper data
-  const ensureProfileExists = profileName => {
-    if (!profileName) return false
+  const ensureProfileExists = profileId => {
+    if (!profileId) return false
 
-    if (dealbreaker && !dealbreaker[profileName]) {
-      console.log('Creating missing profile:', profileName)
+    // Only create the profile if it doesn't exist yet
+    if (dealbreaker && !dealbreaker[profileId]) {
+      console.log('Creating missing profile:', profileId)
 
       // Create a properly structured deep copy
       const updatedDealbreaker = JSON.parse(JSON.stringify(dealbreaker))
 
-      // Initialize the profile with items from main
-      updatedDealbreaker[profileName] = {
-        flag: updatedDealbreaker.main?.flag?.map(item => ({ ...item })) || [],
-        dealbreaker:
-          updatedDealbreaker.main?.dealbreaker?.map(item => ({ ...item })) || []
+      // Initialize the profile with items from main, but reset all flags to white
+      // Get items from main profile
+      const mainFlags =
+        updatedDealbreaker.main?.flag?.map(item => ({
+          ...item,
+          flag: 'white' // Reset all flags to white
+        })) || []
+
+      // Get dealbreakers from main (these go to flag list as white flags)
+      const mainDealbreakers =
+        updatedDealbreaker.main?.dealbreaker?.map(item => ({
+          ...item,
+          flag: 'white' // Reset all flags to white
+        })) || []
+
+      // For a new profile, all items start in the flag list with white color
+      updatedDealbreaker[profileId] = {
+        flag: [...mainFlags, ...mainDealbreakers], // All items go to flags list
+        dealbreaker: [] // Start with empty dealbreaker list
       }
 
       // Update the state with new profile
@@ -205,10 +222,14 @@ export default function App() {
 
   // Use this function to ensure the current profile exists whenever it changes
   useEffect(() => {
-    if (isLoaded) {
-      ensureProfileExists(currentProfile)
+    if (isLoaded && currentProfileId) {
+      // Only call ensureProfileExists if the profile doesn't exist yet
+      if (!dealbreaker[currentProfileId]) {
+        console.log('Need to initialize profile:', currentProfileId)
+        ensureProfileExists(currentProfileId)
+      }
     }
-  }, [currentProfile, isLoaded])
+  }, [currentProfileId, isLoaded, dealbreaker])
 
   // Function to handle adding a new item to all profiles - optimized
   const addItemToAllProfiles = (item, type) => {
@@ -216,28 +237,40 @@ export default function App() {
 
     console.log('Adding item to all profiles:', item.title)
 
-    // Get all profiles that should exist
-    const allProfiles = Array.from(new Set([...profile, currentProfile]))
+    // Get all profile IDs that should exist
+    const allProfileIds = Array.from(
+      new Set([...profiles.map(p => p.id), currentProfileId])
+    )
 
     // Create a single deep copy of the state
     const updatedDealbreaker = JSON.parse(JSON.stringify(dealbreaker))
 
     // Update each profile with the new item
-    allProfiles.forEach(profileName => {
+    allProfileIds.forEach(profileId => {
       // Ensure the profile and type arrays exist
-      if (!updatedDealbreaker[profileName]) {
-        updatedDealbreaker[profileName] = {
+      if (!updatedDealbreaker[profileId]) {
+        updatedDealbreaker[profileId] = {
           flag: [],
           dealbreaker: []
         }
       }
 
-      if (!updatedDealbreaker[profileName][type]) {
-        updatedDealbreaker[profileName][type] = []
+      if (!updatedDealbreaker[profileId][type]) {
+        updatedDealbreaker[profileId][type] = []
       }
 
-      // Add the new item to this profile
-      updatedDealbreaker[profileName][type].push({ ...item })
+      // Add the new item to this profile - for main profile, add as is
+      // For other profiles, if adding to flag list, ensure it's white
+      if (profileId === 'main' || type === 'dealbreaker') {
+        // Add as is to main profile or to dealbreaker list
+        updatedDealbreaker[profileId][type].push({ ...item })
+      } else {
+        // For non-main profiles, add to flag list with white color
+        updatedDealbreaker[profileId][type].push({
+          ...item,
+          flag: 'white' // Override with white flag
+        })
+      }
     })
 
     // Update state once with all changes
@@ -251,23 +284,22 @@ export default function App() {
 
     console.log('Removing item from all profiles:', itemId)
 
-    // Create a single deep copy
+    // Create a single deep copy of the state
     const updatedDealbreaker = JSON.parse(JSON.stringify(dealbreaker))
 
     // Remove the item from all profiles
-    Object.keys(updatedDealbreaker).forEach(profileName => {
+    Object.keys(updatedDealbreaker).forEach(profileId => {
       if (
-        updatedDealbreaker[profileName] &&
-        updatedDealbreaker[profileName][type]
+        updatedDealbreaker[profileId] &&
+        updatedDealbreaker[profileId][type]
       ) {
-        // Filter out the item directly
-        updatedDealbreaker[profileName][type] = updatedDealbreaker[profileName][
+        updatedDealbreaker[profileId][type] = updatedDealbreaker[profileId][
           type
-        ].filter(item => item && item.id !== itemId)
+        ].filter(item => item.id !== itemId)
       }
     })
 
-    // Update state once
+    // Update state once with all changes
     setDealbreaker(updatedDealbreaker)
     return true
   }
@@ -275,121 +307,146 @@ export default function App() {
   console.log('app dealbreaker: ', dealbreaker)
 
   // Function to delete a profile
-  const deleteProfile = profileName => {
+  const deleteProfile = profileId => {
     // Multiple checks to prevent deleting the main profile
     if (
-      !profileName ||
-      profileName === 'main' ||
-      profileName.toLowerCase() === 'main' ||
-      profileName.trim() === 'main'
+      !profileId ||
+      profileId === 'main' ||
+      profileId.toLowerCase() === 'main' ||
+      profileId.trim() === 'main'
     ) {
       console.log('Cannot delete the main profile')
       return false
     }
 
     // Check if profile exists
-    if (!profile.includes(profileName)) {
-      console.log('Profile does not exist:', profileName)
+    if (!profiles.some(p => p.id === profileId)) {
+      console.log('Profile does not exist:', profileId)
       return false
     }
 
-    // One last check - never delete main
-    if (profileName === 'main') {
+    // Extra check to prevent deleting the main profile
+    if (profileId === 'main') {
       console.error('Critical: Attempted to delete main profile - prevented')
       return false
     }
 
-    console.log('Deleting profile:', profileName)
+    console.log('Deleting profile:', profileId)
 
     // Create a copy of the current profiles array without the deleted profile
-    const updatedProfiles = profile.filter(p => p !== profileName)
-
-    // Ensure main profile still exists in the array
-    if (!updatedProfiles.includes('main')) {
-      console.error('Cannot delete - this would remove the main profile')
-      return false
-    }
+    const updatedProfiles = profiles.filter(p => p.id !== profileId)
 
     // Create a copy of the dealbreaker state without the deleted profile
     const updatedDealbreaker = JSON.parse(JSON.stringify(dealbreaker))
-    delete updatedDealbreaker[profileName]
+    delete updatedDealbreaker[profileId]
 
     // If we're deleting the current profile, switch to main
-    if (currentProfile === profileName) {
-      setCurrentProfile('main')
+    if (currentProfileId === profileId) {
+      console.log('Deleting current profile - switching to main')
+      setCurrentProfileId('main')
     }
 
-    // Update the profiles array
-    setProfile(updatedProfiles)
-
-    // Update the dealbreaker state
+    // Update state
+    setProfiles(updatedProfiles)
     setDealbreaker(updatedDealbreaker)
-
     return true
   }
 
   // Function to rename a profile
-  const renameProfile = (oldName, newName) => {
-    // Cannot rename main
-    if (oldName === 'main') {
-      console.log('Cannot rename the main profile')
+  const renameProfile = (profileId, newName) => {
+    // Validate profileId and newName
+    if (!profileId || !newName || newName.trim() === '') return false
+
+    // Find the profile in the array
+    const profileIndex = profiles.findIndex(p => p.id === profileId)
+    if (profileIndex === -1) {
+      console.log('Profile not found:', profileId)
       return false
     }
 
-    // Cannot rename to main or empty
-    if (!newName || newName === 'main') {
-      console.log('New profile name is invalid')
-      return false
+    console.log(`Renaming profile ${profileId} to: ${newName}`)
+
+    // Create a copy of the profiles array with the updated name
+    const updatedProfiles = [...profiles]
+    updatedProfiles[profileIndex] = {
+      ...updatedProfiles[profileIndex],
+      name: newName.trim()
     }
 
-    // Profile doesn't exist
-    if (!profile.includes(oldName)) {
-      console.log('Profile does not exist:', oldName)
-      return false
+    // Update state
+    setProfiles(updatedProfiles)
+    return true
+  }
+
+  // Function to create a new profile
+  const createProfile = name => {
+    if (!name || name.trim() === '') return null
+
+    // Generate a unique ID for the new profile
+    const newId = 'profile_' + Date.now()
+
+    // Create the new profile object
+    const newProfile = { id: newId, name: name.trim() }
+
+    // Add the profile to the profiles array first
+    setProfiles([...profiles, newProfile])
+
+    // Now create a separate dealbreaker update
+    // We'll create a completely new copy of the state
+    const updatedDealbreaker = {}
+
+    // First, copy ALL existing profiles exactly as they are
+    Object.keys(dealbreaker).forEach(profileKey => {
+      updatedDealbreaker[profileKey] = JSON.parse(
+        JSON.stringify(dealbreaker[profileKey])
+      )
+    })
+
+    // Now create the new profile with white flags
+    // Create arrays of new objects with white flags
+    const newProfileFlags =
+      dealbreaker.main?.flag?.map(item => {
+        return {
+          ...JSON.parse(JSON.stringify(item)),
+          flag: 'white'
+        }
+      }) || []
+
+    const newProfileDealbreakers =
+      dealbreaker.main?.dealbreaker?.map(item => {
+        return {
+          ...JSON.parse(JSON.stringify(item)),
+          flag: 'white'
+        }
+      }) || []
+
+    // Add the new profile data
+    updatedDealbreaker[newId] = {
+      flag: [...newProfileFlags, ...newProfileDealbreakers],
+      dealbreaker: []
     }
 
-    // New name already exists
-    if (profile.includes(newName)) {
-      console.log('New profile name already exists:', newName)
-      return false
-    }
-
-    console.log(`Renaming profile: ${oldName} -> ${newName}`)
-
-    // Update the profile list
-    const updatedProfiles = profile.map(p => (p === oldName ? newName : p))
-
-    // Update the dealbreaker state by creating a new object with the new key
-    const updatedDealbreaker = JSON.parse(JSON.stringify(dealbreaker))
-    updatedDealbreaker[newName] = updatedDealbreaker[oldName]
-    delete updatedDealbreaker[oldName]
-
-    // If we're renaming the current profile, update currentProfile
-    if (currentProfile === oldName) {
-      setCurrentProfile(newName)
-    }
-
-    // Update both states
-    setProfile(updatedProfiles)
+    // Update the dealbreaker state
     setDealbreaker(updatedDealbreaker)
 
-    return true
+    return newId
   }
 
   return (
     <StoreContext.Provider
       value={{
         dealbreaker,
-        profile,
         setDealbreaker: updateDealbreaker,
-        setProfile,
-        currentProfile,
-        setCurrentProfile,
+        profiles,
+        setProfiles,
+        currentProfileId,
+        setCurrentProfileId,
+        ensureProfileExists,
         addItemToAllProfiles,
         removeItemFromAllProfiles,
-        ensureProfileExists,
         deleteProfile,
         renameProfile,
+        createProfile,
         isOnline,
         syncData: syncOfflineData
       }}>

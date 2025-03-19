@@ -1,21 +1,21 @@
 import { Dropdown } from 'react-native-element-dropdown'
 import { StyleSheet, Modal, View, Text, Alert } from 'react-native'
-import { useState, useContext, useEffect } from 'react'
+import { useState, useContext, useEffect, useCallback, memo } from 'react'
 import AppButton from '../AppButton'
 import StoreContext from '../../store'
 import { useNavigation } from '@react-navigation/native'
 
-function SwitchProfileModal({ visible, onClose }) {
+const SwitchProfileModal = memo(({ visible, onClose }) => {
   // Move all context usage to the top level of the component
   const {
-    currentProfile,
-    setCurrentProfile,
-    profile,
+    currentProfileId,
+    setCurrentProfileId,
+    profiles = [],
     ensureProfileExists,
     deleteProfile
   } = useContext(StoreContext)
 
-  const [value, setValue] = useState(null)
+  const [selectedId, setSelectedId] = useState(null)
   const [isFocus, setIsFocus] = useState(false)
   const [data, setData] = useState([])
   const navigation = useNavigation()
@@ -23,19 +23,35 @@ function SwitchProfileModal({ visible, onClose }) {
   // Update dropdown data and selected value when modal becomes visible
   useEffect(() => {
     if (visible) {
-      setData(profile.map(item => ({ label: item, value: item })))
-      setValue(currentProfile)
+      // Ensure profiles is an array before mapping
+      if (Array.isArray(profiles)) {
+        setData(
+          profiles.map(p => ({
+            label: p.name || 'Unnamed',
+            value: p.id
+          }))
+        )
+        setSelectedId(currentProfileId)
+      } else {
+        console.warn('Profiles is not an array:', profiles)
+        setData([])
+      }
     }
-  }, [profile, currentProfile, visible])
+  }, [profiles, currentProfileId, visible])
 
   // Check if a profile can be deleted (not main and not the only profile)
-  const canDeleteProfile = profileName => {
-    return profileName !== 'main' && profile.length > 1
-  }
+  const canDeleteProfile = useCallback(
+    profileId => {
+      return (
+        profileId !== 'main' && Array.isArray(profiles) && profiles.length > 1
+      )
+    },
+    [profiles]
+  )
 
   // Handle profile change with proper error handling
-  const handleProfileChange = () => {
-    if (!value || value === currentProfile) {
+  const handleProfileChange = useCallback(() => {
+    if (!selectedId || selectedId === currentProfileId) {
       onClose()
       return
     }
@@ -44,31 +60,42 @@ function SwitchProfileModal({ visible, onClose }) {
     onClose()
 
     // Ensure profile exists before switching
-    ensureProfileExists(value)
+    ensureProfileExists(selectedId)
 
     // Change the profile
-    setCurrentProfile(value)
+    setCurrentProfileId(selectedId)
 
     // Force the UI to refresh
     setTimeout(() => {
       navigation.navigate('Flags List', { refresh: Date.now() })
     }, 100)
-  }
+  }, [
+    selectedId,
+    currentProfileId,
+    onClose,
+    ensureProfileExists,
+    setCurrentProfileId,
+    navigation
+  ])
 
   // Handle profile deletion
-  const handleDeleteProfile = () => {
+  const handleDeleteProfile = useCallback(() => {
     // Extra protection - don't allow deleting main profile or if only one profile exists
-    if (!canDeleteProfile(value)) {
+    if (!canDeleteProfile(selectedId)) {
       console.log(
         'Prevented attempt to delete profile - either main or only profile'
       )
       return
     }
 
+    // Find the profile name to display in the confirmation
+    const selectedProfile = profiles.find(p => p.id === selectedId)
+    if (!selectedProfile) return
+
     // Show confirmation alert
     Alert.alert(
       'Delete Profile',
-      `Are you sure you want to delete the "${value}" profile? This action cannot be undone.`,
+      `Are you sure you want to delete the "${selectedProfile.name}" profile? This action cannot be undone.`,
       [
         {
           text: 'Cancel',
@@ -79,7 +106,7 @@ function SwitchProfileModal({ visible, onClose }) {
           style: 'destructive',
           onPress: () => {
             // Final safety check before deletion
-            if (!canDeleteProfile(value)) {
+            if (!canDeleteProfile(selectedId)) {
               console.error('Attempted to delete protected profile - prevented')
               return
             }
@@ -88,13 +115,13 @@ function SwitchProfileModal({ visible, onClose }) {
             onClose()
 
             // Delete the profile
-            const success = deleteProfile(value)
+            const success = deleteProfile(selectedId)
 
             if (success) {
               // Show success message
               Alert.alert(
                 'Success',
-                `Profile "${value}" was deleted successfully.`
+                `Profile "${selectedProfile.name}" was deleted successfully.`
               )
 
               // Force UI refresh
@@ -104,7 +131,19 @@ function SwitchProfileModal({ visible, onClose }) {
         }
       ]
     )
-  }
+  }, [
+    selectedId,
+    profiles,
+    canDeleteProfile,
+    onClose,
+    deleteProfile,
+    navigation
+  ])
+
+  const handleDropdownChange = useCallback(item => {
+    setSelectedId(item.value)
+    setIsFocus(false)
+  }, [])
 
   return (
     <Modal visible={visible} animationType='slide'>
@@ -124,17 +163,14 @@ function SwitchProfileModal({ visible, onClose }) {
             valueField='value'
             placeholder={!isFocus ? 'Select profile' : '...'}
             searchPlaceholder='Search...'
-            value={value}
+            value={selectedId}
             onFocus={() => setIsFocus(true)}
             onBlur={() => setIsFocus(false)}
-            onChange={item => {
-              setValue(item.value)
-              setIsFocus(false)
-            }}
+            onChange={handleDropdownChange}
           />
           <View style={styles.buttonContainer}>
             <AppButton title='Select Profile' onPress={handleProfileChange} />
-            {canDeleteProfile(value) ? (
+            {canDeleteProfile(selectedId) ? (
               <AppButton
                 title='Delete Profile'
                 onPress={handleDeleteProfile}
@@ -147,7 +183,7 @@ function SwitchProfileModal({ visible, onClose }) {
       </View>
     </Modal>
   )
-}
+})
 
 const styles = StyleSheet.create({
   container: {
@@ -155,7 +191,7 @@ const styles = StyleSheet.create({
   },
   dropdown: {
     height: 50,
-    width: '200',
+    width: 200,
     borderColor: 'gray',
     borderWidth: 0.5,
     borderRadius: 8,

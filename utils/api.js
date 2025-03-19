@@ -56,12 +56,14 @@ export const addFlagHistory = async (
   flagTitle,
   previousStatus,
   newStatus,
-  reason = ''
+  reason = '',
+  profileName = 'Unknown Profile'
 ) => {
   try {
     // Create the history entry object
     const historyEntry = {
       profileId,
+      profileName,
       flagId,
       flagTitle: String(flagTitle),
       timestamp: new Date(),
@@ -103,6 +105,7 @@ export const addFlagHistory = async (
       const offlineEntry = {
         _id: `local_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
         profileId,
+        profileName,
         flagId,
         flagTitle: String(flagTitle),
         timestamp: new Date(),

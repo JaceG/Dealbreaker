@@ -6,6 +6,10 @@ const flagHistorySchema = new mongoose.Schema({
     required: true,
     index: true
   },
+  profileName: {
+    type: String,
+    required: true
+  },
   flagId: {
     type: String,
     required: true,
@@ -34,7 +38,7 @@ const flagHistorySchema = new mongoose.Schema({
     default: ''
   },
   attachments: {
-    type: [String],
+    type: Array,
     default: []
   }
 })

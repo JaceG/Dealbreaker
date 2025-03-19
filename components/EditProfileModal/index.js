@@ -6,6 +6,7 @@ const EditProfileModal = ({
   visible,
   onClose,
   onSave,
+  profileId,
   profileName,
   existingProfiles
 }) => {
@@ -32,8 +33,8 @@ const EditProfileModal = ({
       return false
     }
 
-    // Name cannot be "main" (case insensitive)
-    if (value.trim().toLowerCase() === 'main') {
+    // Name cannot be "main" (case insensitive) if this isn't already the main profile
+    if (profileId !== 'main' && value.trim().toLowerCase() === 'main') {
       setError('Cannot use "main" as a profile name')
       return false
     }
@@ -42,7 +43,9 @@ const EditProfileModal = ({
     if (
       existingProfiles &&
       existingProfiles.some(
-        p => p !== profileName && p.toLowerCase() === value.trim().toLowerCase()
+        p =>
+          p.id !== profileId &&
+          p.name.toLowerCase() === value.trim().toLowerCase()
       )
     ) {
       setError('Profile name already exists')
@@ -84,8 +87,8 @@ const EditProfileModal = ({
         {
           text: 'Rename',
           onPress: () => {
-            // Call the onSave callback with the new profile name
-            onSave(profileName, name.trim())
+            // Call the onSave callback with the profileId and new name
+            onSave(profileId, name.trim())
             onClose()
           }
         }

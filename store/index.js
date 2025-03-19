@@ -7,7 +7,8 @@ const StoreContext = createContext({
       dealbreaker: []
     }
   },
-  profile: ['main']
+  profiles: [{ id: 'main', name: 'Main Profile' }],
+  currentProfileId: 'main'
 })
 
 export default StoreContext

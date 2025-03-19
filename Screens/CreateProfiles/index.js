@@ -7,8 +7,7 @@ import StoreContext from '../../store'
 import { useFocusEffect } from '@react-navigation/native'
 
 export default function CreateUsers({ navigation }) {
-  const { profile, setProfile, dealbreaker, setDealbreaker } =
-    useContext(StoreContext)
+  const { profiles, createProfile } = useContext(StoreContext)
 
   const [name, setName] = useState('')
   const [error, setError] = useState({
@@ -32,34 +31,24 @@ export default function CreateUsers({ navigation }) {
 
   function handleSubmit() {
     if (validate()) {
-      if (profile.includes(name)) {
+      // Check if profile name already exists
+      if (profiles.some(p => p.name.toLowerCase() === name.toLowerCase())) {
         showToast('error', 'Profile name already exists')
         return
       }
 
-      // Create a deep copy of the current items in main profile
-      const mainFlags = JSON.parse(JSON.stringify(dealbreaker.main.flag || []))
-      const mainDealbreakers = JSON.parse(
-        JSON.stringify(dealbreaker.main.dealbreaker || [])
-      )
+      // Create new profile with a unique ID
+      const newProfileId = createProfile(name)
 
-      // Update the profiles array
-      setProfile([...profile, name])
+      if (newProfileId) {
+        showToast('success', 'Profile created successfully')
+        setName('')
 
-      // Create the new profile with copies of items from main
-      setDealbreaker({
-        ...dealbreaker,
-        [name]: {
-          flag: [...mainFlags],
-          dealbreaker: [...mainDealbreakers]
-        }
-      })
-
-      showToast('success', 'Profile created successfully')
-      setName('')
-
-      // Navigate with a refresh param to ensure UI updates
-      navigation.navigate('Flags List', { refresh: Date.now() })
+        // Navigate with a refresh param to ensure UI updates
+        navigation.navigate('Flags List', { refresh: Date.now() })
+      } else {
+        showToast('error', 'Failed to create profile')
+      }
     } else showToast('error', 'Fix the following errors')
   }
 
@@ -67,6 +56,7 @@ export default function CreateUsers({ navigation }) {
     setName(text)
     handleValidation('name', text)
   }
+
   function handleValidation(
     type,
     text = '',
@@ -79,6 +69,9 @@ export default function CreateUsers({ navigation }) {
     newError[type] = ''
     if (!text && type === 'name') {
       newError[type] = `${type} is required`
+    }
+    if (text && type === 'name' && text.toLowerCase() === 'main') {
+      newError[type] = `Cannot use 'main' as a profile name`
     }
     if (text && type === 'name' && text.length > 50) {
       newError[type] = `${type} too long`
