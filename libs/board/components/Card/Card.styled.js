@@ -24,11 +24,13 @@ const CardWrapper = styled.TouchableWithoutFeedback`
 `
 
 const ColumnWrapper = styled.View`
+  flex: 1;
 `
 
 const IconRowWrapper = styled.View`
   flexDirection: row;
   alignItems: center;
+  flex: 1;
 `
 
 const Paragraph = styled.Text`

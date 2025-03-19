@@ -1,13 +1,16 @@
 import { StyleSheet, Text, View, TextInput, Button } from 'react-native'
 import RadioGroup from 'react-native-radio-buttons-group'
 import { color } from 'react-native-reanimated'
-import { useMemo, useState, useContext } from 'react'
+import { useMemo, useState, useContext, useEffect } from 'react'
 import { showToast } from '../../utils/functions'
 import { set } from 'react-native-reanimated'
 import StoreContext from '../../store'
+import { useFocusEffect } from '@react-navigation/native'
+import { useCallback } from 'react'
 
 export default function CreateFlags({ navigation }) {
-  const { dealbreaker, setDealbreaker } = useContext(StoreContext)
+  const { dealbreaker, setDealbreaker, addItemToAllProfiles } =
+    useContext(StoreContext)
   const radioButtons = useMemo(
     () => [
       {
@@ -34,24 +37,52 @@ export default function CreateFlags({ navigation }) {
     title: '',
     description: ''
   })
+
+  // Reset form when screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      console.log('Create Flag screen focused - resetting form')
+      setTitle('')
+      setDescription('')
+      setSelectedId('1')
+      setError({
+        title: '',
+        description: ''
+      })
+
+      return () => {
+        // Clean up when screen is unfocused
+      }
+    }, [])
+  )
+
   function handleSubmit() {
     if (validate()) {
       const type = selectedId === '1' ? 'flag' : 'dealbreaker'
-      setDealbreaker({
-        ...dealbreaker,
-        main: {
-          ...dealbreaker.main,
-          [type]: [
-            ...dealbreaker.main[type],
-            { id: Math.random() * 1000, title, description, flag: 'white' }
-          ]
-        }
-      })
+
+      // Create a unique ID with timestamp for better tracking
+      const newItemId = Math.random() * 1000 + Date.now() / 1000000
+
+      // Create the new item
+      const newItem = {
+        id: newItemId,
+        title,
+        description,
+        flag: 'white'
+      }
+
+      // Use the central function to add the item to all profiles
+      addItemToAllProfiles(newItem, type)
+
       showToast('success', 'Flag created successfully')
       setTitle('')
       setDescription('')
       setSelectedId('1')
-      navigation.navigate('Flags List')
+
+      // Add a short delay before navigating back to give time for the state to update
+      setTimeout(() => {
+        navigation.navigate('Flags List', { refresh: Date.now() })
+      }, 500)
     } else showToast('error', 'Fix the following errors')
   }
 
@@ -102,6 +133,7 @@ export default function CreateFlags({ navigation }) {
       <View style={styles.row}>
         <Text style={styles.text}>Flag Name:</Text>
         <TextInput
+          value={title}
           onChangeText={handleTitleChange}
           style={styles.textInput}
           placeholder='Enter Name'
@@ -114,6 +146,7 @@ export default function CreateFlags({ navigation }) {
       <View style={styles.row}>
         <Text style={styles.text}>Description:</Text>
         <TextInput
+          value={description}
           onChangeText={handleDescriptionChange}
           style={{ ...styles.textInput, ...styles.description }}
           multiline={true}

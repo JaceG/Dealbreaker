@@ -1,5 +1,5 @@
 import React from 'react'
-import { Animated } from 'react-native'
+import { Animated, TouchableOpacity, View, Text } from 'react-native'
 import { bool, func, number, object, shape, string } from 'prop-types'
 import { colors, fonts, deviceWidth } from '../../constants'
 import { Flag } from '../Icons'
@@ -29,7 +29,8 @@ const Card = ({
   onPress,
   onPressIn,
   style,
-  onFlagClicked
+  onFlagClicked,
+  onDeleteItem
 }) => {
   const styles = [style]
   if (hidden) {
@@ -55,7 +56,14 @@ const Card = ({
             elevation={isCardWithShadow ? 5 : 0}
             shadowOpacity={isCardWithShadow ? 0.1 : 0}>
             <RowWrapper>
-              <IconRowWrapper width={deviceWidth / 2 - 28}>
+              <IconRowWrapper>
+                {item && onDeleteItem && (
+                  <TouchableOpacity
+                    onPress={() => onDeleteItem(item)}
+                    style={{ marginRight: 10, padding: 5 }}>
+                    <Text style={{ fontSize: 20, color: '#fff' }}>🗑️</Text>
+                  </TouchableOpacity>
+                )}
                 <ColumnWrapper>
                   <Paragraph
                     fontSize={cardNameFontSize}
@@ -63,12 +71,6 @@ const Card = ({
                     color={cardNameTextColor}>
                     {item ? item.row().name : ''}
                   </Paragraph>
-                  {/* <Paragraph
-										fontSize={cardDescriptionFontSize}
-										fontFamily={cardDescriptionFontFamily}
-										color={cardDescriptionTextColor}>
-										{item ? item.row().description : ''}
-									</Paragraph> */}
                 </ColumnWrapper>
               </IconRowWrapper>
               {item?.columnId() === 2 ? null : (
@@ -96,7 +98,8 @@ Card.defaultProps = {
   cardNameTextColor: colors.blurple,
   cardNameFontSize: 18,
   cardNameFontFamily: '',
-  isCardWithShadow: true
+  isCardWithShadow: true,
+  onDeleteItem: null
 }
 
 Card.propTypes = {
@@ -115,7 +118,8 @@ Card.propTypes = {
   isCardWithShadow: bool.isRequired,
   onPress: func,
   onPressIn: func,
-  style: shape({ string })
+  style: shape({ string }),
+  onDeleteItem: func
 }
 
 export default Card

@@ -321,6 +321,8 @@ class Board extends React.Component {
       {...data}
       {...this.props}
       onFlagClicked={this.props.onFlagClicked}
+      item={data.item}
+      onDeleteItem={this.props.onDeleteItem}
       width={CARD_WIDTH}
     />
   )
@@ -389,7 +391,9 @@ Board.propTypes = {
   open: func.isRequired,
   requestAnimationFrame: func.isRequired,
   boardRepository: object.isRequired,
-  setTimeout: func.isRequired
+  setTimeout: func.isRequired,
+  onFlagClicked: func,
+  onDeleteItem: func
 }
 
 export default ReactTimeout(Board)

@@ -30,51 +30,183 @@ export default function App() {
   const isDealbreakerMountRef = useRef(false)
   const isProfileMountRef = useRef(false)
   const isCurrentProfileMountRef = useRef(false)
+
+  // Create a function to safely update dealbreaker state
+  const updateDealbreaker = newState => {
+    console.log('Updating dealbreaker state with:', JSON.stringify(newState))
+    setDealbreaker(newState)
+    // Immediately persist to storage to prevent race conditions
+    setList('dealbreaker', newState)
+  }
+
+  // Create a unified function to ensure profile exists with proper data
+  const ensureProfileExists = profileName => {
+    if (!profileName) return false
+
+    if (dealbreaker && !dealbreaker[profileName]) {
+      console.log('Creating missing profile:', profileName)
+
+      // Create a properly structured deep copy
+      const updatedDealbreaker = JSON.parse(JSON.stringify(dealbreaker))
+
+      // Initialize the profile with items from main
+      updatedDealbreaker[profileName] = {
+        flag: updatedDealbreaker.main?.flag?.map(item => ({ ...item })) || [],
+        dealbreaker:
+          updatedDealbreaker.main?.dealbreaker?.map(item => ({ ...item })) || []
+      }
+
+      // Update the state directly - will trigger save via useEffect
+      setDealbreaker(updatedDealbreaker)
+      return true
+    }
+    return false
+  }
+
+  // Function to handle adding a new item to all profiles - optimized
+  const addItemToAllProfiles = (item, type) => {
+    if (!item || !type) return null
+
+    console.log('Adding item to all profiles:', item.title)
+
+    // Get all profiles that should exist
+    const allProfiles = Array.from(new Set([...profile, currentProfile]))
+
+    // Create a single deep copy of the state
+    const updatedDealbreaker = JSON.parse(JSON.stringify(dealbreaker))
+
+    // Update each profile with the new item
+    allProfiles.forEach(profileName => {
+      // Ensure the profile and type arrays exist
+      if (!updatedDealbreaker[profileName]) {
+        updatedDealbreaker[profileName] = {
+          flag: [],
+          dealbreaker: []
+        }
+      }
+
+      if (!updatedDealbreaker[profileName][type]) {
+        updatedDealbreaker[profileName][type] = []
+      }
+
+      // Add the new item to this profile
+      updatedDealbreaker[profileName][type].push({ ...item })
+    })
+
+    // Update state once with all changes
+    setDealbreaker(updatedDealbreaker)
+    return updatedDealbreaker
+  }
+
+  // Function to handle removing an item from all profiles - optimized
+  const removeItemFromAllProfiles = (itemId, type) => {
+    if (!itemId || !type) return false
+
+    console.log('Removing item from all profiles:', itemId)
+
+    // Create a single deep copy
+    const updatedDealbreaker = JSON.parse(JSON.stringify(dealbreaker))
+
+    // Remove the item from all profiles
+    Object.keys(updatedDealbreaker).forEach(profileName => {
+      if (
+        updatedDealbreaker[profileName] &&
+        updatedDealbreaker[profileName][type]
+      ) {
+        // Filter out the item directly
+        updatedDealbreaker[profileName][type] = updatedDealbreaker[profileName][
+          type
+        ].filter(item => item && item.id !== itemId)
+      }
+    })
+
+    // Update state once
+    setDealbreaker(updatedDealbreaker)
+    return true
+  }
+
   const handleDealbreakers = async () => {
     if (isDealbreakerMountRef.current && dealbreaker) {
-      setList('dealbreaker', dealbreaker)
+      await setList('dealbreaker', dealbreaker)
     } else {
       isDealbreakerMountRef.current = true
-      const dealbreaker = await getList('dealbreaker')
-      if (dealbreaker) {
-        setDealbreaker(dealbreaker)
+      const savedDealbreaker = await getList('dealbreaker')
+      if (savedDealbreaker) {
+        setDealbreaker(savedDealbreaker)
       }
     }
   }
+
   const handleProfiles = async () => {
     if (isProfileMountRef.current && profile) {
-      setList('profile', profile)
+      await setList('profile', profile)
     } else {
       isProfileMountRef.current = true
-      const profile = await getList('profile')
-      if (profile) {
-        setProfile(profile)
+      const savedProfile = await getList('profile')
+      if (savedProfile) {
+        setProfile(savedProfile)
       }
     }
   }
+
   const handleCurrentProfile = async () => {
     if (isCurrentProfileMountRef.current && currentProfile) {
-      setAtomicValue('currentProfile', currentProfile)
+      await setAtomicValue('currentProfile', currentProfile)
     } else {
       isCurrentProfileMountRef.current = true
-      const currentProfile = await getAtomicValue('currentProfile')
-      if (currentProfile) {
-        setCurrentProfile(currentProfile)
+      const savedCurrentProfile = await getAtomicValue('currentProfile')
+      if (savedCurrentProfile) {
+        setCurrentProfile(savedCurrentProfile)
       }
     }
   }
+
   console.log('app dealbreaker: ', dealbreaker)
+
   useEffect(() => {
-    handleDealbreakers()
+    // Set isDealbreakerMountRef to true before any async operations
+    // to avoid race conditions
+    isDealbreakerMountRef.current = true
+
+    // Only perform storage operations if dealbreaker is defined
+    if (dealbreaker) {
+      setList('dealbreaker', dealbreaker)
+      console.log('Saved dealbreaker state to storage')
+    }
   }, [dealbreaker])
+
+  useEffect(() => {
+    // Load initial data from storage when the app mounts
+    const loadInitialData = async () => {
+      try {
+        const savedDealbreaker = await getList('dealbreaker')
+        if (savedDealbreaker) {
+          console.log('Loaded dealbreaker state from storage')
+          setDealbreaker(savedDealbreaker)
+        }
+      } catch (error) {
+        console.error('Error loading initial data:', error)
+      }
+    }
+
+    // Only load initial data if we haven't already
+    if (!isDealbreakerMountRef.current) {
+      loadInitialData()
+    }
+  }, [])
 
   useEffect(() => {
     handleProfiles()
   }, [profile])
 
   useEffect(() => {
-    handleCurrentProfile()
+    // Ensure the profile exists whenever the current profile changes
+    if (!ensureProfileExists(currentProfile)) {
+      // Only save to storage if we didn't need to create the profile
+      handleCurrentProfile()
+    }
   }, [currentProfile])
+
   // useEffect(() => {
   //   clearStorage()
   // }, [])
@@ -84,10 +216,13 @@ export default function App() {
       value={{
         dealbreaker,
         profile,
-        setDealbreaker,
+        setDealbreaker: updateDealbreaker,
         setProfile,
         currentProfile,
-        setCurrentProfile
+        setCurrentProfile,
+        addItemToAllProfiles,
+        removeItemFromAllProfiles,
+        ensureProfileExists
       }}>
       <NavigationContainer>
         <Drawer.Navigator>
