@@ -1,5 +1,5 @@
 import { NavigationContainer } from '@react-navigation/native'
-import { StyleSheet } from 'react-native'
+import { StyleSheet, View, Text } from 'react-native'
 import { createDrawerNavigator } from '@react-navigation/drawer'
 import { useState, useRef, useEffect } from 'react'
 import StoreContext from './store'
@@ -14,6 +14,9 @@ import {
   getAtomicValue,
   clearStorage
 } from './utils/storage'
+import NetInfo from '@react-native-community/netinfo'
+import { syncPendingChanges } from './utils/api'
+import { showToast } from './utils/functions'
 
 const Drawer = createDrawerNavigator()
 
@@ -30,6 +33,8 @@ export default function App() {
   const [isLoaded, setIsLoaded] = useState(false)
   const isProfileMountRef = useRef(false)
   const isCurrentProfileMountRef = useRef(false)
+  const [isOnline, setIsOnline] = useState(true)
+  const syncInterval = useRef(null)
 
   // Load all data at app initialization
   useEffect(() => {
@@ -77,6 +82,69 @@ export default function App() {
 
     loadAllData()
   }, [])
+
+  // Set up network status monitoring
+  useEffect(() => {
+    // Set up network status monitoring
+    const unsubscribe = NetInfo.addEventListener(state => {
+      const online = state.isConnected && state.isInternetReachable
+      const wasOffline = !isOnline
+      setIsOnline(online)
+
+      // If we just came back online and the app is loaded, sync data
+      if (online && wasOffline && isLoaded) {
+        syncOfflineData()
+      }
+    })
+
+    return () => {
+      unsubscribe()
+      if (syncInterval.current) {
+        clearInterval(syncInterval.current)
+      }
+    }
+  }, [isOnline, isLoaded])
+
+  // Set up periodic sync when online
+  useEffect(() => {
+    // Clear any existing interval
+    if (syncInterval.current) {
+      clearInterval(syncInterval.current)
+      syncInterval.current = null
+    }
+
+    // If online and loaded, set up periodic sync
+    if (isOnline && isLoaded) {
+      syncOfflineData() // Immediate sync on connection
+
+      // Set up periodic sync every 5 minutes
+      syncInterval.current = setInterval(
+        () => {
+          syncOfflineData()
+        },
+        5 * 60 * 1000
+      )
+    }
+
+    return () => {
+      if (syncInterval.current) {
+        clearInterval(syncInterval.current)
+      }
+    }
+  }, [isOnline, isLoaded])
+
+  // Function to sync offline data
+  const syncOfflineData = async () => {
+    try {
+      const success = await syncPendingChanges()
+      if (success) {
+        console.log('Successfully synced offline data')
+        showToast('success', 'Data synced with cloud')
+      }
+    } catch (error) {
+      console.error('Error syncing offline data:', error)
+    }
+  }
 
   // Save dealbreaker state whenever it changes
   useEffect(() => {
@@ -262,46 +330,46 @@ export default function App() {
 
   // Function to rename a profile
   const renameProfile = (oldName, newName) => {
-    // Don't allow renaming main profile
+    // Cannot rename main
     if (oldName === 'main') {
       console.log('Cannot rename the main profile')
       return false
     }
 
-    // Don't allow renaming to "main"
-    if (newName.toLowerCase() === 'main') {
-      console.log('Cannot rename a profile to "main"')
+    // Cannot rename to main or empty
+    if (!newName || newName === 'main') {
+      console.log('New profile name is invalid')
       return false
     }
 
-    // Check if old profile exists
+    // Profile doesn't exist
     if (!profile.includes(oldName)) {
       console.log('Profile does not exist:', oldName)
       return false
     }
 
-    // Check if new name already exists
-    if (profile.some(p => p.toLowerCase() === newName.toLowerCase())) {
-      console.log('Profile name already exists:', newName)
+    // New name already exists
+    if (profile.includes(newName)) {
+      console.log('New profile name already exists:', newName)
       return false
     }
 
-    console.log('Renaming profile from', oldName, 'to', newName)
+    console.log(`Renaming profile: ${oldName} -> ${newName}`)
 
-    // Create a copy of the current profiles array with the renamed profile
+    // Update the profile list
     const updatedProfiles = profile.map(p => (p === oldName ? newName : p))
 
-    // Create a copy of the dealbreaker state with the renamed profile
+    // Update the dealbreaker state by creating a new object with the new key
     const updatedDealbreaker = JSON.parse(JSON.stringify(dealbreaker))
     updatedDealbreaker[newName] = updatedDealbreaker[oldName]
     delete updatedDealbreaker[oldName]
 
-    // If we're renaming the current profile, update the current profile
+    // If we're renaming the current profile, update currentProfile
     if (currentProfile === oldName) {
       setCurrentProfile(newName)
     }
 
-    // Update the profiles array and dealbreaker state
+    // Update both states
     setProfile(updatedProfiles)
     setDealbreaker(updatedDealbreaker)
 
@@ -321,7 +389,9 @@ export default function App() {
         removeItemFromAllProfiles,
         ensureProfileExists,
         deleteProfile,
-        renameProfile
+        renameProfile,
+        isOnline,
+        syncData: syncOfflineData
       }}>
       <NavigationContainer>
         <Drawer.Navigator>

@@ -16,8 +16,11 @@ import ConfirmationModal from '../../components/ConfirmationModal'
 import EditItemModal from '../../components/EditItemModal'
 import EditProfileModal from '../../components/EditProfileModal'
 import DealbreakerAlert from '../../components/DealbreakerAlert'
+import FlagHistoryModal from '../../components/FlagHistoryModal'
+import ReasonInputModal from '../../components/ReasonInputModal'
 import { showToast } from '../../utils/functions'
 import { useFocusEffect } from '@react-navigation/native'
+import { addFlagHistory } from '../../utils/mongodb'
 
 const data = [
   {
@@ -40,7 +43,9 @@ export default function Lists({ navigation, route }) {
     setDealbreaker,
     profile,
     renameProfile,
-    removeItemFromAllProfiles
+    removeItemFromAllProfiles,
+    isOnline,
+    syncData
   } = useContext(StoreContext)
   const [visible, setVisible] = useState(false)
   const [deleteModalVisible, setDeleteModalVisible] = useState(false)
@@ -58,6 +63,14 @@ export default function Lists({ navigation, route }) {
   // New state for dealbreaker alert
   const [dealbreakerAlertVisible, setDealbreakerAlertVisible] = useState(false)
   const [transitionedItem, setTransitionedItem] = useState(null)
+
+  // Add new state for flag history modal
+  const [historyModalVisible, setHistoryModalVisible] = useState(false)
+  const [selectedFlag, setSelectedFlag] = useState(null)
+
+  // Add new state for reason input modal
+  const [reasonModalVisible, setReasonModalVisible] = useState(false)
+  const [pendingFlagChange, setPendingFlagChange] = useState(null)
 
   // Helper function to ensure current profile exists
   const ensureCurrentProfileExists = () => {
@@ -204,7 +217,8 @@ export default function Lists({ navigation, route }) {
         id: item.id,
         name: item.title,
         description: item.description,
-        flag: item.flag
+        flag: item.flag,
+        onLongPress: () => handleViewFlagHistory(item)
       }
     })
 
@@ -215,7 +229,8 @@ export default function Lists({ navigation, route }) {
         id: item.id,
         name: item.title,
         description: item.description,
-        flag: item.flag
+        flag: item.flag,
+        onLongPress: () => handleViewFlagHistory(item)
       }
     })
 
@@ -519,7 +534,14 @@ export default function Lists({ navigation, route }) {
     return dealbreaker.main.dealbreaker.some(item => item.id === itemId)
   }
 
-  // Handler for the flag click with auto-transition feature
+  // Function to handle viewing flag history
+  const handleViewFlagHistory = item => {
+    console.log('Viewing history for flag:', item)
+    setSelectedFlag(item)
+    setHistoryModalVisible(true)
+  }
+
+  // Modify the flag click handler to prompt for reason
   const handleFlagClick = (newFlag, item) => {
     // If not current profile or item data is missing, exit early
     if (!dealbreaker?.[currentProfile]?.flag || !item?.attributes?.row) return
@@ -527,57 +549,118 @@ export default function Lists({ navigation, route }) {
     const rowId = item.attributes.row.id
     const flagsList = dealbreaker[currentProfile].flag
 
-    // Prepare to update the flag
-    const newFlags = JSON.parse(JSON.stringify(flagsList))
-    const flagItem = newFlags.find(flag => flag.id === rowId)
+    // Get the current flag item to determine previous status
+    const existingFlags = JSON.parse(JSON.stringify(flagsList))
+    const flagItem = existingFlags.find(flag => flag.id === rowId)
 
     if (!flagItem) return
 
-    // Check if this should auto-transition to dealbreaker
-    if (
-      newFlag === 'red' &&
-      currentProfile !== 'main' &&
-      isItemOnMainDealbreakerList(rowId)
-    ) {
-      // This is a match for auto-transition!
-      console.log('Auto-transitioning item to dealbreaker:', flagItem.title)
+    // Save the previous status
+    const previousStatus = flagItem.flag || 'white'
 
-      // Move the item from flag list to dealbreaker list
-      const updatedDealbreaker = JSON.parse(JSON.stringify(dealbreaker))
-
-      // Remove item from flags list
-      updatedDealbreaker[currentProfile].flag = updatedDealbreaker[
-        currentProfile
-      ].flag.filter(f => f.id !== rowId)
-
-      // Add item to dealbreakers list
-      updatedDealbreaker[currentProfile].dealbreaker = [
-        ...updatedDealbreaker[currentProfile].dealbreaker,
-        { ...flagItem, flag: newFlag }
-      ]
-
-      // Update state
-      setDealbreaker(updatedDealbreaker)
-
-      // Store the transitioned item for potential undo
-      setTransitionedItem(flagItem)
-
-      // Show the alert
-      setDealbreakerAlertVisible(true)
-    } else {
-      // Regular flag update (no transition)
-      flagItem.flag = newFlag
-      setDealbreaker({
-        ...dealbreaker,
-        [currentProfile]: {
-          ...dealbreaker[currentProfile],
-          flag: newFlags
-        }
+    // Only prompt for reason if the status is actually changing
+    if (previousStatus !== newFlag) {
+      // Store the pending change
+      setPendingFlagChange({
+        item,
+        rowId,
+        previousStatus,
+        newFlag
       })
+
+      // Show reason input modal
+      setReasonModalVisible(true)
     }
   }
 
-  // Handler for undoing a dealbreaker transition
+  // Handle completing the flag change after getting reason
+  const handleFlagChangeWithReason = async reason => {
+    // Close the reason modal
+    setReasonModalVisible(false)
+
+    if (!pendingFlagChange) return
+
+    const { item, rowId, previousStatus, newFlag } = pendingFlagChange
+
+    try {
+      // Record the flag status change in history
+      await addFlagHistory(
+        currentProfile,
+        rowId,
+        item.attributes.row.title,
+        previousStatus,
+        newFlag,
+        reason
+      )
+
+      // Now proceed with the actual flag change
+      const flagsList = dealbreaker[currentProfile].flag
+      const newFlags = JSON.parse(JSON.stringify(flagsList))
+      const updatedFlagItem = newFlags.find(flag => flag.id === rowId)
+
+      if (!updatedFlagItem) return
+
+      // Check if this should auto-transition to dealbreaker
+      if (
+        newFlag === 'red' &&
+        currentProfile !== 'main' &&
+        isItemOnMainDealbreakerList(rowId)
+      ) {
+        // This is a match for auto-transition!
+        console.log(
+          'Auto-transitioning item to dealbreaker:',
+          item.attributes.row.title
+        )
+
+        // Move the item from flag list to dealbreaker list
+        const updatedDealbreaker = JSON.parse(JSON.stringify(dealbreaker))
+
+        // Remove item from flags list
+        updatedDealbreaker[currentProfile].flag = updatedDealbreaker[
+          currentProfile
+        ].flag.filter(f => f.id !== rowId)
+
+        // Add item to dealbreakers list
+        updatedDealbreaker[currentProfile].dealbreaker = [
+          ...updatedDealbreaker[currentProfile].dealbreaker,
+          { ...updatedFlagItem, flag: newFlag }
+        ]
+
+        // Update state
+        setDealbreaker(updatedDealbreaker)
+
+        // Store the transitioned item for potential undo
+        setTransitionedItem(updatedFlagItem)
+
+        // Show the alert
+        setDealbreakerAlertVisible(true)
+      } else {
+        // Regular flag update (no transition)
+        updatedFlagItem.flag = newFlag
+        setDealbreaker({
+          ...dealbreaker,
+          [currentProfile]: {
+            ...dealbreaker[currentProfile],
+            flag: newFlags
+          }
+        })
+      }
+    } catch (error) {
+      console.error('Error updating flag with reason:', error)
+      showToast('error', 'Failed to update flag status')
+    } finally {
+      // Clear pending flag change
+      setPendingFlagChange(null)
+    }
+  }
+
+  // Handle cancelling the flag change
+  const handleCancelFlagChange = () => {
+    setReasonModalVisible(false)
+    setPendingFlagChange(null)
+  }
+
+  // Keep the existing handleUndoTransition function
   const handleUndoTransition = () => {
     if (!transitionedItem) return
 
@@ -663,6 +746,23 @@ export default function Lists({ navigation, route }) {
         onUndo={handleUndoTransition}
         itemTitle={transitionedItem?.title || ''}
       />
+      <FlagHistoryModal
+        visible={historyModalVisible}
+        onClose={() => setHistoryModalVisible(false)}
+        profileId={currentProfile}
+        flagId={selectedFlag?.id}
+        flagTitle={selectedFlag?.title}
+      />
+      {pendingFlagChange && (
+        <ReasonInputModal
+          visible={reasonModalVisible}
+          onClose={handleCancelFlagChange}
+          onSubmit={handleFlagChangeWithReason}
+          flagTitle={pendingFlagChange.item?.attributes?.row?.title || ''}
+          prevStatus={pendingFlagChange.previousStatus}
+          newStatus={pendingFlagChange.newFlag}
+        />
+      )}
 
       <View>
         {list &&
@@ -673,12 +773,25 @@ export default function Lists({ navigation, route }) {
           <View>
             <View style={styles.profileButtonContainer}>
               <View style={styles.innerProfileButtonContainer}>
-                <AppButton
-                  title={`Switch Profile`}
-                  onPress={() => {
-                    setVisible(true)
-                  }}
-                />
+                <View style={styles.buttonRow}>
+                  <AppButton
+                    title={`Switch Profile`}
+                    onPress={() => {
+                      setVisible(true)
+                    }}
+                  />
+                  {isOnline && (
+                    <AppButton
+                      title='Sync'
+                      onPress={() => {
+                        if (syncData) {
+                          syncData()
+                          showToast('info', 'Syncing with cloud...')
+                        }
+                      }}
+                    />
+                  )}
+                </View>
                 <Text style={styles.profileText}>
                   {currentProfile}
                   {currentProfile !== 'main' && (
@@ -777,16 +890,22 @@ const styles = StyleSheet.create({
   profileButtonContainer: {
     flex: 0.7,
     marginTop: 10,
-    width: 200,
+    width: 300, // Increased from 200 to accommodate both buttons
     alignSelf: 'center',
     justifyContent: 'center',
     alignItems: 'center'
   },
   innerProfileButtonContainer: {
-    flexDirection: 'column',
+    width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 5
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 10
   },
   profileText: {
     fontSize: 16,

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Animated, TouchableOpacity, View, Text } from 'react-native'
 import { bool, func, number, object, shape, string } from 'prop-types'
 import { colors, fonts, deviceWidth } from '../../constants'
@@ -28,6 +28,7 @@ const Card = ({
   isCardWithShadow,
   onPress,
   onPressIn,
+  onLongPress,
   style,
   onFlagClicked,
   onDeleteItem,
@@ -42,7 +43,7 @@ const Card = ({
     iconContainer: {
       flexDirection: 'row',
       alignItems: 'center',
-      marginRight: 5
+      justifyContent: 'flex-start'
     },
     iconButton: {
       padding: 5,
@@ -51,6 +52,16 @@ const Card = ({
     iconText: {
       fontSize: 18,
       color: '#fff'
+    },
+    flagContainer: {
+      alignItems: 'center',
+      justifyContent: 'flex-end'
+    }
+  }
+
+  const handlePress = () => {
+    if (onPress) {
+      onPress()
     }
   }
 
@@ -59,7 +70,7 @@ const Card = ({
       onPressIn={evt =>
         onPressIn ? onPressIn(evt.nativeEvent.pageY - NEGATIVE_SPACE) : {}
       }
-      onPress={onPress}
+      onPress={handlePress}
       collapsable={false}>
       <Animated.View style={styles}>
         {cardContent !== undefined ? (
@@ -73,6 +84,18 @@ const Card = ({
             elevation={isCardWithShadow ? 5 : 0}
             shadowOpacity={isCardWithShadow ? 0.1 : 0}>
             <RowWrapper>
+              {/* First line - Title only */}
+              <View style={{ width: '100%', marginBottom: 8 }}>
+                <Paragraph
+                  fontSize={cardNameFontSize}
+                  fontFamily={cardNameFontFamily}
+                  color={cardNameTextColor}
+                  style={{ textAlign: 'center', fontWeight: 'bold' }}>
+                  {item ? item.row().name : ''}
+                </Paragraph>
+              </View>
+
+              {/* Second line - Icons and flag */}
               <IconRowWrapper>
                 <View style={iconStyles.iconContainer}>
                   {item && onDeleteItem && (
@@ -89,23 +112,24 @@ const Card = ({
                       <Text style={iconStyles.iconText}>✏️</Text>
                     </TouchableOpacity>
                   )}
+                  {item && item.row && item.row().onLongPress && (
+                    <TouchableOpacity
+                      onPress={() => item.row().onLongPress()}
+                      style={iconStyles.iconButton}>
+                      <Text style={iconStyles.iconText}>📋</Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
-                <ColumnWrapper>
-                  <Paragraph
-                    fontSize={cardNameFontSize}
-                    fontFamily={cardNameFontFamily}
-                    color={cardNameTextColor}>
-                    {item ? item.row().name : ''}
-                  </Paragraph>
-                </ColumnWrapper>
+                <View style={iconStyles.flagContainer}>
+                  {item?.columnId() === 2 ? null : (
+                    <Flag
+                      color={cardIconColor}
+                      onFlagClicked={onFlagClicked}
+                      item={item}
+                    />
+                  )}
+                </View>
               </IconRowWrapper>
-              {item?.columnId() === 2 ? null : (
-                <Flag
-                  color={cardIconColor}
-                  onFlagClicked={onFlagClicked}
-                  item={item}
-                />
-              )}
             </RowWrapper>
           </CardContainer>
         )}
@@ -145,6 +169,7 @@ Card.propTypes = {
   isCardWithShadow: bool.isRequired,
   onPress: func,
   onPressIn: func,
+  onLongPress: func,
   style: shape({ string }),
   onDeleteItem: func,
   onEditItem: func

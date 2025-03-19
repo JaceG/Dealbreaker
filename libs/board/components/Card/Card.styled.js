@@ -30,7 +30,8 @@ const ColumnWrapper = styled.View`
 const IconRowWrapper = styled.View`
   flexDirection: row;
   alignItems: center;
-  flex: 1;
+  justifyContent: space-between;
+  width: 100%;
 `
 
 const Paragraph = styled.Text`
@@ -40,9 +41,8 @@ const Paragraph = styled.Text`
 `
 
 const RowWrapper = styled.View`
-  flexDirection: row;
-  alignItems: center;
-  justifyContent: space-between;
+  flexDirection: column;
+  width: 100%;
 `
 
 export {
