@@ -211,6 +211,60 @@ export default function App() {
   //   clearStorage()
   // }, [])
 
+  // Function to delete a profile
+  const deleteProfile = profileName => {
+    // Multiple checks to prevent deleting the main profile
+    if (
+      !profileName ||
+      profileName === 'main' ||
+      profileName.toLowerCase() === 'main' ||
+      profileName.trim() === 'main'
+    ) {
+      console.log('Cannot delete the main profile')
+      return false
+    }
+
+    // Check if profile exists
+    if (!profile.includes(profileName)) {
+      console.log('Profile does not exist:', profileName)
+      return false
+    }
+
+    // One last check - never delete main
+    if (profileName === 'main') {
+      console.error('Critical: Attempted to delete main profile - prevented')
+      return false
+    }
+
+    console.log('Deleting profile:', profileName)
+
+    // Create a copy of the current profiles array without the deleted profile
+    const updatedProfiles = profile.filter(p => p !== profileName)
+
+    // Ensure main profile still exists in the array
+    if (!updatedProfiles.includes('main')) {
+      console.error('Cannot delete - this would remove the main profile')
+      return false
+    }
+
+    // Create a copy of the dealbreaker state without the deleted profile
+    const updatedDealbreaker = JSON.parse(JSON.stringify(dealbreaker))
+    delete updatedDealbreaker[profileName]
+
+    // If we're deleting the current profile, switch to main
+    if (currentProfile === profileName) {
+      setCurrentProfile('main')
+    }
+
+    // Update the profiles array
+    setProfile(updatedProfiles)
+
+    // Update the dealbreaker state
+    setDealbreaker(updatedDealbreaker)
+
+    return true
+  }
+
   return (
     <StoreContext.Provider
       value={{
@@ -222,7 +276,8 @@ export default function App() {
         setCurrentProfile,
         addItemToAllProfiles,
         removeItemFromAllProfiles,
-        ensureProfileExists
+        ensureProfileExists,
+        deleteProfile
       }}>
       <NavigationContainer>
         <Drawer.Navigator>

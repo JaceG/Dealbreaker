@@ -1,5 +1,5 @@
 import { Dropdown } from 'react-native-element-dropdown'
-import { StyleSheet, Modal, View, Text } from 'react-native'
+import { StyleSheet, Modal, View, Text, Alert } from 'react-native'
 import { useState, useContext, useEffect } from 'react'
 import AppButton from '../AppButton'
 import StoreContext from '../../store'
@@ -7,8 +7,13 @@ import { useNavigation } from '@react-navigation/native'
 
 function SwitchProfileModal({ visible, onClose }) {
   // Move all context usage to the top level of the component
-  const { currentProfile, setCurrentProfile, profile, ensureProfileExists } =
-    useContext(StoreContext)
+  const {
+    currentProfile,
+    setCurrentProfile,
+    profile,
+    ensureProfileExists,
+    deleteProfile
+  } = useContext(StoreContext)
 
   const [value, setValue] = useState(null)
   const [isFocus, setIsFocus] = useState(false)
@@ -22,6 +27,11 @@ function SwitchProfileModal({ visible, onClose }) {
       setValue(currentProfile)
     }
   }, [profile, currentProfile, visible])
+
+  // Check if a profile can be deleted (not main and not the only profile)
+  const canDeleteProfile = profileName => {
+    return profileName !== 'main' && profile.length > 1
+  }
 
   // Handle profile change with proper error handling
   const handleProfileChange = () => {
@@ -43,6 +53,57 @@ function SwitchProfileModal({ visible, onClose }) {
     setTimeout(() => {
       navigation.navigate('Flags List', { refresh: Date.now() })
     }, 100)
+  }
+
+  // Handle profile deletion
+  const handleDeleteProfile = () => {
+    // Extra protection - don't allow deleting main profile or if only one profile exists
+    if (!canDeleteProfile(value)) {
+      console.log(
+        'Prevented attempt to delete profile - either main or only profile'
+      )
+      return
+    }
+
+    // Show confirmation alert
+    Alert.alert(
+      'Delete Profile',
+      `Are you sure you want to delete the "${value}" profile? This action cannot be undone.`,
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel'
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            // Final safety check before deletion
+            if (!canDeleteProfile(value)) {
+              console.error('Attempted to delete protected profile - prevented')
+              return
+            }
+
+            // Close modal first
+            onClose()
+
+            // Delete the profile
+            const success = deleteProfile(value)
+
+            if (success) {
+              // Show success message
+              Alert.alert(
+                'Success',
+                `Profile "${value}" was deleted successfully.`
+              )
+
+              // Force UI refresh
+              navigation.navigate('Flags List', { refresh: Date.now() })
+            }
+          }
+        }
+      ]
+    )
   }
 
   return (
@@ -73,7 +134,14 @@ function SwitchProfileModal({ visible, onClose }) {
           />
           <View style={styles.buttonContainer}>
             <AppButton title='Select Profile' onPress={handleProfileChange} />
-            <AppButton title='Close' onPress={onClose} />
+            {canDeleteProfile(value) ? (
+              <AppButton
+                title='Delete Profile'
+                onPress={handleDeleteProfile}
+                color='#d9534f'
+              />
+            ) : null}
+            <AppButton title='Close' onPress={onClose} color='#6c757d' />
           </View>
         </View>
       </View>
@@ -126,8 +194,11 @@ const styles = StyleSheet.create({
     gap: 10
   },
   buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
+    flexDirection: 'column',
+    width: '100%',
+    justifyContent: 'center',
+    alignItems: 'stretch',
+    marginTop: 20,
     gap: 10
   },
   modalInnerContainer: {
