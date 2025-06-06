@@ -17,6 +17,7 @@ import { useAuth } from "../../context/Auth";
 import { router } from "expo-router";
 import { API_BASE_URL } from "../../constants/api";
 import * as SecureStore from "expo-secure-store";
+import { AuthContextType } from "../login";
 
 // Initialize WebBrowser for auth session
 WebBrowser.maybeCompleteAuthSession();
@@ -28,14 +29,6 @@ interface AuthProps {
 }
 
 // Define types for Auth context
-interface AuthContextType {
-  login: (email: string, password: string) => Promise<boolean>;
-  register: (name: string, email: string, password: string) => Promise<boolean>;
-  promptGoogleSignIn: () => Promise<boolean>;
-  isLoading: boolean;
-  error: string | null;
-  createTestUser: () => Promise<boolean>;
-}
 
 // Auth component that supports Google signin
 const Auth: React.FC<AuthProps> = () => {
@@ -47,7 +40,8 @@ const Auth: React.FC<AuthProps> = () => {
   const [showDevOptions, setShowDevOptions] = useState(false);
 
   // Get auth functions from context
-  const { isLoading, error, checkAuthStatus } = useAuth() as AuthContextType;
+  const { isLoading, error, checkAuthStatus, loginAuth } =
+    useAuth() as AuthContextType;
 
   // Clear error when switching between login/register
   useEffect(() => {
@@ -158,6 +152,7 @@ const Auth: React.FC<AuthProps> = () => {
       );
 
       console.log("Registration successful");
+      loginAuth(normalizedUserData, token);
       return true;
     } catch (error: any) {
       console.error("Registration error:", error);

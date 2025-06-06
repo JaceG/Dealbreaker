@@ -3,18 +3,66 @@ import { FontAwesome } from "@expo/vector-icons";
 import Feather from "@expo/vector-icons/Feather";
 import { Button } from "react-native";
 import * as SecureStore from "expo-secure-store";
+import { clearKeys } from "../../utils/storage";
+import { useContext, useEffect, useRef, useState } from "react";
+import { DealbreakerState } from "../_layout";
+import StoreContext from "../../store";
+import { AuthContextType } from "../login";
+import { useAuth } from "../../context/Auth";
+import { getDealbreakers } from "../../utils/mongodbapi";
 
 const Layout = () => {
+  const { setDealbreaker } = useContext<any>(StoreContext);
+  const { clearAuth, user } = useAuth() as AuthContextType;
+  const isDealbreakerTimeoutRef = useRef<
+    boolean | ReturnType<typeof setTimeout>
+  >(false);
   async function clearSecureStore() {
     const keys = ["authToken", "userData"];
     for (const key of keys) {
       await SecureStore.deleteItemAsync(key);
+      await clearKeys(["dealbreaker", "profiles"]);
+      clearAuth();
+      setDealbreaker({
+        main: {
+          flag: [],
+          dealbreaker: [],
+        },
+      });
     }
   }
 
+  const fetchDealbreakers = async () => {
+    const userData = await SecureStore.getItem("userData");
+    if (userData) {
+      if (isDealbreakerTimeoutRef.current) {
+        clearTimeout(
+          isDealbreakerTimeoutRef.current as ReturnType<typeof setTimeout>
+        );
+      }
+      isDealbreakerTimeoutRef.current = setTimeout(async () => {
+        isDealbreakerTimeoutRef.current = false;
+        const userDataObject = JSON.parse(userData);
+        const userId = userDataObject.id;
+        const response = await getDealbreakers(userId);
+        if (response) {
+          setDealbreaker(response);
+        }
+      }, 1000);
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      fetchDealbreakers();
+    }
+  }, [user]);
+
   const logout = async () => {
     await clearSecureStore();
-    router.replace("/login");
+    setTimeout(() => {
+      router.replace("/login");
+    }, 100);
   };
 
   return (

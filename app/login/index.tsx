@@ -13,7 +13,7 @@ import {
 } from "react-native";
 // Uncomment these imports
 import * as WebBrowser from "expo-web-browser";
-import { useAuth } from "../../context/Auth";
+import AuthContext, { useAuth, User } from "../../context/Auth";
 import { router } from "expo-router";
 import { API_BASE_URL } from "../../constants/api";
 import * as SecureStore from "expo-secure-store";
@@ -28,13 +28,17 @@ interface AuthProps {
 }
 
 // Define types for Auth context
-interface AuthContextType {
+export interface AuthContextType {
   login: (email: string, password: string) => Promise<boolean>;
   register: (name: string, email: string, password: string) => Promise<boolean>;
   promptGoogleSignIn: () => Promise<boolean>;
   isLoading: boolean;
   error: string | null;
   createTestUser: () => Promise<boolean>;
+  checkAuthStatus: () => Promise<boolean>;
+  loginAuth: (user: unknown, token: string) => Promise<void>;
+  clearAuth: () => void;
+  user: User;
 }
 
 // Auth component that supports Google signin
@@ -47,7 +51,8 @@ const Auth: React.FC<AuthProps> = () => {
   const [showDevOptions, setShowDevOptions] = useState(false);
 
   // Get auth functions from context
-  const { isLoading, error, checkAuthStatus } = useAuth() as AuthContextType;
+  const { isLoading, error, checkAuthStatus, loginAuth } =
+    useAuth() as AuthContextType;
 
   // Clear error when switching between login/register
   useEffect(() => {
@@ -208,6 +213,7 @@ const Auth: React.FC<AuthProps> = () => {
         JSON.stringify(normalizedUserData)
       );
       console.log("Login successful");
+      loginAuth(normalizedUserData as unknown, token);
       return true;
     } catch (error) {
       console.error("Login error:", error);

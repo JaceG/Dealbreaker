@@ -14,7 +14,7 @@ interface ProfileData {
   dealbreaker: FlagItem[];
 }
 
-interface DealbreakerState {
+export interface DealbreakerState {
   main: ProfileData;
   [profileId: string]: ProfileData;
 }
@@ -213,9 +213,11 @@ const Layout = () => {
   useEffect(() => {
     updateDealbreakers();
   }, [dealbreaker]);
+
   useEffect(() => {
     checkIsLoggedIn();
   }, []);
+
   // For auth demo - simplified approach
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
