@@ -89,6 +89,17 @@ const Layout = () => {
           headerRight: () => <Button title="Logout" onPress={logout} />,
         }}
       />
+      <Tabs.Screen
+        name="create-profile/index"
+        options={{
+          headerTitle: "Create Profile",
+          title: "Create Profile",
+          tabBarIcon: ({ color }) => (
+            <Feather name="user" size={28} color={color} />
+          ),
+          headerRight: () => <Button title="Logout" onPress={logout} />,
+        }}
+      />
     </Tabs>
   );
 };
