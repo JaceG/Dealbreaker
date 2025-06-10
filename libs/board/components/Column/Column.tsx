@@ -1,319 +1,336 @@
-import React from 'react'
-import { FlatList } from 'react-native'
-import { bool, func, object, number, string } from 'prop-types'
-import { colors, fonts, deviceWidth, ios } from '../../constants'
-import EmptyColumn from '../EmptyColumn/EmptyColumn'
+import React from 'react';
+import { FlatList } from 'react-native';
+import { bool, func, object, number, string } from 'prop-types';
+import { colors, fonts, deviceWidth, ios } from '../../constants';
+import EmptyColumn from '../EmptyColumn/EmptyColumn';
 import {
-  ColumnWrapper,
-  ParagraphWrapper,
-  Paragraph,
-  RowContainer,
-  RowWrapper,
-  SumWrapper
-} from './Column.styled'
+	ColumnWrapper,
+	ParagraphWrapper,
+	Paragraph,
+	RowContainer,
+	RowWrapper,
+	SumWrapper,
+} from './Column.styled';
 
-const COLUMN_WIDTH = 0.85 * deviceWidth
-const PADDING = 32
-const ONE_COLUMN_WIDTH = deviceWidth - PADDING
+const COLUMN_WIDTH = 0.85 * deviceWidth;
+const PADDING = 32;
+const ONE_COLUMN_WIDTH = deviceWidth - PADDING;
 
 class Column extends React.Component {
-  constructor(props) {
-    super(props)
+	constructor(props) {
+		super(props);
 
-    this.viewabilityConfig = {
-      itemVisiblePercentThreshold: 50
-    }
-  }
+		this.viewabilityConfig = {
+			itemVisiblePercentThreshold: 50,
+		};
+	}
 
-  componentDidMount() {
-    const { column, boardRepository } = this.props
+	componentDidMount() {
+		const { column, boardRepository } = this.props;
 
-    boardRepository.addListener(column.id(), 'reload', () => this.forceUpdate())
-  }
+		boardRepository.addListener(column.id(), 'reload', () =>
+			this.forceUpdate()
+		);
+	}
 
-  onPressIn = (item, y) => {
-    const { column, onPressIn } = this.props
-    onPressIn(column.id(), item, y)
-  }
+	onPressIn = (item, y) => {
+		const { column, onPressIn } = this.props;
+		onPressIn(column.id(), item, y);
+	};
 
-  onPress = item => {
-    const { column, onPress } = this.props
+	onPress = (item) => {
+		const { column, onPress } = this.props;
 
-    return onPress(column.id(), item)
-  }
+		return onPress(column.id(), item);
+	};
 
-  setItemRef = (item, ref) => {
-    const { column, boardRepository } = this.props
-    boardRepository.setItemRef(column.id(), item, ref)
-    boardRepository.updateColumnsLayoutAfterVisibilityChanged()
-  }
+	setItemRef = (item, ref) => {
+		const { column, boardRepository } = this.props;
+		boardRepository.setItemRef(column.id(), item, ref);
+		boardRepository.updateColumnsLayoutAfterVisibilityChanged();
+	};
 
-  updateItemWithLayout = item => () => {
-    const { column, boardRepository } = this.props
-    boardRepository.updateItemWithLayout(column.id(), item)
-  }
+	updateItemWithLayout = (item) => () => {
+		const { column, boardRepository } = this.props;
+		boardRepository.updateItemWithLayout(column.id(), item);
+	};
 
-  setColumnRef = ref => {
-    const { column, boardRepository } = this.props
-    boardRepository.setColumnRef(column.id(), ref)
-  }
+	setColumnRef = (ref) => {
+		const { column, boardRepository } = this.props;
+		boardRepository.setColumnRef(column.id(), ref);
+	};
 
-  updateColumnWithLayout = () => {
-    const { column, boardRepository } = this.props
+	updateColumnWithLayout = () => {
+		const { column, boardRepository } = this.props;
 
-    boardRepository.updateColumnWithLayout(column.id())
-  }
+		boardRepository.updateColumnWithLayout(column.id());
+	};
 
-  renderWrapperRow = item => {
-    if (!item || !item.row || !item.row() || !item.row().id) {
-      return null
-    }
+	renderWrapperRow = (item) => {
+		if (!item || !item.row || !item.row() || !item.row().id) {
+			return null;
+		}
 
-    const { renderWrapperRow, onFlagClicked, onDeleteItem, onEditItem } =
-      this.props
-    const props = {
-      onPressIn: y => this.onPressIn(item, y),
-      onPress: this.onPress(item),
-      hidden: item.isHidden(),
-      item,
-      onFlagClicked,
-      onDeleteItem,
-      onEditItem
-    }
-    return (
-      <RowWrapper
-        ref={ref => this.setItemRef(item, ref)}
-        collapsable={false}
-        onLayout={this.updateItemWithLayout(item)}
-        // key={item.id.toString()}>
-      >
-        {renderWrapperRow(props)}
-      </RowWrapper>
-    )
-  }
+		const { renderWrapperRow, onFlagClicked, onDeleteItem, onEditItem } =
+			this.props;
+		const props = {
+			onPressIn: (y) => this.onPressIn(item, y),
+			onPress: this.onPress(item),
+			hidden: item.isHidden(),
+			item,
+			onFlagClicked,
+			onDeleteItem,
+			onEditItem,
+		};
+		return (
+			<RowWrapper
+				ref={(ref) => this.setItemRef(item, ref)}
+				collapsable={false}
+				onLayout={this.updateItemWithLayout(item)}
+				// key={item.id.toString()}>
+			>
+				{renderWrapperRow(props)}
+			</RowWrapper>
+		);
+	};
 
-  handleScroll = event => {
-    const {
-      column,
-      onScrollingStarted,
-      boardRepository,
-      unsubscribeFromMovingMode
-    } = this.props
+	handleScroll = (event) => {
+		const {
+			column,
+			onScrollingStarted,
+			boardRepository,
+			unsubscribeFromMovingMode,
+		} = this.props;
 
-    unsubscribeFromMovingMode()
-    onScrollingStarted()
+		unsubscribeFromMovingMode();
+		onScrollingStarted();
 
-    const col = boardRepository.column(column.id())
+		const col = boardRepository.column(column.id());
 
-    const liveOffset = event.nativeEvent.contentOffset.y
+		const liveOffset = event.nativeEvent.contentOffset.y;
 
-    this.scrollingDown = liveOffset > col.scrollOffset()
-  }
+		this.scrollingDown = liveOffset > col.scrollOffset();
+	};
 
-  endScrolling = event => {
-    const { column, onScrollingEnded, boardRepository } = this.props
+	endScrolling = (event) => {
+		const { column, onScrollingEnded, boardRepository } = this.props;
 
-    const currentOffset = event.nativeEvent.contentOffset.y
-    const col = boardRepository.column(column.id())
-    const scrollingDownEnded =
-      this.scrollingDown && currentOffset >= col.scrollOffset()
-    const scrollingUpEnded =
-      !this.scrollingDown && currentOffset <= col.scrollOffset()
+		const currentOffset = event.nativeEvent.contentOffset.y;
+		const col = boardRepository.column(column.id());
+		const scrollingDownEnded =
+			this.scrollingDown && currentOffset >= col.scrollOffset();
+		const scrollingUpEnded =
+			!this.scrollingDown && currentOffset <= col.scrollOffset();
 
-    if (scrollingDownEnded || scrollingUpEnded) {
-      boardRepository.setScrollOffset(col.id(), currentOffset)
-      boardRepository.updateColumnsLayoutAfterVisibilityChanged()
-      onScrollingEnded()
-    }
-  }
+		if (scrollingDownEnded || scrollingUpEnded) {
+			boardRepository.setScrollOffset(col.id(), currentOffset);
+			boardRepository.updateColumnsLayoutAfterVisibilityChanged();
+			onScrollingEnded();
+		}
+	};
 
-  onScrollEndDrag = event => {
-    this.endScrolling(event)
-  }
+	onScrollEndDrag = (event) => {
+		this.endScrolling(event);
+	};
 
-  onMomentumScrollEnd = event => {
-    const { onScrollingEnded } = this.props
+	onMomentumScrollEnd = (event) => {
+		const { onScrollingEnded } = this.props;
 
-    this.endScrolling(event)
-    onScrollingEnded()
-  }
+		this.endScrolling(event);
+		onScrollingEnded();
+	};
 
-  onContentSizeChange = (_, contentHeight) => {
-    const { column, boardRepository } = this.props
+	onContentSizeChange = (_, contentHeight) => {
+		const { column, boardRepository } = this.props;
 
-    boardRepository.setContentHeight(column.id(), contentHeight)
-  }
+		boardRepository.setContentHeight(column.id(), contentHeight);
+	};
 
-  setListView = ref => {
-    const { column, boardRepository } = this.props
+	setListView = (ref) => {
+		const { column, boardRepository } = this.props;
 
-    boardRepository.setListView(column.id(), ref)
-  }
+		boardRepository.setListView(column.id(), ref);
+	};
 
-  handleViewableItemsChanged = ({ viewableItems }) => {
-    const { column, boardRepository } = this.props
-    const visibleItems = viewableItems.map(({ item }) => item)
-    boardRepository.updateItemsVisibility(column.id(), visibleItems)
-  }
+	handleViewableItemsChanged = ({ viewableItems }) => {
+		const { column, boardRepository } = this.props;
+		const visibleItems = viewableItems.map(({ item }) => item);
+		boardRepository.updateItemsVisibility(column.id(), visibleItems);
+	};
 
-  render() {
-    const {
-      badgeBackgroundColor,
-      badgeBorderRadius,
-      badgeHeight,
-      badgeWidth,
-      badgeTextColor,
-      badgeTextFontFamily,
-      badgeTextFontSize,
-      column,
-      columnBackgroundColor,
-      columnBorderRadius,
-      columnHeight,
-      columnNameFontFamily,
-      columnNameFontSize,
-      columnNameTextColor,
-      emptyComponent,
-      isWithCountBadge,
-      oneColumn,
-      movingMode,
-      boardRepository,
-      columnWidth,
-      onFlagClicked,
-      onDeleteItem,
-      onEditItem
-    } = this.props
+	render() {
+		const {
+			badgeBackgroundColor,
+			badgeBorderRadius,
+			badgeHeight,
+			badgeWidth,
+			badgeTextColor,
+			badgeTextFontFamily,
+			badgeTextFontSize,
+			column,
+			columnBackgroundColor,
+			columnBorderRadius,
+			columnHeight,
+			columnNameFontFamily,
+			columnNameFontSize,
+			columnNameTextColor,
+			emptyComponent,
+			isWithCountBadge,
+			oneColumn,
+			movingMode,
+			boardRepository,
+			columnWidth,
+			onFlagClicked,
+			onDeleteItem,
+			onEditItem,
+		} = this.props;
 
-    const colElements = boardRepository.items(column.id()).length - 1
+		const colElements = boardRepository.items(column.id()).length - 1;
 
-    const ColumnComponent = (
-      <ColumnWrapper
-        backgroundColor={columnBackgroundColor}
-        borderRadius={columnBorderRadius}
-        ref={this.setColumnRef}
-        collapsable={false}
-        onLayout={this.updateColumnWithLayout}
-        columnHeight={columnHeight}
-        width={
-          oneColumn
-            ? ONE_COLUMN_WIDTH
-            : columnWidth
-              ? columnWidth
-              : COLUMN_WIDTH
-        }
-        marginRight={oneColumn ? 0 : 8}>
-        <RowContainer>
-          <Paragraph
-            fontSize={columnNameFontSize}
-            fontFamily={columnNameFontFamily}
-            color={columnNameTextColor}>
-            {column.data().name}
-          </Paragraph>
-          {isWithCountBadge && (
-            <SumWrapper>
-              <ParagraphWrapper
-                backgroundColor={badgeBackgroundColor}
-                width={badgeWidth}
-                height={badgeHeight}
-                borderRadius={badgeBorderRadius}>
-                <Paragraph
-                  fontSize={badgeTextFontSize}
-                  fontFamily={badgeTextFontFamily}
-                  color={badgeTextColor}
-                  lineHeight={ios ? null : badgeTextFontSize * 1.6}>
-                  {colElements.toString()}
-                </Paragraph>
-              </ParagraphWrapper>
-            </SumWrapper>
-          )}
-        </RowContainer>
-        {boardRepository.items(column.id()).length - 1 === 0 ? (
-          emptyComponent ? (
-            emptyComponent()
-          ) : (
-            <EmptyColumn {...this.props} marginTop={columnHeight / 3} />
-          )
-        ) : (
-          <FlatList
-            data={boardRepository
-              .items(column.id())
-              .filter(item => item && item.row && item.row() && item.row().id)}
-            ref={this.setListView}
-            onScroll={this.handleScroll}
-            scrollEventThrottle={0}
-            onMomentumScrollEnd={this.onMomentumScrollEnd}
-            onScrollEndDrag={this.onScrollEndDrag}
-            renderItem={item =>
-              item.item ? this.renderWrapperRow(item.item) : null
-            }
-            onViewableItemsChanged={this.handleViewableItemsChanged}
-            viewabilityConfig={this.viewabilityConfig}
-            keyExtractor={item => {
-              if (!item || !item.row || typeof item.row !== 'function')
-                return Math.random().toString()
-              const rowData = item.row()
-              return rowData && rowData.id
-                ? rowData.id.toString()
-                : Math.random().toString()
-            }}
-            scrollEnabled={!movingMode}
-            onContentSizeChange={this.onContentSizeChange}
-            showsVerticalScrollIndicator={false}
-          />
-        )}
-      </ColumnWrapper>
-    )
+		const ColumnComponent = (
+			<ColumnWrapper
+				backgroundColor={columnBackgroundColor}
+				borderRadius={columnBorderRadius}
+				ref={this.setColumnRef}
+				collapsable={false}
+				onLayout={this.updateColumnWithLayout}
+				columnHeight={columnHeight}
+				width={
+					oneColumn
+						? ONE_COLUMN_WIDTH
+						: columnWidth
+						? columnWidth
+						: COLUMN_WIDTH
+				}
+				marginRight={oneColumn ? 0 : 8}>
+				<RowContainer>
+					<Paragraph
+						fontSize={columnNameFontSize}
+						fontFamily={columnNameFontFamily}
+						color={columnNameTextColor}>
+						{column.data().name}
+					</Paragraph>
+					{isWithCountBadge && (
+						<SumWrapper>
+							<ParagraphWrapper
+								backgroundColor={badgeBackgroundColor}
+								width={badgeWidth}
+								height={badgeHeight}
+								borderRadius={badgeBorderRadius}>
+								<Paragraph
+									fontSize={badgeTextFontSize}
+									fontFamily={badgeTextFontFamily}
+									color={badgeTextColor}
+									lineHeight={
+										ios ? null : badgeTextFontSize * 1.6
+									}>
+									{colElements.toString()}
+								</Paragraph>
+							</ParagraphWrapper>
+						</SumWrapper>
+					)}
+				</RowContainer>
+				{boardRepository.items(column.id()).length - 1 === 0 ? (
+					emptyComponent ? (
+						emptyComponent()
+					) : (
+						<EmptyColumn
+							{...this.props}
+							marginTop={columnHeight / 3}
+						/>
+					)
+				) : (
+					<FlatList
+						data={boardRepository
+							.items(column.id())
+							.filter(
+								(item) =>
+									item &&
+									item.row &&
+									item.row() &&
+									item.row().id
+							)}
+						ref={this.setListView}
+						onScroll={this.handleScroll}
+						scrollEventThrottle={0}
+						onMomentumScrollEnd={this.onMomentumScrollEnd}
+						onScrollEndDrag={this.onScrollEndDrag}
+						renderItem={(item) =>
+							item.item ? this.renderWrapperRow(item.item) : null
+						}
+						onViewableItemsChanged={this.handleViewableItemsChanged}
+						viewabilityConfig={this.viewabilityConfig}
+						keyExtractor={(item) => {
+							if (
+								!item ||
+								!item.row ||
+								typeof item.row !== 'function'
+							)
+								return Math.random().toString();
+							const rowData = item.row();
+							return rowData && rowData.id
+								? rowData.id.toString()
+								: Math.random().toString();
+						}}
+						scrollEnabled={!movingMode}
+						onContentSizeChange={this.onContentSizeChange}
+						showsVerticalScrollIndicator={false}
+					/>
+				)}
+			</ColumnWrapper>
+		);
 
-    return ColumnComponent
-  }
+		return ColumnComponent;
+	}
 }
 
 Column.defaultProps = {
-  badgeBackgroundColor: colors.blurple,
-  badgeBorderRadius: 15,
-  badgeHeight: 30,
-  badgeWidth: 30,
-  badgeTextColor: colors.white,
-  badgeTextFontFamily: '',
-  badgeTextFontSize: 14,
-  columnBackgroundColor: colors.fallingStar,
-  columnBorderRadius: 6,
-  columnHeight: 650,
-  columnNameTextColor: colors.blurple,
-  columnNameFontFamily: '',
-  columnNameFontSize: 18,
-  isWithCountBadge: true,
-  oneColumn: false
-}
+	badgeBackgroundColor: colors.blurple,
+	badgeBorderRadius: 15,
+	badgeHeight: 30,
+	badgeWidth: 30,
+	badgeTextColor: colors.white,
+	badgeTextFontFamily: '',
+	badgeTextFontSize: 14,
+	columnBackgroundColor: colors.fallingStar,
+	columnBorderRadius: 6,
+	columnHeight: 620,
+	columnNameTextColor: colors.blurple,
+	columnNameFontFamily: '',
+	columnNameFontSize: 18,
+	isWithCountBadge: true,
+	oneColumn: false,
+};
 
 Column.propTypes = {
-  badgeBackgroundColor: string.isRequired,
-  badgeBorderRadius: number.isRequired,
-  badgeHeight: number.isRequired,
-  badgeWidth: number.isRequired,
-  badgeTextColor: string.isRequired,
-  badgeTextFontFamily: string.isRequired,
-  badgeTextFontSize: number.isRequired,
-  column: object,
-  columnBackgroundColor: string.isRequired,
-  columnBorderRadius: number.isRequired,
-  columnHeight: number.isRequired,
-  columnNameFontFamily: string.isRequired,
-  columnNameFontSize: number.isRequired,
-  columnNameTextColor: string.isRequired,
-  emptyComponent: func,
-  isWithCountBadge: bool.isRequired,
-  movingMode: bool.isRequired,
-  oneColumn: bool,
-  onPress: func.isRequired,
-  onPressIn: func.isRequired,
-  onScrollingEnded: func.isRequired,
-  onScrollingStarted: func.isRequired,
-  renderWrapperRow: func.isRequired,
-  boardRepository: object,
-  unsubscribeFromMovingMode: func.isRequired,
-  onFlagClicked: func,
-  onDeleteItem: func,
-  onEditItem: func
-}
+	badgeBackgroundColor: string.isRequired,
+	badgeBorderRadius: number.isRequired,
+	badgeHeight: number.isRequired,
+	badgeWidth: number.isRequired,
+	badgeTextColor: string.isRequired,
+	badgeTextFontFamily: string.isRequired,
+	badgeTextFontSize: number.isRequired,
+	column: object,
+	columnBackgroundColor: string.isRequired,
+	columnBorderRadius: number.isRequired,
+	columnHeight: number.isRequired,
+	columnNameFontFamily: string.isRequired,
+	columnNameFontSize: number.isRequired,
+	columnNameTextColor: string.isRequired,
+	emptyComponent: func,
+	isWithCountBadge: bool.isRequired,
+	movingMode: bool.isRequired,
+	oneColumn: bool,
+	onPress: func.isRequired,
+	onPressIn: func.isRequired,
+	onScrollingEnded: func.isRequired,
+	onScrollingStarted: func.isRequired,
+	renderWrapperRow: func.isRequired,
+	boardRepository: object,
+	unsubscribeFromMovingMode: func.isRequired,
+	onFlagClicked: func,
+	onDeleteItem: func,
+	onEditItem: func,
+};
 
-export default Column
+export default Column;

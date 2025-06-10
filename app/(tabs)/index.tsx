@@ -1192,17 +1192,17 @@ export default function Lists({
 				dealbreaker?.[currentProfileId] &&
 				(dealbreaker[currentProfileId]?.flag?.length > 0 ||
 					dealbreaker[currentProfileId]?.dealbreaker?.length > 0) ? (
-					<View>
+					<>
 						<View style={styles.profileButtonContainer}>
 							<View style={styles.innerProfileButtonContainer}>
-								<View style={styles.buttonRow}>
-									<AppButton
+								{/* <View style={styles.buttonRow}> */}
+								{/* <AppButton
 										title={`Switch Profile`}
 										onPress={() => {
 											setVisible(true);
 										}}
-									/>
-									{isOnline && (
+									/> */}
+								{/* {isOnline && (
 										<AppButton
 											title='Sync'
 											onPress={() => {
@@ -1215,8 +1215,8 @@ export default function Lists({
 												}
 											}}
 										/>
-									)}
-								</View>
+									)} */}
+								{/* </View> */}
 								<View style={styles.profileSwitchTextContainer}>
 									<Text style={styles.profileLabel}>
 										Profile:{' '}
@@ -1292,7 +1292,7 @@ export default function Lists({
 							isWithCountBadge={false}
 							cardNameTextColor='white'
 						/>
-					</View>
+					</>
 				) : (
 					<View style={styles.noDealbreakerContainer}>
 						<View style={styles.noDealbreakerInContainer}>
@@ -1319,8 +1319,7 @@ const styles = StyleSheet.create({
 	container: {
 		flex: 1,
 		backgroundColor: '#fff',
-		alignItems: 'center',
-		justifyContent: 'center',
+		// justifyContent: 'fl',
 	},
 	noDealbreakerContainer: {
 		flex: 1,
@@ -1337,9 +1336,7 @@ const styles = StyleSheet.create({
 		fontWeight: 'bold',
 	},
 	profileButtonContainer: {
-		flex: 0.7,
 		marginTop: 10,
-		width: 300, // Increased from 200 to accommodate both buttons
 		alignSelf: 'center',
 		justifyContent: 'center',
 		alignItems: 'center',
@@ -1380,5 +1377,8 @@ const styles = StyleSheet.create({
 	},
 	editProfileText: {
 		fontSize: 16,
+	},
+	emptyView: {
+		height: 80,
 	},
 });
