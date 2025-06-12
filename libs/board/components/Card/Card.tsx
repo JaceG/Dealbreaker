@@ -17,7 +17,7 @@ import {
 	Paragraph,
 	RowWrapper,
 } from './Card.styled';
-const NEGATIVE_SPACE = 200;
+const NEGATIVE_SPACE = 100;
 const Card = ({
 	cardBackground,
 	cardBorderRadius,
@@ -54,9 +54,9 @@ const Card = ({
 		iconContainer: {
 			flexDirection: 'row',
 			alignItems: 'center',
-			justifyContent: 'flex-center',
+			justifyContent: 'center',
 			alignSelf: 'flex-end',
-			paddingTop: '20px',
+			paddingTop: 20,
 		},
 		iconButton: {
 			padding: 5,
