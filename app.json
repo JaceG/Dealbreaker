@@ -7,7 +7,8 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
+    "newArchEnabled": true, 
+    "jsEngine": "hermes",
     "developmentClient": true,
     "splash": {
       "image": "./assets/splash-icon.png",
@@ -16,7 +17,9 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.dealbreaker.v2"
+      "bundleIdentifier": "com.dealbreaker.v2",
+      "jsEngine": "jsc"
+    
     },
     "android": {
       "adaptiveIcon": {

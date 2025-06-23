@@ -1,4 +1,4 @@
-import { Stack } from "expo-router";
+import { SplashScreen, Stack } from "expo-router";
 // Add polyfills for React Native
 import "react-native-get-random-values";
 import { Buffer } from "buffer";
@@ -683,6 +683,10 @@ const Layout = () => {
     debugLog("No changes needed for flag synchronization");
     return false;
   };
+
+  useEffect(() => {
+    SplashScreen.hideAsync();
+  }, []);
 
   return (
     <StoreContext.Provider
