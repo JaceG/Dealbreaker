@@ -33,7 +33,13 @@ export const AuthProvider = ({
 	}
 	const logout = async () => {
 		await clearSecureStore();
-		router.replace('/login');
+		setTimeout(() => {
+			try {
+				router.replace('/login/');
+			} catch (error) {
+				console.log('Navigation error during logout:', error);
+			}
+		}, 100);
 	};
 
 	useEffect(() => {
@@ -50,10 +56,24 @@ export const AuthProvider = ({
 			if (token && userData) {
 				setAuthToken(token);
 				setUser(JSON.parse(userData));
-				router.replace('/(tabs)');
+				// Add delay to ensure navigation is ready
+				setTimeout(() => {
+					try {
+						router.replace('/(tabs)');
+					} catch (error) {
+						console.log('Navigation error to tabs:', error);
+					}
+				}, 100);
 				return;
 			}
-			router.replace('/login');
+			// Add delay to ensure navigation is ready
+			setTimeout(() => {
+				try {
+					router.replace('/login/');
+				} catch (error) {
+					console.log('Navigation error to login:', error);
+				}
+			}, 100);
 		} catch (error) {
 			setError(
 				error instanceof Error

@@ -15,11 +15,6 @@ import {
 import RadioGroup, { RadioButtonProps } from 'react-native-radio-buttons-group';
 import { showToast } from '../../../utils/functions';
 import StoreContext from '../../../store';
-import {
-	useFocusEffect,
-	CommonActions,
-	StackActions,
-} from '@react-navigation/native';
 import { router } from 'expo-router';
 
 // Types from app/_layout.tsx
@@ -65,20 +60,14 @@ const CreateFlags: React.FC<{}> = () => {
 	const [description, setDescription] = useState<string>('');
 	const [error, setError] = useState<ErrorState>(initialErrorState);
 
-	// Reset form when screen is focused
-	useFocusEffect(
-		useCallback(() => {
-			console.log('Create Flag screen focused - resetting form');
-			setTitle('');
-			setDescription('');
-			setSelectedId('1');
-			setError(initialErrorState);
-
-			return () => {
-				// Clean up when screen is unfocused
-			};
-		}, [])
-	);
+	// Reset form when component mounts
+	useEffect(() => {
+		console.log('Create Flag screen mounted - resetting form');
+		setTitle('');
+		setDescription('');
+		setSelectedId('1');
+		setError(initialErrorState);
+	}, []);
 
 	// Debug component lifecycle
 	useEffect(() => {

@@ -64,8 +64,16 @@ const Layout = () => {
 	const logout = async () => {
 		await clearSecureStore();
 		setTimeout(() => {
-			router.replace('/login');
-		}, 100);
+			try {
+				router.replace('/login/');
+			} catch (error) {
+				console.log('Navigation error during logout:', error);
+				// Fallback - try again after a longer delay
+				setTimeout(() => {
+					router.replace('/login/');
+				}, 500);
+			}
+		}, 200);
 	};
 
 	return (

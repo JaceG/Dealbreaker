@@ -11,8 +11,6 @@ import { useMemo, useState, useContext, useCallback, useEffect } from 'react';
 import { showToast } from '../../../utils/functions';
 import { set } from 'react-native-reanimated';
 import StoreContext from '../../../store';
-import { useFocusEffect, CommonActions } from '@react-navigation/native';
-import { navigate, reset } from '../../../utils/navigationRef';
 import { router } from 'expo-router';
 
 // Type definitions
@@ -56,20 +54,14 @@ export default function CreateUsers({ navigation }: CreateUsersProps) {
 		name: '',
 	});
 
-	// Reset form when screen is focused
-	useFocusEffect(
-		useCallback(() => {
-			console.log('Create Profile screen focused - resetting form');
-			setName('');
-			setError({
-				name: '',
-			});
-
-			return () => {
-				// Clean up when screen is unfocused
-			};
-		}, [])
-	);
+	// Reset form when component mounts
+	useEffect(() => {
+		console.log('Create Profile screen mounted - resetting form');
+		setName('');
+		setError({
+			name: '',
+		});
+	}, []);
 
 	function handleSubmit(): void {
 		if (validate()) {
@@ -93,26 +85,9 @@ export default function CreateUsers({ navigation }: CreateUsersProps) {
 				showToast('success', 'Profile created successfully');
 				setName('');
 
-				// Try both local and global navigation methods
-				console.log('Attempting navigation via component props');
-				router.push('(tabs)');
-
-				setTimeout(() => {
-					// Try with global navigation utility
-					console.log(
-						'Attempting navigation via global navigation utility'
-					);
-					router.push('(tabs)');
-
-					// Last resort - try reset
-					setTimeout(() => {
-						console.log('Final attempt with reset');
-						reset({
-							index: 0,
-							routes: [{ name: 'Lists' }],
-						});
-					}, 300);
-				}, 300);
+				// Navigate back to tabs
+				console.log('Navigating back to tabs');
+				router.push('/(tabs)');
 			} else {
 				showToast('error', 'Failed to create profile');
 			}
