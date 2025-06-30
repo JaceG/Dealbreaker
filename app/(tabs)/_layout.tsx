@@ -11,6 +11,8 @@ import { AuthContextType } from '../login';
 import { useAuth } from '../../context/Auth';
 import { getDealbreakers } from '../../utils/mongodbapi';
 import SwitchProfileModal from '../../components/SwitchProfileModal';
+import { colors } from '../../libs/board/constants';
+
 const Layout = () => {
 	const [visible, setVisible] = useState(false);
 	const { setDealbreaker } = useContext<any>(StoreContext);
@@ -91,6 +93,7 @@ const Layout = () => {
 						tabBarIcon: ({ color }) => (
 							<FontAwesome name='home' color={color} size={28} />
 						),
+						tabBarActiveTintColor: colors.exodusFruit,
 						headerRight: () => (
 							<Button title='Logout' onPress={logout} />
 						),
@@ -110,6 +113,7 @@ const Layout = () => {
 						tabBarIcon: ({ color }) => (
 							<Feather name='flag' size={28} color={color} />
 						),
+						tabBarActiveTintColor: colors.exodusFruit,
 						headerRight: () => (
 							<Button title='Logout' onPress={logout} />
 						),
@@ -123,6 +127,7 @@ const Layout = () => {
 						tabBarIcon: ({ color }) => (
 							<Feather name='user' size={28} color={color} />
 						),
+						tabBarActiveTintColor: colors.exodusFruit,
 						headerRight: () => (
 							<Button title='Logout' onPress={logout} />
 						),

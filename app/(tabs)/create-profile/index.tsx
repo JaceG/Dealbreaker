@@ -12,6 +12,7 @@ import { showToast } from '../../../utils/functions';
 import { set } from 'react-native-reanimated';
 import StoreContext from '../../../store';
 import { router } from 'expo-router';
+import { colors } from '../../../libs/board/constants';
 
 // Type definitions
 interface Profile {
@@ -165,7 +166,7 @@ export default function CreateUsers({ navigation }: CreateUsersProps) {
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
-		backgroundColor: 'blue',
+		backgroundColor: 'white',
 		padding: 10,
 	},
 	row: {
@@ -178,34 +179,34 @@ const styles = StyleSheet.create({
 	textInput: {
 		padding: 13,
 		borderWidth: 1,
-		borderColor: '#fff',
+		borderColor: '#000',
 		borderRadius: 5,
 		width: '100%',
-		color: '#fff',
+		color: '#000',
 	},
 	text: {
 		fontSize: 20,
 		marginBottom: 10,
 		fontWeight: 'bold' as const,
-		color: '#fff',
+		color: '#000',
 	},
 	description: {
 		height: 120,
 		textAlignVertical: 'top' as const,
-		color: '#fff',
+		color: '#000',
 	},
 	radioButtonStyle: {
 		flexDirection: 'row' as const,
 		justifyContent: 'space-between' as const,
 	},
 	errorText: {
-		color: '#fff',
+		color: '#000',
 		fontSize: 16,
 		marginTop: 3,
 		marginBottom: 3,
 	},
 	button: {
-		backgroundColor: '#fff',
+		backgroundColor: colors.exodusFruit,
 		paddingVertical: 15,
 		paddingHorizontal: 20,
 		borderRadius: 10,
@@ -217,7 +218,7 @@ const styles = StyleSheet.create({
 		shadowRadius: 2,
 	},
 	buttonText: {
-		color: 'blue',
+		color: '#fff',
 		fontSize: 18,
 		fontWeight: 'bold' as const,
 	},

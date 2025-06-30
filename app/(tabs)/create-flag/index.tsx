@@ -16,6 +16,7 @@ import RadioGroup, { RadioButtonProps } from 'react-native-radio-buttons-group';
 import { showToast } from '../../../utils/functions';
 import StoreContext from '../../../store';
 import { router } from 'expo-router';
+import { colors } from '../../../libs/board/constants';
 
 // Types from app/_layout.tsx
 interface FlagItem {
@@ -42,15 +43,15 @@ const CreateFlags: React.FC<{}> = () => {
 				id: '1',
 				label: 'Flag',
 				value: 'flag',
-				color: '#fff',
-				labelStyle: { color: '#fff', fontSize: 20 },
+				color: '#000',
+				labelStyle: { color: '#000', fontSize: 20 },
 			},
 			{
 				id: '2',
 				label: 'Dealbreaker',
 				value: 'dealbreaker',
-				color: '#fff',
-				labelStyle: { color: '#fff', fontSize: 20 },
+				color: 'red',
+				labelStyle: { color: 'red', fontSize: 20 },
 			},
 		],
 		[]
@@ -231,7 +232,7 @@ const CreateFlags: React.FC<{}> = () => {
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
-		backgroundColor: '#eb4d4b',
+		backgroundColor: '#fff',
 		padding: 10,
 	},
 	row: {
@@ -244,7 +245,7 @@ const styles = StyleSheet.create({
 	textInput: {
 		padding: 13,
 		borderWidth: 1,
-		borderColor: '#fff',
+		borderColor: '#000',
 		borderRadius: 5,
 		width: '100%',
 	},
@@ -252,25 +253,25 @@ const styles = StyleSheet.create({
 		fontSize: 20,
 		marginBottom: 10,
 		fontWeight: 'bold',
-		color: '#fff',
+		color: '#000',
 	},
 	description: {
 		height: 120,
 		textAlignVertical: 'top',
-		color: '#fff',
+		color: '#000',
 	},
 	radioButtonStyle: {
 		flexDirection: 'row',
 		justifyContent: 'space-between',
 	},
 	errorText: {
-		color: '#fff',
+		color: '#000',
 		fontSize: 16,
 		marginTop: 3,
 		marginBottom: 3,
 	},
 	button: {
-		backgroundColor: '#fff',
+		backgroundColor: colors.exodusFruit,
 		paddingVertical: 15,
 		paddingHorizontal: 20,
 		borderRadius: 10,
@@ -282,7 +283,7 @@ const styles = StyleSheet.create({
 		shadowRadius: 2,
 	},
 	buttonText: {
-		color: '#eb4d4b',
+		color: '#fff',
 		fontSize: 18,
 		fontWeight: 'bold',
 	},
