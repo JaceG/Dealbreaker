@@ -4,7 +4,7 @@ import 'react-native-get-random-values';
 import { Buffer } from 'buffer';
 
 // Define types for our data structures
-interface FlagItem {
+export interface FlagItem {
 	id: string;
 	[key: string]: any;
 }

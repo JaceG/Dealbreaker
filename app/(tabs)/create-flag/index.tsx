@@ -17,168 +17,37 @@ import { showToast } from '../../../utils/functions';
 import StoreContext from '../../../store';
 import { router } from 'expo-router';
 import { colors } from '../../../libs/board/constants';
+import useCreateFlag from '../../../hooks/useCreateFlag';
 
 // Types from app/_layout.tsx
-interface FlagItem {
+export interface FlagItem {
 	id: string;
 	[key: string]: any;
 }
 
-interface ErrorState {
+export interface ErrorState {
 	title: string;
 	description: string;
 }
 
-const initialErrorState: ErrorState = {
+export const initialErrorState: ErrorState = {
 	title: '',
 	description: '',
 };
 
 const CreateFlags: React.FC<{}> = () => {
+	const {
+		radioButtons,
+		title,
+		description,
+		error,
+		handleSubmit,
+		handleTitleChange,
+		handleDescriptionChange,
+		selectedId,
+		setSelectedId,
+	} = useCreateFlag();
 	// Context type is not strongly typed in store, so use 'any' for now
-	const { addItemToAllProfiles } = useContext<any>(StoreContext);
-	const radioButtons: RadioButtonProps[] = useMemo(
-		() => [
-			{
-				id: '1',
-				label: 'Flag',
-				value: 'flag',
-				color: '#000',
-				labelStyle: { color: '#000', fontSize: 20 },
-			},
-			{
-				id: '2',
-				label: 'Dealbreaker',
-				value: 'dealbreaker',
-				color: 'red',
-				labelStyle: { color: 'red', fontSize: 20 },
-			},
-		],
-		[]
-	);
-
-	const [title, setTitle] = useState<string>('');
-	const [description, setDescription] = useState<string>('');
-	const [error, setError] = useState<ErrorState>(initialErrorState);
-
-	// Reset form when component mounts
-	useEffect(() => {
-		console.log('Create Flag screen mounted - resetting form');
-		setTitle('');
-		setDescription('');
-		setSelectedId('1');
-		setError(initialErrorState);
-	}, []);
-
-	// Debug component lifecycle
-	useEffect(() => {
-		console.log('CreateFlags component mounted');
-
-		return () => {
-			console.log('CreateFlags component unmounted');
-		};
-	}, []);
-
-	function handleSubmit() {
-		if (validate()) {
-			const type = selectedId === '1' ? 'flag' : 'dealbreaker';
-
-			// Create a unique ID with timestamp for better tracking
-			const newItemId = Math.random() * 1000 + Date.now() / 1000000;
-
-			// Create the new item
-			const newItem: FlagItem = {
-				id: newItemId.toString(),
-				title,
-				description,
-				flag: 'white',
-			};
-
-			// Use the central function to add the item to all profiles
-			addItemToAllProfiles(newItem, type);
-
-			// Log before navigation to help with debugging
-			console.log('Flag created successfully, attempting navigation...');
-			showToast('success', 'Flag created successfully');
-
-			// Reset form immediately
-			setTitle('');
-			setDescription('');
-			setSelectedId('1');
-
-			// Try both local and global navigation methods
-			console.log('Attempting navigation via component props');
-			router.push('/(tabs)');
-			// router.push({
-			// 	pathname: 'index',
-			// });
-			// setTimeout(() => {
-			// 	// Try with global navigation utility
-			// 	console.log(
-			// 		'Attempting navigation via global navigation utility'
-			// 	);
-			// 	// router.push('(tabs)/index');
-
-			// 	// Last resort - try reset
-			// 	setTimeout(() => {
-			// 		console.log('Final attempt with reset');
-			// 		// reset({
-			// 		// 	index: 0,
-			// 		// 	routes: [{ name: '(tabs)/index' }],
-			// 		// });
-			// 	}, 300);
-			// }, 300);
-		} else showToast('error', 'Fix the following errors');
-	}
-
-	const [selectedId, setSelectedId] = useState<string>('1');
-	function handleTitleChange(text: string) {
-		setTitle(text);
-		handleValidation('title', text);
-	}
-	function handleDescriptionChange(text: string) {
-		setDescription(text);
-		handleValidation('description', text);
-	}
-	function handleValidation(
-		type: keyof ErrorState,
-		text: string = '',
-		isShow: boolean = true,
-		initialError: ErrorState | null = null
-	): ErrorState {
-		let newError: ErrorState = {
-			title: initialError ? initialError.title : error.title,
-			description: initialError
-				? initialError.description
-				: error.description,
-		};
-		newError[type] = '';
-		if (!text && type === 'title') {
-			newError[type] = `${type} is required`;
-		}
-		if (text && type === 'title' && text.length > 100) {
-			newError[type] = `${type} too long`;
-		}
-		if (text && type === 'description' && text.length > 1000) {
-			newError[type] = `${type} too long`;
-		}
-		if (isShow) setError(newError);
-
-		return newError;
-	}
-
-	function validate(): boolean {
-		let newError = handleValidation('title', title, false, error);
-		newError = handleValidation(
-			'description',
-			description,
-			false,
-			newError
-		);
-		setError(newError);
-		const errorList = Object.values(newError);
-		return !errorList.find((item) => item);
-	}
 
 	return (
 		<View style={styles.container}>

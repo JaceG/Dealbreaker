@@ -61,6 +61,14 @@ const ReasonInputModal = ({
 	prevStatus,
 	newStatus,
 	modalTitle,
+}: {
+	visible: boolean;
+	onClose: () => void;
+	onSubmit: (reason: string, attachments: any[]) => void;
+	flagTitle: string;
+	prevStatus: string;
+	newStatus: string;
+	modalTitle?: string;
 }) => {
 	const [reason, setReason] = useState('');
 	const [attachments, setAttachments] = useState([]);

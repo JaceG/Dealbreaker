@@ -225,7 +225,7 @@ const styles = StyleSheet.create({
 		alignItems: 'center',
 	},
 	switchButtonText: {
-		color: '#007bff',
+		color: colors.exodusFruit,
 		fontSize: 14,
 	},
 	errorText: {
