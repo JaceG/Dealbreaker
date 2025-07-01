@@ -10,6 +10,7 @@ import FlagHistoryModal from '../../components/FlagHistoryModal';
 import ReasonInputModal from '../../components/ReasonInputModal';
 import { router } from 'expo-router';
 import useBoardManagement from '../../hooks/useBoardManagement';
+import BoardManagementModals from '../../components/BoardManagementModals';
 
 export default function Lists() {
 	const {
@@ -96,105 +97,47 @@ export default function Lists() {
 
 	return (
 		<View style={styles.container}>
-			<SwitchProfileModal
+			<BoardManagementModals
 				visible={visible}
-				onClose={() => setVisible(false)}
-			/>
-
-			<ConfirmationModal
-				visible={deleteModalVisible}
-				onClose={() => {
-					setDeleteModalVisible(false);
-					setItemToDelete(null);
-				}}
-				onConfirm={confirmDeleteItem}
-				title='Delete Item'
-				message='This will delete the item from all profiles. Are you sure you want to delete it?'
-			/>
-
-			<EditItemModal
-				visible={editModalVisible}
-				onClose={() => {
-					setEditModalVisible(false);
-					setItemToEdit(null);
-				}}
-				onSave={handleSaveEdit}
-				item={itemToEdit}
-			/>
-
-			<EditProfileModal
-				visible={editProfileModalVisible}
-				onClose={() => setEditProfileModalVisible(false)}
-				onSave={handleSaveProfileEdit}
-				profileId={currentProfileId}
-				profileName={getCurrentProfileName()}
-				existingProfiles={profiles}
-			/>
-
-			<DealbreakerAlert
-				visible={dealbreakerAlertVisible}
-				onClose={() => {
-					setDealbreakerAlertVisible(false);
-					setTransitionedItem(null);
-				}}
-				onUndo={handleUndoTransition}
-				itemTitle={transitionedItem?.title || ''}
-			/>
-
-			{/* Flag change reason modal from context */}
-			<ReasonInputModal
-				key={`reasonModal-${reasonModalVisible}`}
-				visible={reasonModalVisible}
-				onClose={handleCancelFlagChange}
-				onSubmit={handleFlagChangeWithReason}
-				flagTitle={
-					pendingFlagChange?.item?.attributes?.row?.name || 'Flag'
+				setVisible={setVisible}
+				deleteModalVisible={deleteModalVisible}
+				setDeleteModalVisible={setDeleteModalVisible}
+				itemToDelete={itemToDelete}
+				setItemToDelete={setItemToDelete}
+				editModalVisible={editModalVisible}
+				setEditModalVisible={setEditModalVisible}
+				itemToEdit={itemToEdit}
+				setItemToEdit={setItemToEdit}
+				editProfileModalVisible={editProfileModalVisible}
+				setEditProfileModalVisible={setEditProfileModalVisible}
+				dealbreakerAlertVisible={dealbreakerAlertVisible}
+				setDealbreakerAlertVisible={setDealbreakerAlertVisible}
+				transitionedItem={transitionedItem}
+				setTransitionedItem={setTransitionedItem}
+				pendingFlagChange={pendingFlagChange}
+				selectedFlag={selectedFlag}
+				reasonModalVisible={reasonModalVisible}
+				additionalReasonModalVisible={additionalReasonModalVisible}
+				historyModalVisible={historyModalVisible}
+				currentProfileId={currentProfileId}
+				profiles={profiles}
+				confirmDeleteItem={confirmDeleteItem}
+				handleSaveEdit={handleSaveEdit}
+				handleUndoTransition={handleUndoTransition}
+				handleCancelFlagChange={handleCancelFlagChange}
+				handleFlagChangeWithReason={handleFlagChangeWithReason}
+				handleAddAdditionalReason={handleAddAdditionalReason}
+				handleOpenAddReasonModal={handleOpenAddReasonModal}
+				handleTransitionReasonCancel={handleTransitionReasonCancel}
+				handleTransitionReasonSubmit={handleTransitionReasonSubmit}
+				pendingTransition={pendingTransition}
+				transitionReasonModalVisible={transitionReasonModalVisible}
+				handleSaveProfileEdit={handleSaveProfileEdit}
+				getCurrentProfileName={getCurrentProfileName}
+				setAdditionalReasonModalVisible={
+					setAdditionalReasonModalVisible
 				}
-				prevStatus={pendingFlagChange?.previousStatus || 'white'}
-				newStatus={pendingFlagChange?.newFlag || 'white'}
-			/>
-
-			{/* Additional reason modal from context */}
-			<ReasonInputModal
-				key={`additionalReasonModal-${additionalReasonModalVisible}`}
-				visible={additionalReasonModalVisible}
-				onClose={() => setAdditionalReasonModalVisible(false)}
-				onSubmit={handleAddAdditionalReason}
-				flagTitle={selectedFlag?.title || selectedFlag?.name || 'Flag'}
-				prevStatus='white'
-				newStatus={selectedFlag?.flag || 'white'}
-				modalTitle='Add Additional Context'
-			/>
-
-			{/* Flag history modal from context */}
-			{selectedFlag && (
-				<FlagHistoryModal
-					visible={historyModalVisible}
-					onClose={() => setHistoryModalVisible(false)}
-					profileId={currentProfileId}
-					flagId={selectedFlag?.id}
-					flagTitle={selectedFlag?.title || selectedFlag?.name || ''}
-					onAddReason={handleOpenAddReasonModal}
-				/>
-			)}
-
-			{/* Transition reason modal */}
-			<ReasonInputModal
-				visible={transitionReasonModalVisible}
-				onClose={handleTransitionReasonCancel}
-				onSubmit={handleTransitionReasonSubmit}
-				flagTitle={pendingTransition?.itemTitle || 'Item'}
-				prevStatus={
-					pendingTransition?.type === 'dealbreaker-to-flag'
-						? 'dealbreaker'
-						: pendingTransition?.prevStatus || 'white'
-				}
-				newStatus={pendingTransition?.newStatus || 'white'}
-				modalTitle={
-					pendingTransition?.type === 'flag-to-dealbreaker'
-						? 'Moving to Dealbreakers'
-						: 'Moving to Flags'
-				}
+				setHistoryModalVisible={setHistoryModalVisible}
 			/>
 
 			{list &&

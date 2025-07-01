@@ -7,7 +7,7 @@ import { useAuth } from '../context/Auth';
 import { BoardRepository } from '../libs/board/components';
 import { showToast } from '../utils/functions';
 import { addFlagHistory } from '../utils/mongodb';
-import { data } from '../models/boardManagementModel';
+import { data, PendingTransition } from '../models/boardManagementModel';
 import { FlagItem } from '../app/_layout';
 
 const useBoardManagement = () => {
@@ -64,7 +64,8 @@ const useBoardManagement = () => {
 	// New state for transition reason modal
 	const [transitionReasonModalVisible, setTransitionReasonModalVisible] =
 		useState(false);
-	const [pendingTransition, setPendingTransition] = useState<any>(null);
+	const [pendingTransition, setPendingTransition] =
+		useState<PendingTransition | null>(null);
 
 	// Create a reference to track if an operation is a user drag
 	const isDragOperationRef = useRef(false);
@@ -330,6 +331,7 @@ const useBoardManagement = () => {
 						newStatus: movedItem.flag || 'white',
 						prevCardType: 'flag',
 						newCardType: 'dealbreaker',
+						newFlagColor: 'white',
 					});
 					setTransitionReasonModalVisible(true);
 

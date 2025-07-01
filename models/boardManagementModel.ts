@@ -86,3 +86,65 @@ export const data = [
 		rows: [],
 	},
 ];
+
+export interface PendingTransition {
+	type: 'dealbreaker-to-flag' | 'flag-to-dealbreaker';
+	profileId: string;
+	profileName: string;
+	itemId: string;
+	itemTitle: string;
+	prevStatus: string;
+	newStatus: string;
+	prevCardType: 'dealbreaker' | 'flag';
+	newCardType: 'dealbreaker' | 'flag';
+	newFlagColor: string;
+	isUndo?: boolean;
+}
+
+export type BoardManagementModalsProps = {
+	// Modal visibility states
+	visible: boolean;
+	setVisible: (visible: boolean) => void;
+	deleteModalVisible: boolean;
+	setDeleteModalVisible: (visible: boolean) => void;
+	editModalVisible: boolean;
+	setEditModalVisible: (visible: boolean) => void;
+	editProfileModalVisible: boolean;
+	setEditProfileModalVisible: (visible: boolean) => void;
+	dealbreakerAlertVisible: boolean;
+	setDealbreakerAlertVisible: (visible: boolean) => void;
+	reasonModalVisible: boolean;
+	additionalReasonModalVisible: boolean;
+	setAdditionalReasonModalVisible: (visible: boolean) => void;
+	historyModalVisible: boolean;
+	setHistoryModalVisible: (visible: boolean) => void;
+	transitionReasonModalVisible: boolean;
+
+	// Item states
+	itemToDelete: any;
+	setItemToDelete: (item: any) => void;
+	itemToEdit: any;
+	setItemToEdit: (item: any) => void;
+	transitionedItem: any;
+	setTransitionedItem: (item: any) => void;
+	pendingFlagChange: any;
+	selectedFlag: any;
+	pendingTransition: PendingTransition | null;
+
+	// Profile data
+	currentProfileId: string;
+	profiles: Profile[];
+	getCurrentProfileName: () => string;
+
+	// Action handlers
+	confirmDeleteItem: () => void;
+	handleSaveEdit: (item: any) => void;
+	handleSaveProfileEdit: (profileId: string, newName: string) => void;
+	handleUndoTransition: () => void;
+	handleCancelFlagChange: () => void;
+	handleFlagChangeWithReason: (reason: string, attachments?: any[]) => void;
+	handleAddAdditionalReason: (reason: string, attachments?: any[]) => void;
+	handleOpenAddReasonModal: () => void;
+	handleTransitionReasonCancel: () => void;
+	handleTransitionReasonSubmit: (reason: string, attachments?: any[]) => void;
+};
