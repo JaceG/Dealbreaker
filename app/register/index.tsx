@@ -17,7 +17,7 @@ import { useAuth } from '../../context/Auth';
 import { router } from 'expo-router';
 import { API_BASE_URL } from '../../constants/api';
 import * as SecureStore from 'expo-secure-store';
-import { AuthContextType } from '../login';
+import { AuthContextType } from '../../models/authModels';
 import { colors } from '../../libs/board/constants';
 import useRegister from '../../hooks/useRegister';
 

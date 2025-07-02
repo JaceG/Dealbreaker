@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Text, Modal, TextInput, Alert } from 'react-native';
 import AppButton from '../AppButton';
 import { colors } from '../../libs/board/constants';
+import { EditProfileModalProps } from '../../models/modalModels';
 
 const EditProfileModal = ({
 	visible,
@@ -10,7 +11,7 @@ const EditProfileModal = ({
 	profileId,
 	profileName,
 	existingProfiles,
-}) => {
+}: EditProfileModalProps) => {
 	const [name, setName] = useState('');
 	const [error, setError] = useState('');
 
@@ -22,12 +23,12 @@ const EditProfileModal = ({
 		}
 	}, [visible, profileName]);
 
-	const handleNameChange = (text) => {
+	const handleNameChange = (text: string) => {
 		setName(text);
 		validateName(text);
 	};
 
-	const validateName = (value) => {
+	const validateName = (value: string) => {
 		// Name cannot be empty
 		if (!value.trim()) {
 			setError('Profile name is required');

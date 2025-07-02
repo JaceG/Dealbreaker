@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/Auth';
-import { AuthContextType } from '../app/login';
+import { AuthContextType } from '../models/authModels';
 import { API_BASE_URL } from '../constants/api';
 import * as SecureStore from 'expo-secure-store';
 import { router } from 'expo-router';

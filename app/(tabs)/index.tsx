@@ -185,6 +185,20 @@ export default function Lists() {
 									if (!dealbreaker?.[currentProfileId])
 										return;
 
+									// Safety checks for draggedItem structure
+									if (
+										!draggedItem ||
+										!draggedItem.attributes ||
+										!draggedItem.attributes.row ||
+										!draggedItem.attributes.row.id
+									) {
+										console.warn(
+											'Invalid draggedItem structure:',
+											draggedItem
+										);
+										return;
+									}
+
 									// Set the flag to indicate this is a user drag operation
 									isDragOperationRef.current = true;
 
@@ -192,24 +206,44 @@ export default function Lists() {
 									if (draggedItem.attributes.columnId === 2) {
 										isDealbreaker = true;
 									}
-									let oldIndex = flagListIndexRef.current.get(
-										draggedItem.attributes.row.id
-									);
+
+									const itemId =
+										draggedItem.attributes.row.id;
+									let oldIndex =
+										flagListIndexRef.current.get(itemId);
 									console.log('oldIndex: ', oldIndex);
-									console.log(
-										'draggedItem: ',
-										draggedItem.attributes.row.id
-									);
+									console.log('draggedItem: ', itemId);
+
 									if (!oldIndex && oldIndex !== 0) {
 										oldIndex =
 											dealbreakerListIndexRef.current.get(
-												draggedItem.attributes.row.id
+												itemId
 											);
 									}
+
+									// Safety check for required properties
+									if (
+										draggedItem.attributes.index ===
+											undefined ||
+										oldIndex === undefined
+									) {
+										console.warn(
+											'Missing required properties for updateListOrder:',
+											{
+												newIndex:
+													draggedItem.attributes
+														.index,
+												oldIndex: oldIndex,
+												itemId: itemId,
+											}
+										);
+										return;
+									}
+
 									updateListOrder(
 										draggedItem.attributes.index,
 										oldIndex as number,
-										draggedItem.attributes.row.id,
+										itemId,
 										isDealbreaker
 									);
 								}}

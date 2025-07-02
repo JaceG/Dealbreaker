@@ -1,12 +1,18 @@
 import { useState, useEffect } from 'react';
 import { Alert } from 'react-native';
-import { AuthContextType } from '../app/login';
 import { API_BASE_URL } from '../constants/api';
 import { useAuth } from '../context/Auth';
 import { router } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
+import {
+	AuthContextType,
+	LoginHookReturn,
+	UserData,
+	LoginApiResponse,
+	UserApiResponse,
+} from '../models/authModels';
 
-const useLogin = () => {
+const useLogin = (): LoginHookReturn => {
 	const [isLogin, setIsLogin] = useState(true);
 	const [name, setName] = useState('');
 	const [email, setEmail] = useState('');
@@ -161,7 +167,7 @@ const useLogin = () => {
 			});
 
 			// Transform MongoDB _id to id for consistency in the app
-			const normalizedUserData = {
+			const normalizedUserData: UserData = {
 				...userData,
 				id: userData._id, // Add id field based on MongoDB's _id
 			};
@@ -172,7 +178,7 @@ const useLogin = () => {
 				JSON.stringify(normalizedUserData)
 			);
 			console.log('Login successful');
-			loginAuth(normalizedUserData as unknown, token);
+			loginAuth(normalizedUserData, token);
 			return true;
 		} catch (error) {
 			console.error('Login error:', error);

@@ -3,9 +3,10 @@ import { StyleSheet, Modal, View, Text, Alert } from 'react-native';
 import { useState, useContext, useEffect, useCallback, memo } from 'react';
 import AppButton from '../AppButton';
 import StoreContext from '../../store';
+import { SwitchProfileModalProps } from '../../models/modalModels';
 
-const SwitchProfileModal = memo(
-	({ visible, onClose }: { visible: boolean; onClose: () => void }) => {
+const SwitchProfileModal = memo<SwitchProfileModalProps>(
+	({ visible, onClose }) => {
 		// Move all context usage to the top level of the component
 		const {
 			currentProfileId,
@@ -13,11 +14,13 @@ const SwitchProfileModal = memo(
 			profiles = [],
 			ensureProfileExists,
 			deleteProfile,
-		} = useContext(StoreContext);
+		} = useContext(StoreContext) as any;
 
-		const [selectedId, setSelectedId] = useState(null);
+		const [selectedId, setSelectedId] = useState<string | null>(null);
 		const [isFocus, setIsFocus] = useState(false);
-		const [data, setData] = useState([]);
+		const [data, setData] = useState<
+			Array<{ label: string; value: string }>
+		>([]);
 
 		// Update dropdown data and selected value when modal becomes visible
 		useEffect(() => {
@@ -40,7 +43,7 @@ const SwitchProfileModal = memo(
 
 		// Check if a profile can be deleted (not main and not the only profile)
 		const canDeleteProfile = useCallback(
-			(profileId) => {
+			(profileId: string) => {
 				return (
 					profileId !== 'main' &&
 					Array.isArray(profiles) &&
@@ -76,7 +79,7 @@ const SwitchProfileModal = memo(
 		// Handle profile deletion
 		const handleDeleteProfile = useCallback(() => {
 			// Extra protection - don't allow deleting main profile or if only one profile exists
-			if (!canDeleteProfile(selectedId)) {
+			if (!selectedId || !canDeleteProfile(selectedId)) {
 				console.log(
 					'Prevented attempt to delete profile - either main or only profile'
 				);
@@ -84,7 +87,9 @@ const SwitchProfileModal = memo(
 			}
 
 			// Find the profile name to display in the confirmation
-			const selectedProfile = profiles.find((p) => p.id === selectedId);
+			const selectedProfile = profiles.find(
+				(p: { id: string; name: string }) => p.id === selectedId
+			);
 			if (!selectedProfile) return;
 
 			// Show confirmation alert
@@ -127,10 +132,13 @@ const SwitchProfileModal = memo(
 			);
 		}, [selectedId, profiles, canDeleteProfile, onClose, deleteProfile]);
 
-		const handleDropdownChange = useCallback((item) => {
-			setSelectedId(item.value);
-			setIsFocus(false);
-		}, []);
+		const handleDropdownChange = useCallback(
+			(item: { label: string; value: string }) => {
+				setSelectedId(item.value);
+				setIsFocus(false);
+			},
+			[]
+		);
 
 		return (
 			<Modal visible={visible} animationType='slide'>
@@ -163,7 +171,7 @@ const SwitchProfileModal = memo(
 								title='Select Profile'
 								onPress={handleProfileChange}
 							/>
-							{canDeleteProfile(selectedId) ? (
+							{selectedId && canDeleteProfile(selectedId) ? (
 								<AppButton
 									title='Delete Profile'
 									onPress={handleDeleteProfile}

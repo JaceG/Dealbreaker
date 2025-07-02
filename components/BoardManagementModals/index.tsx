@@ -5,7 +5,7 @@ import EditProfileModal from '../EditProfileModal';
 import DealbreakerAlert from '../DealbreakerAlert';
 import FlagHistoryModal from '../FlagHistoryModal';
 import ReasonInputModal from '../ReasonInputModal';
-import { BoardManagementModalsProps } from '../../models/boardManagementModel';
+import { BoardManagementModalsProps } from '../../models/modalModels';
 
 const BoardManagementModals = ({
 	visible,

@@ -2,8 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Text, Modal, TextInput, Alert } from 'react-native';
 import AppButton from '../AppButton';
 import { colors } from '../../libs/board/constants';
+import { EditItemModalProps } from '../../models/modalModels';
 
-const EditItemModal = ({ visible, onClose, onSave, item }) => {
+const EditItemModal = ({
+	visible,
+	onClose,
+	onSave,
+	item,
+}: EditItemModalProps) => {
 	const [title, setTitle] = useState('');
 	const [description, setDescription] = useState('');
 	const [error, setError] = useState({
@@ -23,17 +29,17 @@ const EditItemModal = ({ visible, onClose, onSave, item }) => {
 		}
 	}, [visible, item]);
 
-	const handleTitleChange = (text) => {
+	const handleTitleChange = (text: string) => {
 		setTitle(text);
 		validateField('title', text);
 	};
 
-	const handleDescriptionChange = (text) => {
+	const handleDescriptionChange = (text: string) => {
 		setDescription(text);
 		validateField('description', text);
 	};
 
-	const validateField = (field, value) => {
+	const validateField = (field: string, value: string) => {
 		let errorMessage = '';
 
 		if (field === 'title') {

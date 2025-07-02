@@ -1,7 +1,15 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors } from '../../libs/board/constants';
 
-const AppButton = ({ title, onPress, color = colors.exodusFruit }) => {
+const AppButton = ({
+	title,
+	onPress,
+	color = colors.exodusFruit,
+}: {
+	title: string;
+	onPress: () => void;
+	color?: string;
+}) => {
 	return (
 		<Pressable onPress={onPress}>
 			<View style={[styles.container, { backgroundColor: color }]}>

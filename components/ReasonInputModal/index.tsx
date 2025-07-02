@@ -15,6 +15,7 @@ import {
 import { showToast, uploadToS3 } from '../../utils';
 import { imageUtils } from '../../utils/functions';
 import { colors } from '../../libs/board/constants';
+import { SimpleAttachment, SimpleAttachmentType } from '../../models';
 
 // Feature flags to disable native modules
 const AUDIO_ENABLED = false;
@@ -24,23 +25,26 @@ const MOCK_AUDIO_ENABLED = true; // Enable mock audio without using native modul
 const DEBUG_LOGGING = false;
 
 // Helper to prevent excessive logging
-const debugLog = (...args) => {
+const debugLog = (...args: any[]) => {
 	if (DEBUG_LOGGING) {
 		console.log(...args);
 	}
 };
 
 // Conditionally import modules only if enabled
-let Audio = null;
-let ImagePicker = null;
+let Audio: any = null;
+let ImagePicker: any = null;
 
 // Try to load modules only if enabled
 if (AUDIO_ENABLED) {
 	try {
 		Audio = require('expo-av').Audio;
 		console.log('Audio module loaded successfully');
-	} catch (error) {
-		console.log('Audio module not available:', error.message);
+	} catch (error: any) {
+		console.log(
+			'Audio module not available:',
+			error?.message || 'Unknown error'
+		);
 	}
 }
 
@@ -48,8 +52,11 @@ if (IMAGE_PICKER_ENABLED) {
 	try {
 		ImagePicker = require('expo-image-picker');
 		console.log('ImagePicker module loaded successfully');
-	} catch (error) {
-		console.log('ImagePicker module not available:', error.message);
+	} catch (error: any) {
+		console.log(
+			'ImagePicker module not available:',
+			error?.message || 'Unknown error'
+		);
 	}
 }
 
@@ -64,28 +71,32 @@ const ReasonInputModal = ({
 }: {
 	visible: boolean;
 	onClose: () => void;
-	onSubmit: (reason: string, attachments: any[]) => void;
+	onSubmit: (reason: string, attachments: SimpleAttachment[]) => void;
 	flagTitle: string;
 	prevStatus: string;
 	newStatus: string;
 	modalTitle?: string;
 }) => {
 	const [reason, setReason] = useState('');
-	const [attachments, setAttachments] = useState([]);
+	const [attachments, setAttachments] = useState<SimpleAttachment[]>([]);
 	const [isPickerAvailable, setIsPickerAvailable] = useState(true);
 
 	// Audio recording states - only used if Audio is available
-	const [recording, setRecording] = useState(null);
-	const [recordingStatus, setRecordingStatus] = useState('idle');
+	const [recording, setRecording] = useState<any>(null);
+	const [recordingStatus, setRecordingStatus] = useState<
+		'idle' | 'recording' | 'saving'
+	>('idle');
 	const [recordingDuration, setRecordingDuration] = useState(0);
 	const [audioPermission, setAudioPermission] = useState(false);
-	const recordingInterval = useRef(null);
+	const recordingInterval = useRef<NodeJS.Timeout | null>(null);
 
 	// Audio playback states - only used if Audio is available
-	const [sound, setSound] = useState(null);
+	const [sound, setSound] = useState<any>(null);
 	const [isPlaying, setIsPlaying] = useState(false);
 	const [playbackPosition, setPlaybackPosition] = useState(0);
-	const [playingAttachmentId, setPlayingAttachmentId] = useState(null);
+	const [playingAttachmentId, setPlayingAttachmentId] = useState<
+		string | null
+	>(null);
 
 	// Add state to track submission progress
 	const [isSubmitting, setIsSubmitting] = useState(false);
@@ -228,7 +239,7 @@ const ReasonInputModal = ({
 			console.log('SUBMIT: Attachments count:', attachments.length);
 
 			// Process attachments to upload images to S3
-			const processedAttachments = [];
+			const processedAttachments: SimpleAttachment[] = [];
 
 			// Upload any image attachments to S3
 			for (let i = 0; i < attachments.length; i++) {
@@ -276,7 +287,6 @@ const ReasonInputModal = ({
 								url: s3Url,
 								name: attachment.name || filename,
 								timestamp: new Date().toISOString(),
-								isS3: true,
 							});
 							console.log(
 								`SUBMIT: Successfully added S3 attachment to processedAttachments list`
@@ -298,10 +308,9 @@ const ReasonInputModal = ({
 							);
 							processedAttachments.push({
 								...attachment,
-								errorInfo: 'S3 upload failed - no URL returned',
 							});
 						}
-					} catch (error) {
+					} catch (error: any) {
 						console.error(
 							`SUBMIT: Error uploading attachment ${i} to S3:`,
 							error
@@ -309,18 +318,15 @@ const ReasonInputModal = ({
 						showToast(
 							'error',
 							'Upload failed',
-							`Error: ${error.message || 'Unknown error'}`
+							`Error: ${error?.message || 'Unknown error'}`
 						);
 
 						// Fall back to using the original URL with error info
 						console.log(
-							`SUBMIT: Falling back to original URL due to error: ${error.message}`
+							`SUBMIT: Falling back to original URL due to error: ${error?.message}`
 						);
 						processedAttachments.push({
 							...attachment,
-							errorInfo: `S3 upload error: ${
-								error.message || 'Unknown error'
-							}`,
 						});
 					}
 				} else {
@@ -511,7 +517,7 @@ const ReasonInputModal = ({
 	};
 
 	// Add mock images in simulator mode
-	const addMockImages = (count) => {
+	const addMockImages = (count: number) => {
 		try {
 			// Sample image URLs that work in simulators
 			const sampleImages = [
@@ -546,7 +552,7 @@ const ReasonInputModal = ({
 	};
 
 	// Add mock videos in simulator mode
-	const addMockVideos = (count) => {
+	const addMockVideos = (count: number) => {
 		try {
 			// Sample video URLs that work in simulators
 			const sampleVideos = [
@@ -586,7 +592,7 @@ const ReasonInputModal = ({
 			const duration = Math.floor(Math.random() * 40) + 5;
 
 			// Create mock audio attachment (no real URI in simulator)
-			const attachment = {
+			const attachment: SimpleAttachment = {
 				type: 'audio',
 				// Use a remote audio file that actually works in simulator
 				url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
@@ -693,8 +699,8 @@ const ReasonInputModal = ({
 				const attachment = imageUtils.prepareAudioAttachment(
 					uri,
 					finalDuration,
-					`voice-memo-${Date.now()}.m4a`
-				);
+					null
+				) as SimpleAttachment | null;
 
 				if (attachment) {
 					setAttachments((prev) => [...prev, attachment]);
@@ -714,7 +720,7 @@ const ReasonInputModal = ({
 	};
 
 	// Play audio attachment
-	const playAudio = async (attachmentId, uri) => {
+	const playAudio = async (attachmentId: string, uri: string) => {
 		if (!AUDIO_ENABLED || !Audio) return;
 
 		try {
@@ -762,7 +768,7 @@ const ReasonInputModal = ({
 	};
 
 	// Track playback status
-	const onPlaybackStatusUpdate = (status) => {
+	const onPlaybackStatusUpdate = (status: any) => {
 		if (status.isLoaded) {
 			setPlaybackPosition(status.positionMillis / 1000);
 
@@ -773,13 +779,13 @@ const ReasonInputModal = ({
 		}
 	};
 
-	const removeAttachment = (index) => {
+	const removeAttachment = (index: number) => {
 		const newAttachments = [...attachments];
 		newAttachments.splice(index, 1);
 		setAttachments(newAttachments);
 	};
 
-	const getStatusText = (status) => {
+	const getStatusText = (status: string) => {
 		switch (status) {
 			case 'white':
 				return 'WHITE';
@@ -794,7 +800,7 @@ const ReasonInputModal = ({
 		}
 	};
 
-	const getStatusColor = (status) => {
+	const getStatusColor = (status: string) => {
 		switch (status) {
 			case 'white':
 				return '#f0f0f0';
@@ -1050,12 +1056,12 @@ const ReasonInputModal = ({
 																			if (
 																				isPlaying &&
 																				playingAttachmentId ===
-																					index
+																					index.toString()
 																			) {
 																				stopPlayback();
 																			} else {
 																				playAudio(
-																					index,
+																					index.toString(),
 																					attachment.url
 																				);
 																			}
@@ -1066,7 +1072,7 @@ const ReasonInputModal = ({
 																			}>
 																			{isPlaying &&
 																			playingAttachmentId ===
-																				index
+																				index.toString()
 																				? '⏸️'
 																				: '▶️'}
 																		</Text>
@@ -1077,12 +1083,13 @@ const ReasonInputModal = ({
 																		}>
 																		{isPlaying &&
 																		playingAttachmentId ===
-																			index
+																			index.toString()
 																			? imageUtils?.formatDuration(
 																					playbackPosition
 																			  )
 																			: imageUtils?.formatDuration(
-																					attachment.duration
+																					attachment.duration ||
+																						0
 																			  )}
 																	</Text>
 																</View>

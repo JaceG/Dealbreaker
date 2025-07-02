@@ -1,37 +1,136 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, ReactNode } from 'react';
 // Import directly from implementation files to bypass index.js
 import {
 	addFlagHistory,
 	addAttachmentToHistory,
 } from '../../utils/mongodb/index';
-import { getDatabase } from '../../utils';
-import FlagHistoryModal from '../../components/FlagHistoryModal';
-import ReasonInputModal from '../../components/ReasonInputModal';
+
+// Type definitions
+interface Profile {
+	id: string;
+	name: string;
+}
+
+interface FlagItem {
+	id: string;
+	name?: string;
+	title?: string;
+	flag: string;
+}
+
+interface BoardItem {
+	attributes: {
+		row: FlagItem;
+	};
+}
+
+interface Attachment {
+	type: string;
+	url: string;
+}
+
+interface PendingFlagChange {
+	item: BoardItem;
+	rowId: string;
+	previousStatus: string;
+	newFlag: string;
+	currentProfileId: string;
+}
+
+interface SelectedFlag extends FlagItem {
+	currentProfileId: string;
+}
+
+interface Dealbreaker {
+	[profileId: string]: {
+		flag: FlagItem[];
+	};
+}
+
+interface FlagContextType {
+	// States
+	pendingFlagChange: PendingFlagChange | null;
+	reasonModalVisible: boolean;
+	selectedFlag: SelectedFlag | null;
+	historyModalVisible: boolean;
+	additionalReasonModalVisible: boolean;
+
+	// Setters
+	setPendingFlagChange: (change: PendingFlagChange | null) => void;
+	setReasonModalVisible: (visible: boolean) => void;
+	setSelectedFlag: (flag: SelectedFlag | null) => void;
+	setHistoryModalVisible: (visible: boolean) => void;
+	setAdditionalReasonModalVisible: (visible: boolean) => void;
+
+	// Actions
+	handleFlagClick: (
+		newFlag: string,
+		item: BoardItem,
+		dealbreaker: Dealbreaker,
+		currentProfileId: string,
+		setDealbreaker: (dealbreaker: Dealbreaker) => void
+	) => void;
+	handleFlagChangeWithReason: (
+		reason: string,
+		attachments?: Attachment[],
+		profiles?: Profile[]
+	) => Promise<void>;
+	handleCancelFlagChange: () => void;
+	handleViewFlagHistory: (
+		item: BoardItem | FlagItem,
+		currentProfileId: string
+	) => void;
+	handleOpenAddReasonModal: () => void;
+	handleAddAdditionalReason: (
+		reason: string,
+		attachments?: Attachment[],
+		profiles?: Profile[]
+	) => Promise<void>;
+}
+
+interface FlagProviderProps {
+	children: ReactNode;
+	profiles: Profile[];
+	setDealbreaker: (
+		dealbreaker: Dealbreaker | ((prev: Dealbreaker) => Dealbreaker)
+	) => void;
+}
 
 // Create the context
-const FlagContext = createContext();
+const FlagContext = createContext<FlagContextType | undefined>(undefined);
 
 // Custom hook to use the flag context
-export const useFlagContext = () => useContext(FlagContext);
+export const useFlagContext = () => {
+	const context = useContext(FlagContext);
+	if (context === undefined) {
+		throw new Error('useFlagContext must be used within a FlagProvider');
+	}
+	return context;
+};
 
-export const FlagProvider = ({ children, profiles, setDealbreaker }) => {
+export const FlagProvider = ({
+	children,
+	profiles,
+	setDealbreaker,
+}: FlagProviderProps) => {
 	// States for flag changes
-	const [pendingFlagChange, setPendingFlagChange] = useState(null);
+	const [pendingFlagChange, setPendingFlagChange] =
+		useState<PendingFlagChange | null>(null);
 	const [reasonModalVisible, setReasonModalVisible] = useState(false);
 
 	// For FlagHistory Modal
-	const [selectedFlag, setSelectedFlag] = useState(null);
+	const [selectedFlag, setSelectedFlag] = useState<SelectedFlag | null>(null);
 	const [historyModalVisible, setHistoryModalVisible] = useState(false);
 	const [additionalReasonModalVisible, setAdditionalReasonModalVisible] =
 		useState(false);
 
 	// Function to handle flag click and show reason modal
 	const handleFlagClick = (
-		newFlag,
-		item,
-		dealbreaker,
-		currentProfileId,
-		setDealbreaker
+		newFlag: string,
+		item: BoardItem,
+		dealbreaker: Dealbreaker,
+		currentProfileId: string,
+		setDealbreaker: (dealbreaker: Dealbreaker) => void
 	) => {
 		// If not current profile or item data is missing, exit early
 		if (!dealbreaker?.[currentProfileId]?.flag || !item?.attributes?.row)
@@ -42,7 +141,9 @@ export const FlagProvider = ({ children, profiles, setDealbreaker }) => {
 
 		// Get the current flag item to determine previous status
 		const existingFlags = JSON.parse(JSON.stringify(flagsList));
-		const flagItem = existingFlags.find((flag) => flag.id === rowId);
+		const flagItem = existingFlags.find(
+			(flag: FlagItem) => flag.id === rowId
+		);
 
 		if (!flagItem) return;
 
@@ -60,7 +161,7 @@ export const FlagProvider = ({ children, profiles, setDealbreaker }) => {
 
 		// IMPORTANT: Apply the flag change IMMEDIATELY to the state so it persists
 		// even if the user cancels entering a reason
-		const updatedFlagsList = flagsList.map((flag) =>
+		const updatedFlagsList = flagsList.map((flag: FlagItem) =>
 			flag.id === rowId ? { ...flag, flag: newFlag } : flag
 		);
 
@@ -73,7 +174,7 @@ export const FlagProvider = ({ children, profiles, setDealbreaker }) => {
 		});
 
 		// Store the change details
-		const pendingChange = {
+		const pendingChange: PendingFlagChange = {
 			item,
 			rowId,
 			previousStatus,
@@ -92,9 +193,9 @@ export const FlagProvider = ({ children, profiles, setDealbreaker }) => {
 
 	// Handle completing the flag change after getting reason
 	const handleFlagChangeWithReason = async (
-		reason,
-		attachments = [],
-		profiles
+		reason: string,
+		attachments: Attachment[] = [],
+		profiles: Profile[] = []
 	) => {
 		// Close the reason modal
 		setReasonModalVisible(false);
@@ -107,7 +208,7 @@ export const FlagProvider = ({ children, profiles, setDealbreaker }) => {
 		try {
 			// Get the current profile name
 			const currentProfile = profiles.find(
-				(p) => p.id === currentProfileId
+				(p: Profile) => p.id === currentProfileId
 			);
 			if (!currentProfile) {
 				console.error('Current profile not found');
@@ -185,14 +286,17 @@ export const FlagProvider = ({ children, profiles, setDealbreaker }) => {
 	};
 
 	// Function to handle viewing flag history
-	const handleViewFlagHistory = (item, currentProfileId) => {
+	const handleViewFlagHistory = (
+		item: BoardItem | FlagItem,
+		currentProfileId: string
+	) => {
 		console.log('handleViewFlagHistory called with item:', item);
 
 		// Extract the actual data from the board item if needed
-		let flagData = item;
+		let flagData: FlagItem = item as FlagItem;
 
 		// Check if this is a board item with attributes structure
-		if (item && item.attributes && item.attributes.row) {
+		if ('attributes' in item && item.attributes && item.attributes.row) {
 			console.log('Converting board item to flag data');
 			flagData = item.attributes.row;
 		}
@@ -213,7 +317,7 @@ export const FlagProvider = ({ children, profiles, setDealbreaker }) => {
 
 		// Close the history modal first
 		setHistoryModalVisible(false);
-		setDealbreaker((prevDealbreaker) => {
+		setDealbreaker((prevDealbreaker: Dealbreaker): Dealbreaker => {
 			return { ...prevDealbreaker };
 		});
 		setAdditionalReasonModalVisible(false);
@@ -230,9 +334,9 @@ export const FlagProvider = ({ children, profiles, setDealbreaker }) => {
 
 	// Handle adding additional reason
 	const handleAddAdditionalReason = async (
-		reason,
-		attachments = [],
-		profiles
+		reason: string,
+		attachments: Attachment[] = [],
+		profiles: Profile[] = []
 	) => {
 		console.log('Adding additional reason:', reason);
 		setAdditionalReasonModalVisible(false);
@@ -242,7 +346,7 @@ export const FlagProvider = ({ children, profiles, setDealbreaker }) => {
 		try {
 			// Get the current profile
 			const currentProfile = profiles.find(
-				(p) => p.id === selectedFlag.currentProfileId
+				(p: Profile) => p.id === selectedFlag.currentProfileId
 			);
 			if (!currentProfile) {
 				console.error('Profile not found');
@@ -305,7 +409,7 @@ export const FlagProvider = ({ children, profiles, setDealbreaker }) => {
 	};
 
 	// Create the context value object
-	const contextValue = {
+	const contextValue: FlagContextType = {
 		// States
 		pendingFlagChange,
 		reasonModalVisible,

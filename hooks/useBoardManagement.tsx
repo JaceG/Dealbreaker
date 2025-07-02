@@ -8,7 +8,10 @@ import { BoardRepository } from '../libs/board/components';
 import { showToast } from '../utils/functions';
 import { addFlagHistory } from '../utils/mongodb';
 import { data, PendingTransition } from '../models/boardManagementModel';
-import { FlagItem } from '../app/_layout';
+import { useModalStates } from './boardManagement/useModalStates';
+import { useBoardOperations } from './boardManagement/useBoardOperations';
+import { useItemOperations } from './boardManagement/useItemOperations';
+import { useTransitions } from './boardManagement/useTransitions';
 
 const useBoardManagement = () => {
 	let ScreenHeight = Dimensions.get('window').height - 150;
@@ -42,41 +45,113 @@ const useBoardManagement = () => {
 		setAdditionalReasonModalVisible,
 	} = useFlagContext() as any;
 	const { user } = useAuth() as any;
-	const [visible, setVisible] = useState<boolean>(false);
-	const [deleteModalVisible, setDeleteModalVisible] = useState(false);
-	const [itemToDelete, setItemToDelete] = useState<any>(null);
-	const [editModalVisible, setEditModalVisible] = useState(false);
-	const [itemToEdit, setItemToEdit] = useState<any>(null);
-	const [editProfileModalVisible, setEditProfileModalVisible] =
-		useState(false);
-	const flagListIndexRef = useRef<Map<string, number>>(new Map());
-	const skipUpdateRef = useRef(false);
-	const dealbreakerListIndexRef = useRef<Map<string, number>>(new Map());
-	const isMountRef = useRef(false);
-	const [isRemount, setIsRemount] = useState(false);
-	const [refreshKey, setRefreshKey] = useState(Date.now());
 
-	// New state for dealbreaker alert
-	const [dealbreakerAlertVisible, setDealbreakerAlertVisible] =
-		useState(false);
-	const [transitionedItem, setTransitionedItem] = useState<any>(null);
+	// Modal states hook
+	const {
+		visible,
+		setVisible,
+		deleteModalVisible,
+		setDeleteModalVisible,
+		editModalVisible,
+		setEditModalVisible,
+		editProfileModalVisible,
+		setEditProfileModalVisible,
+		dealbreakerAlertVisible,
+		setDealbreakerAlertVisible,
+		transitionReasonModalVisible,
+		setTransitionReasonModalVisible,
+		itemToDelete,
+		setItemToDelete,
+		itemToEdit,
+		setItemToEdit,
+		transitionedItem,
+		setTransitionedItem,
+	} = useModalStates();
 
-	// New state for transition reason modal
-	const [transitionReasonModalVisible, setTransitionReasonModalVisible] =
-		useState(false);
-	const [pendingTransition, setPendingTransition] =
-		useState<PendingTransition | null>(null);
-
-	// Create a reference to track if an operation is a user drag
-	const isDragOperationRef = useRef(false);
-
-	// Add this debug function to help track what's happening with flag colors
-	const logProfileFlags = (label: string) => {
-		console.log(
-			`${label} - Profile ${currentProfileId} flags:`,
-			dealbreaker[currentProfileId]?.flag
-		);
+	// Handle viewing flag history
+	const handleViewFlagHistory = (item: any) => {
+		contextHandleViewFlagHistory(item, currentProfileId);
 	};
+
+	// Board operations hook
+	const {
+		list,
+		setList,
+		isRemount,
+		setIsRemount,
+		refreshKey,
+		setRefreshKey,
+		flagListIndexRef,
+		dealbreakerListIndexRef,
+		skipUpdateRef,
+		isMountRef,
+		updateBoard,
+		reloadBoard,
+		cleanupDuplicates,
+		logProfileFlags,
+		ensureCurrentProfileExists,
+	} = useBoardOperations(
+		dealbreaker,
+		currentProfileId,
+		ensureProfileExists,
+		params,
+		handleViewFlagHistory
+	);
+
+	// Item operations hook
+	const {
+		handleDeleteItem,
+		confirmDeleteItem,
+		handleEditItem,
+		handleSaveEdit,
+	} = useItemOperations(
+		dealbreaker,
+		currentProfileId,
+		removeItemFromAllProfiles,
+		setDealbreaker,
+		updateBoard,
+		setList,
+		setIsRemount,
+		setRefreshKey,
+		itemToDelete,
+		setItemToDelete,
+		itemToEdit,
+		setItemToEdit,
+		setDeleteModalVisible,
+		setEditModalVisible
+	);
+
+	// Transitions hook
+	const {
+		pendingTransition,
+		setPendingTransition,
+		isDragOperationRef,
+		updateListOrder,
+		checkForDealbreakerTransition,
+		handleUndoTransition,
+		handleTransitionReasonSubmit,
+		handleTransitionReasonCancel,
+		isItemOnMainDealbreakerList,
+		getCurrentProfileName,
+	} = useTransitions(
+		dealbreaker,
+		currentProfileId,
+		setDealbreaker,
+		profiles,
+		user,
+		updateBoard,
+		flagListIndexRef,
+		dealbreakerListIndexRef,
+		setIsRemount,
+		setList,
+		setRefreshKey,
+		logProfileFlags,
+		setDealbreakerAlertVisible,
+		setTransitionReasonModalVisible,
+		setTransitionedItem,
+		transitionedItem,
+		pendingFlagChange
+	);
 
 	useEffect(() => {
 		// Log flag colors whenever currentProfileId changes
@@ -93,21 +168,6 @@ const useBoardManagement = () => {
 		logProfileFlags('Dealbreaker state updated');
 		reloadBoard();
 	}, [dealbreaker]);
-
-	// Helper function to ensure current profile exists
-	const ensureCurrentProfileExists = () => {
-		// Safety checks for initial render
-		if (!dealbreaker) return false;
-		if (!currentProfileId) return false;
-
-		// Check if the profile already exists
-		if (dealbreaker[currentProfileId]) return false;
-
-		console.log('Creating missing profile in Lists:', currentProfileId);
-
-		// Use the store's ensureProfileExists function
-		return ensureProfileExists(currentProfileId);
-	};
 
 	useEffect(() => {
 		// Create the profile if it doesn't exist
@@ -160,276 +220,9 @@ const useBoardManagement = () => {
 		}
 	}, [params?.refresh, params?.forceRefresh, currentProfileId, dealbreaker]);
 
-	const reloadBoard = () => {
-		// Check if we have items to display
-		const hasItems =
-			dealbreaker?.[currentProfileId]?.flag?.length > 0 ||
-			dealbreaker?.[currentProfileId]?.dealbreaker?.length > 0;
-
-		// Only update board if we have items and required conditions are met
-		if (hasItems && !skipUpdateRef.current && isMountRef.current) {
-			console.log('updateBoard');
-			// Small timeout to ensure state is current
-			setTimeout(() => updateBoard(), 50);
-		} else if (!hasItems && list) {
-			// If we have no items but are showing a list, reset to empty state
-			setList(null);
-		} else {
-			// Set defaults for next time
-			skipUpdateRef.current = false;
-			isMountRef.current = true;
-		}
-	};
 	useEffect(() => {
 		reloadBoard();
 	}, [dealbreaker]);
-
-	const updateBoard = (force: boolean = false, forceData: any = null) => {
-		// Skip if requested
-		if (!force && skipUpdateRef.current) {
-			skipUpdateRef.current = false;
-			return;
-		}
-
-		// Ensure the current profile exists
-		if (!force && !dealbreaker[currentProfileId]) {
-			ensureCurrentProfileExists();
-			return;
-		}
-
-		let flag = [];
-		let dealbreakerList = [];
-		if (forceData) {
-			// Get data from current profile with defaults for safety
-			const {
-				flag: newFlags = [],
-				dealbreaker: newDealbreakerList = [],
-			} = forceData[currentProfileId];
-			flag = newFlags;
-			dealbreakerList = newDealbreakerList;
-		} else {
-			// Get data from current profile with defaults for safety
-			const {
-				flag: newFlags = [],
-				dealbreaker: newDealbreakerList = [],
-			} = dealbreaker[currentProfileId];
-			flag = newFlags;
-			dealbreakerList = newDealbreakerList;
-		}
-
-		console.log('current flag', { flag });
-		// Add logging to track flag colors
-		console.log(
-			`Profile ${currentProfileId} flag colors:`,
-			flag.map((f: any) => ({ id: f.id, title: f.title, flag: f.flag }))
-		);
-
-		// Filter out any invalid items
-		const cleanFlag = flag.filter((item: any) => item && item.id);
-		const cleanDealbreakers = dealbreakerList.filter(
-			(item: any) => item && item.id
-		);
-
-		// Create a fresh board data structure
-		const newData = JSON.parse(JSON.stringify(data));
-		flagListIndexRef.current = new Map();
-		dealbreakerListIndexRef.current = new Map();
-
-		// Map flags to board rows while preserving the original flag colors
-		newData[0].rows = cleanFlag.map((item: any, index: number) => {
-			flagListIndexRef.current.set(item.id, index);
-
-			// Create a row object with the original flag value
-			return {
-				id: item.id,
-				name: item.title,
-				description: item.description,
-				flag: item.flag || 'white', // Preserve the original flag color but default to white if missing
-				// Make viewHistory a direct property instead
-				onLongPress: () => handleViewFlagHistory(item), // The board component will expose this through item.row().onLongPress
-			};
-		});
-
-		// Map dealbreakers to board rows
-		newData[1].rows = cleanDealbreakers.map((item: any, index: number) => {
-			dealbreakerListIndexRef.current.set(item.id, index);
-			return {
-				id: item.id,
-				name: item.title,
-				description: item.description,
-				flag: item.flag || 'white', // Preserve the original flag color but default to white if missing
-				// Make viewHistory a direct property instead
-				onLongPress: () => handleViewFlagHistory(item), // The board component will expose this through item.row().onLongPress
-			};
-		});
-
-		// Set the board with the processed data
-		setList(new BoardRepository(newData));
-	};
-
-	const updateListOrder = (
-		newIndex: number,
-		oldIndex: number,
-		id: string,
-		isDealbreaker: boolean
-	) => {
-		// Safety check
-		if (!dealbreaker?.[currentProfileId]) return;
-
-		// Set flag to indicate this is a user-initiated drag operation
-		const isDragOperation = isDragOperationRef.current;
-		// Reset the flag for next time
-		isDragOperationRef.current = false;
-
-		// Log before making changes
-		logProfileFlags('Before updateListOrder');
-
-		// Create a deep copy of the current state
-		const updatedDealbreaker = JSON.parse(JSON.stringify(dealbreaker));
-
-		// Get references to the current profile's lists
-		const flagsList = updatedDealbreaker[currentProfileId].flag || [];
-		const dealbreakersList =
-			updatedDealbreaker[currentProfileId].dealbreaker || [];
-
-		let movedItem = null;
-
-		// Case 1: Moving within the same list (reordering)
-		if (
-			(isDealbreaker &&
-				dealbreakerListIndexRef.current.get(id) !== undefined) ||
-			(!isDealbreaker && flagListIndexRef.current.get(id) !== undefined)
-		) {
-			// Get the source list
-			const sourceList = isDealbreaker ? dealbreakersList : flagsList;
-
-			// Find the item to move
-			if (oldIndex >= 0 && oldIndex < sourceList.length) {
-				movedItem = { ...sourceList[oldIndex] };
-				// Remove from current position
-				sourceList.splice(oldIndex, 1);
-				// Insert at new position
-				sourceList.splice(newIndex, 0, movedItem);
-			}
-		}
-		// Case 2: Moving from flags to dealbreakers
-		else if (isDealbreaker) {
-			// Find the item in the flags list
-			if (oldIndex >= 0 && oldIndex < flagsList.length) {
-				movedItem = { ...flagsList[oldIndex] };
-
-				// If this is a user drag operation, we'll wait for reason confirmation
-				if (isDragOperation) {
-					// Save the transition info but don't move the item yet
-					setPendingTransition({
-						type: 'flag-to-dealbreaker',
-						profileId: currentProfileId,
-						profileName: getCurrentProfileName(),
-						itemId: movedItem.id,
-						itemTitle: movedItem.title,
-						prevStatus: movedItem.flag || 'white',
-						newStatus: movedItem.flag || 'white',
-						prevCardType: 'flag',
-						newCardType: 'dealbreaker',
-						newFlagColor: 'white',
-					});
-					setTransitionReasonModalVisible(true);
-
-					// Return without updating the state
-					return;
-				} else {
-					// For non-user operations, proceed with the move immediately
-					// Remove from flags list
-					flagsList.splice(oldIndex, 1);
-					// Add to dealbreakers list at the specified position
-					dealbreakersList.splice(newIndex, 0, movedItem);
-				}
-			}
-		}
-		// Case 3: Moving from dealbreakers to flags
-		else {
-			// Find the item in the dealbreakers list
-			if (oldIndex >= 0 && oldIndex < dealbreakersList.length) {
-				movedItem = { ...dealbreakersList[oldIndex] };
-
-				// If this is a user drag operation, we'll wait for reason confirmation
-				if (isDragOperation) {
-					// Apply flag color for the pending transition
-					let newFlagColor = 'white';
-					if (
-						currentProfileId !== 'main' &&
-						isItemOnMainDealbreakerList(movedItem.id)
-					) {
-						// Make the flag yellow when it's a dealbreaker on main profile
-						newFlagColor = 'yellow';
-					}
-
-					// Save the transition info but don't move the item yet
-					setPendingTransition({
-						type: 'dealbreaker-to-flag',
-						profileId: currentProfileId,
-						profileName: getCurrentProfileName(),
-						itemId: movedItem.id,
-						itemTitle: movedItem.title,
-						prevStatus: movedItem.flag || 'white',
-						newStatus: newFlagColor,
-						prevCardType: 'dealbreaker',
-						newCardType: 'flag',
-						newFlagColor: newFlagColor,
-					});
-					setTransitionReasonModalVisible(true);
-
-					// Return without updating the state
-					return;
-				} else {
-					// For non-user operations, proceed with the move immediately
-					// Remove from dealbreakers list
-					dealbreakersList.splice(oldIndex, 1);
-
-					// Set flag color
-					if (
-						currentProfileId !== 'main' &&
-						isItemOnMainDealbreakerList(movedItem.id)
-					) {
-						// Make the flag yellow when it's a dealbreaker on main profile
-						movedItem.flag = 'yellow';
-					} else {
-						// Otherwise, reset to a white flag
-						movedItem.flag = 'white';
-					}
-
-					// Add to flags list at the specified position
-					flagsList.splice(newIndex, 0, movedItem);
-				}
-			}
-		}
-
-		// Safety check - if we didn't move anything, exit
-		if (!movedItem) return;
-
-		// Update the state with the modified lists
-		updatedDealbreaker[currentProfileId].flag = flagsList;
-		updatedDealbreaker[currentProfileId].dealbreaker = dealbreakersList;
-
-		console.log(
-			'Updated deal breaker list',
-			JSON.stringify(updatedDealbreaker)
-		);
-		// Set the updated state
-		setDealbreaker(updatedDealbreaker);
-
-		// Force a complete UI refresh to ensure changes are visible
-		setIsRemount(true);
-		setTimeout(() => {
-			setIsRemount(false);
-			setList(null);
-			console.log('calling update');
-			updateBoard(true, updatedDealbreaker);
-			setRefreshKey(Date.now());
-		}, 300);
-	};
-
-	const [list, setList] = useState<BoardRepository | null>(null);
 
 	// Add safety checks to prevent accessing properties of undefined
 	console.log('flag: ', dealbreaker?.[currentProfileId]?.flag || []);
@@ -437,134 +230,6 @@ const useBoardManagement = () => {
 		'dealbreaker: ',
 		dealbreaker?.[currentProfileId]?.dealbreaker || []
 	);
-
-	const handleDeleteItem = (item: any) => {
-		setItemToDelete(item);
-		setDeleteModalVisible(true);
-	};
-
-	const confirmDeleteItem = () => {
-		if (
-			!itemToDelete ||
-			!itemToDelete.attributes ||
-			!itemToDelete.attributes.row
-		) {
-			setDeleteModalVisible(false);
-			return;
-		}
-
-		const rowId = itemToDelete.attributes.row.id;
-		if (!rowId) {
-			setDeleteModalVisible(false);
-			setItemToDelete(null);
-			return;
-		}
-
-		const isDealbreaker = itemToDelete.attributes.columnId === 2;
-		const type = isDealbreaker ? 'dealbreaker' : 'flag';
-
-		// Close the modal first for better UX
-		setDeleteModalVisible(false);
-		setItemToDelete(null);
-
-		// Delete the item using our central function
-		removeItemFromAllProfiles(rowId, type);
-
-		// Show success message
-		showToast('success', `Item deleted from all profiles`);
-
-		// Force a complete UI refresh to ensure deleted item disappears
-		setList(null);
-		setIsRemount(true);
-
-		// Give state update time to complete, then refresh the board
-		setTimeout(() => {
-			// Only try to update the board if we still have a valid state
-			if (
-				dealbreaker &&
-				currentProfileId &&
-				dealbreaker[currentProfileId]
-			) {
-				updateBoard();
-			}
-
-			setIsRemount(false);
-			setRefreshKey(Date.now());
-
-			// Force a navigation update to ensure state is current everywhere
-			// if (navigation && navigation.setParams) {
-			// 	navigation.setParams({ forceRefresh: Date.now() });
-			// }
-		}, 300);
-	};
-
-	const handleEditItem = (item: any) => {
-		// Extract the raw item data from the board item
-		if (item && item.attributes && item.attributes.row) {
-			const rowData = item.attributes.row;
-			// Find the actual item in the dealbreaker state
-			const isDealbreaker = item.attributes.columnId === 2;
-			const type = isDealbreaker ? 'dealbreaker' : 'flag';
-
-			const items = dealbreaker[currentProfileId][type];
-			const foundItem = items.find((i: any) => i.id === rowData.id);
-
-			if (foundItem) {
-				setItemToEdit(foundItem);
-				setEditModalVisible(true);
-			} else {
-				showToast('error', 'Item not found');
-			}
-		}
-	};
-
-	// Check if we need to add the handleSaveEdit function if it's missing
-	const handleSaveEdit = (updatedItem: any) => {
-		if (!updatedItem || !updatedItem.id) return;
-
-		// Determine the type (flag or dealbreaker)
-		const isFlagItem = dealbreaker[currentProfileId].flag.some(
-			(item: any) => item.id === updatedItem.id
-		);
-		const type = isFlagItem ? 'flag' : 'dealbreaker';
-
-		// Create a copy of the dealbreaker state
-		const updatedDealbreaker = JSON.parse(JSON.stringify(dealbreaker));
-
-		// Update the item in all profiles
-		Object.keys(updatedDealbreaker).forEach((profileName: string) => {
-			if (
-				updatedDealbreaker[profileName] &&
-				updatedDealbreaker[profileName][type]
-			) {
-				updatedDealbreaker[profileName][type] = updatedDealbreaker[
-					profileName
-				][type].map((item: any) => {
-					if (item.id === updatedItem.id) {
-						return {
-							...item,
-							title: updatedItem.title,
-							description: updatedItem.description,
-						};
-					}
-					return item;
-				});
-			}
-		});
-
-		// Update the state
-		setDealbreaker(updatedDealbreaker);
-
-		// Close the modal
-		setEditModalVisible(false);
-		setItemToEdit(null);
-
-		// Show a success message
-		showToast('success', 'Item updated successfully');
-
-		// Force UI update
-		setRefreshKey(Date.now());
-	};
 
 	// Handle profile edit button click
 	const handleEditProfile = () => {
@@ -625,15 +290,6 @@ const useBoardManagement = () => {
 		}
 	}, [dealbreaker, currentProfileId]);
 
-	// Check if an item is on the main profile's dealbreaker list
-	const isItemOnMainDealbreakerList = (itemId: string) => {
-		if (!dealbreaker?.main?.dealbreaker) return false;
-
-		return dealbreaker.main.dealbreaker.some(
-			(item: FlagItem) => item.id === itemId
-		);
-	};
-
 	// Wrapper functions to pass required params to context functions
 
 	// Handle flag click (color change)
@@ -645,11 +301,6 @@ const useBoardManagement = () => {
 			currentProfileId,
 			setDealbreaker
 		);
-	};
-
-	// Handle viewing flag history
-	const handleViewFlagHistory = (item: any) => {
-		contextHandleViewFlagHistory(item, currentProfileId);
 	};
 
 	// Handle adding additional reason with profiles
@@ -671,278 +322,7 @@ const useBoardManagement = () => {
 		checkForDealbreakerTransition();
 	};
 
-	// Function to check if a flag change should trigger dealbreaker transition
-	const checkForDealbreakerTransition = () => {
-		if (!pendingFlagChange) return;
-
-		const { rowId, newFlag } = pendingFlagChange;
-
-		// Check if this should auto-transition to dealbreaker
-		if (
-			newFlag === 'red' &&
-			currentProfileId !== 'main' &&
-			isItemOnMainDealbreakerList(rowId)
-		) {
-			// This is a match for auto-transition!
-			console.log(
-				'Auto-transitioning item to dealbreaker:',
-				pendingFlagChange.item.attributes.row.name
-			);
-
-			// Show the alert
-			setDealbreakerAlertVisible(true);
-		}
-	};
-
-	// Keep the existing handleUndoTransition function
-	const handleUndoTransition = () => {
-		if (!transitionedItem) return;
-
-		// Close the dealbreaker alert
-		setDealbreakerAlertVisible(false);
-
-		// Set up pending transition for the undo
-		const flagColor = isItemOnMainDealbreakerList(transitionedItem.id)
-			? 'yellow'
-			: 'white';
-
-		setPendingTransition({
-			type: 'dealbreaker-to-flag',
-			profileId: currentProfileId,
-			profileName: getCurrentProfileName(),
-			itemId: transitionedItem.id,
-			itemTitle: transitionedItem.title,
-			prevStatus: transitionedItem.flag || 'white',
-			newStatus: flagColor,
-			prevCardType: 'dealbreaker',
-			newCardType: 'flag',
-			newFlagColor: flagColor,
-			isUndo: true, // Mark this as an undo operation
-		});
-
-		// Save the transitioned item to be used if the user confirms the reason
-		setTransitionReasonModalVisible(true);
-	};
-
-	// Get current profile name
-	const getCurrentProfileName = () => {
-		const profile = profiles.find((p: any) => p.id === currentProfileId);
-		return profile ? profile.name : currentProfileId;
-	};
-
-	// Function to handle transition reason submission
-	const handleTransitionReasonSubmit = (
-		reason: string,
-		attachments: any[] = []
-	) => {
-		if (!pendingTransition) {
-			setTransitionReasonModalVisible(false);
-			return;
-		}
-
-		// Copy the current state
-		const updatedDealbreaker = JSON.parse(JSON.stringify(dealbreaker));
-
-		// Handle all transition types
-		if (pendingTransition.type === 'flag-to-dealbreaker') {
-			// Find and remove the item from flags list
-			const itemIndex = updatedDealbreaker[
-				currentProfileId
-			].flag.findIndex(
-				(item: any) => item.id === pendingTransition.itemId
-			);
-
-			if (itemIndex !== -1) {
-				// Get the item
-				const movedItem =
-					updatedDealbreaker[currentProfileId].flag[itemIndex];
-
-				// Remove from flags list
-				updatedDealbreaker[currentProfileId].flag.splice(itemIndex, 1);
-
-				// Add to dealbreakers list
-				updatedDealbreaker[currentProfileId].dealbreaker.push(
-					movedItem
-				);
-			}
-		} else if (pendingTransition.type === 'dealbreaker-to-flag') {
-			// Check if it's an undo operation
-			if (pendingTransition.isUndo && transitionedItem) {
-				// Remove the item from dealbreaker list
-				updatedDealbreaker[currentProfileId].dealbreaker =
-					updatedDealbreaker[currentProfileId].dealbreaker.filter(
-						(item: any) => item.id !== transitionedItem.id
-					);
-
-				// Add the item back to flag list with appropriate flag color
-				updatedDealbreaker[currentProfileId].flag.push({
-					...transitionedItem,
-					flag: pendingTransition.newFlagColor,
-				});
-
-				// Clear the transitioning item
-				setTransitionedItem(null);
-			} else {
-				// Find and remove the item from dealbreakers list
-				const itemIndex = updatedDealbreaker[
-					currentProfileId
-				].dealbreaker.findIndex(
-					(item: any) => item.id === pendingTransition.itemId
-				);
-
-				if (itemIndex !== -1) {
-					// Get the item
-					const movedItem =
-						updatedDealbreaker[currentProfileId].dealbreaker[
-							itemIndex
-						];
-
-					// Apply flag color
-					if (
-						currentProfileId !== 'main' &&
-						isItemOnMainDealbreakerList(movedItem.id)
-					) {
-						movedItem.flag = 'yellow';
-					} else {
-						movedItem.flag = 'white';
-					}
-
-					// Remove from dealbreakers list
-					updatedDealbreaker[currentProfileId].dealbreaker.splice(
-						itemIndex,
-						1
-					);
-
-					// Add to flags list
-					updatedDealbreaker[currentProfileId].flag.push(movedItem);
-				}
-			}
-		}
-
-		// Update the state
-		setDealbreaker(updatedDealbreaker);
-
-		// Create flag history entry with the provided reason
-		addFlagHistory(
-			pendingTransition.profileId,
-			pendingTransition.profileName,
-			pendingTransition.itemId,
-			pendingTransition.itemTitle,
-			pendingTransition.prevStatus,
-			pendingTransition.newStatus,
-			reason ||
-				(pendingTransition.isUndo
-					? 'Undid transition to dealbreaker'
-					: pendingTransition.type === 'flag-to-dealbreaker'
-					? 'Moved to Dealbreakers'
-					: 'Moved to Flags'),
-			user?.id || null,
-			pendingTransition.prevCardType,
-			pendingTransition.newCardType
-		);
-
-		// Add attachments if any
-		if (attachments && attachments.length > 0) {
-			// Handle attachments (this would depend on your existing attachment handling logic)
-		}
-
-		// Clear pending transition and close modal
-		setPendingTransition(null);
-		setTransitionReasonModalVisible(false);
-
-		// Force a complete UI refresh
-		// setTimeout(() => {
-		// 	setIsRemount(false);
-		// 	setList(null);
-		// 	updateBoard();
-		// 	setRefreshKey(Date.now());
-
-		// 	// Force navigation update
-		// 	if (navigation && navigation.setParams) {
-		// 		navigation.setParams({ forceRefresh: Date.now() });
-		// 	}
-		// }, 300);
-
-		// Show feedback
-		if (pendingTransition.isUndo) {
-			showToast(
-				'success',
-				'Transition undone. Item moved back to flags list.'
-			);
-		} else {
-			showToast(
-				'success',
-				pendingTransition.type === 'flag-to-dealbreaker'
-					? 'Item moved to Dealbreakers'
-					: 'Item moved to Flags'
-			);
-		}
-	};
-
-	// Function to handle transition reason cancellation
-	const handleTransitionReasonCancel = () => {
-		// Close the modal and reset the pending transition
-		setTransitionReasonModalVisible(false);
-		setPendingTransition(null);
-
-		// Force a UI refresh to revert to the previous state
-		setIsRemount(true);
-		setTimeout(() => {
-			setIsRemount(false);
-			setList(null);
-			updateBoard();
-			setRefreshKey(Date.now());
-		}, 300);
-	};
 	console.log('dealbreaker: ', dealbreaker?.main?.dealbreaker);
-	// Function to clean up any duplicate items that exist in both flags and dealbreakers lists
-	const cleanupDuplicates = () => {
-		// Safety check
-		if (!dealbreaker || !currentProfileId || !dealbreaker[currentProfileId])
-			return;
-
-		// Create a deep copy of the current state
-		const updatedDealbreaker = JSON.parse(JSON.stringify(dealbreaker));
-
-		// Get references to the current profile's lists
-		const flagsList = updatedDealbreaker[currentProfileId].flag || [];
-		const dealbreakersList =
-			updatedDealbreaker[currentProfileId].dealbreaker || [];
-
-		// Create a set of IDs from the dealbreakers list
-		const dealbreakerIds = new Set(
-			dealbreakersList.map((item: any) => item.id)
-		);
-
-		// Filter out any items from flags list that exist in dealbreakers list
-		const cleanFlagsList = flagsList.filter(
-			(item: any) => !dealbreakerIds.has(item.id)
-		);
-
-		// If we found and removed any duplicates
-		if (cleanFlagsList.length < flagsList.length) {
-			console.log(
-				`Removed ${
-					flagsList.length - cleanFlagsList.length
-				} duplicate items from flags list`
-			);
-
-			// Update the state with the cleaned list
-			updatedDealbreaker[currentProfileId].flag = cleanFlagsList;
-			setDealbreaker(updatedDealbreaker);
-
-			// Force a complete UI refresh
-			setIsRemount(true);
-			setTimeout(() => {
-				setIsRemount(false);
-				setList(null);
-				updateBoard();
-				setRefreshKey(Date.now());
-			}, 300);
-
-			showToast('success', 'Duplicate items removed');
-		}
-	};
 	console.log(
 		'- additionalReasonModalVisible:',
 		additionalReasonModalVisible
@@ -1022,6 +402,7 @@ const useBoardManagement = () => {
 		handleEditProfile,
 		handleSaveProfileEdit,
 		handleFlagClick,
+		handleViewFlagHistory,
 		handleFlagChangeWithReason,
 		handleCancelFlagChange,
 		handleAddAdditionalReason,
