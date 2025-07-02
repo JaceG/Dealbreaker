@@ -181,7 +181,11 @@ export default function Lists() {
 								boardRepository={list}
 								open={() => {}}
 								onFlagClicked={handleFlagClick}
-								onDragEnd={(draggedItem: any) => {
+								onDragEnd={(
+									srcColumn: any,
+									destColumn: any,
+									draggedItem: any
+								) => {
 									if (!dealbreaker?.[currentProfileId])
 										return;
 
