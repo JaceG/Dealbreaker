@@ -182,8 +182,8 @@ export default function Lists() {
 								open={() => {}}
 								onFlagClicked={handleFlagClick}
 								onDragEnd={(
-									srcColumn: any,
-									destColumn: any,
+									_: any,
+									__: any,
 									draggedItem: any
 								) => {
 									if (!dealbreaker?.[currentProfileId])

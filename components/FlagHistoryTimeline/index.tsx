@@ -12,9 +12,7 @@ import {
 	ScrollView,
 } from 'react-native';
 import { getFlagHistory } from '../../utils/mongodb';
-import AppButton from '../AppButton';
-import { showToast, testS3Upload } from '../../utils';
-import { imageUtils } from '../../utils/functions';
+import { showToast } from '../../utils';
 import { colors } from '../../libs/board/constants/colors';
 import { FlagHistoryTimelineProps } from '../../models/modalModels';
 import { Audio } from 'expo-av';
@@ -650,75 +648,6 @@ const FlagHistoryTimeline = ({
 		</View>
 	);
 
-	// Add test S3 function
-	const handleTestS3 = async () => {
-		try {
-			setIsTestingS3(true);
-			showToast('info', 'Testing S3 upload...', 'Please wait');
-			console.log('Starting S3 test upload...');
-
-			// Call the test function
-			const result = (await testS3Upload()) as TestS3Result;
-
-			if (result.success) {
-				showToast(
-					'success',
-					'S3 Test Successful!',
-					'File uploaded to S3'
-				);
-				console.log('S3 upload success:', result.url);
-				// Display the uploaded file URL
-				Alert.alert(
-					'S3 Upload Success',
-					`File uploaded to:\n${result.url}`,
-					[{ text: 'OK' }]
-				);
-			} else {
-				console.error('S3 test failed:', result.error);
-				showToast(
-					'error',
-					'S3 Test Failed',
-					result.error || 'Unknown error'
-				);
-
-				// Display detailed error info
-				let errorMessage = result.error || 'Unknown error';
-
-				// Add details if available
-				if ('details' in result && result.details) {
-					errorMessage += `\n\nDetails: ${JSON.stringify(
-						result.details,
-						null,
-						2
-					)}`;
-				}
-
-				// Add stack trace if available
-				if ('stack' in result && result.stack) {
-					errorMessage += `\n\nStack: ${result.stack}`;
-				}
-
-				Alert.alert('S3 Upload Failed', errorMessage, [{ text: 'OK' }]);
-			}
-		} catch (error: any) {
-			console.error('S3 Test Exception:', error);
-			showToast(
-				'error',
-				'S3 Test Error',
-				error?.message || 'Unknown error'
-			);
-			Alert.alert(
-				'S3 Test Exception',
-				`Error: ${error?.message || 'Unknown error'}\n\nStack: ${
-					error?.stack || 'Not available'
-				}`,
-				[{ text: 'OK' }]
-			);
-		} finally {
-			setIsTestingS3(false);
-		}
-	};
-
 	// Return early if no flagId
 	if (!flagId && previewVisible) {
 		debugLog('FlagHistoryModal has no flagId but is visible, closing');
@@ -731,15 +660,6 @@ const FlagHistoryTimeline = ({
 			<View style={styles.header}>
 				<Text style={styles.headerTitle}>{flagTitle}</Text>
 				<View style={styles.headerButtons}>
-					<TouchableOpacity
-						style={[
-							styles.testButton,
-							isTestingS3 && styles.disabledButton,
-						]}
-						onPress={handleTestS3}
-						disabled={isTestingS3}>
-						<Text style={styles.testButtonText}>Test S3</Text>
-					</TouchableOpacity>
 					<TouchableOpacity
 						style={styles.addButton}
 						onPress={onAddReason}>
