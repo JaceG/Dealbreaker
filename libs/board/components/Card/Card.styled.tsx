@@ -1,8 +1,8 @@
 import styled from 'styled-components/native';
-import { borderRadius, color, fontFamily, fontSize } from 'styled-system';
+import { borderRadius, color, fontFamily, fontSize, BorderRadiusProps } from 'styled-system';
 import { colors } from '../../constants';
 
-const CardContainer = styled.View`
+const CardContainer = styled.View<BorderRadiusProps>`
 	${borderRadius}
   marginHorizontal: 8;
   paddingHorizontal: 10;
