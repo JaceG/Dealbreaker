@@ -1,2 +1,2 @@
-export * from './colors'
-export * from './deviceHelpers'
+export * from './colors';
+export * from './deviceHelpers';
