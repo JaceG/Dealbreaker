@@ -287,7 +287,12 @@ export interface AuthError {
 }
 
 // Union type for all API errors
-export type ApiError = NetworkError | ServerError | ValidationError | AuthError;
+export type ApiError =
+	| NetworkError
+	| ServerError
+	| ValidationError
+	| AuthError
+	| CustomApiError;
 
 // =============================================================================
 // API ENDPOINT TYPES
@@ -390,4 +395,44 @@ export interface StorageAdapter {
 	setItem<T>(key: CacheKey, value: T): Promise<void>;
 	removeItem(key: CacheKey): Promise<void>;
 	clear(): Promise<void>;
+}
+
+// Type definitions
+export interface Attachment {
+	type: string;
+	url: string;
+	originalUrl?: string;
+	name: string;
+	timestamp: string;
+	isS3?: boolean;
+}
+
+export interface HistoryEntry {
+	_id?: string;
+	profileId: string | number;
+	profileName: string;
+	flagId: string | number;
+	flagTitle: string;
+	timestamp: string | Date;
+	previousStatus: string;
+	newStatus: string;
+	reason: string;
+	creatorId: string | number | null;
+	cardTypeChange: string;
+	previousCardType: string;
+	newCardType: string;
+	attachments: Attachment[];
+}
+
+export interface CustomApiError extends Error {
+	response?: {
+		data: any;
+		status: number;
+	};
+	request?: any;
+}
+
+export interface UserData {
+	profiles?: any[];
+	flags?: { [key: string]: any };
 }

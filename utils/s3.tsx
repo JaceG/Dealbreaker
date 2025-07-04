@@ -101,7 +101,7 @@ export const uploadToS3 = async (fileUri, fileName) => {
 		});
 
 		// Get the backend URL based on platform and environment - use the direct endpoint
-		const backendUrl = API_BASE_URL + '/upload/direct';
+		const backendUrl = API_BASE_URL + '/api/upload/direct';
 
 		console.log(`[S3] Uploading to backend at: ${backendUrl}`);
 

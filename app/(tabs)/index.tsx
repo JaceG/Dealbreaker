@@ -1,13 +1,6 @@
 import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
-import { Board, BoardRepository } from '../../libs/board/components';
+import { Board } from '../../libs/board/components';
 import AppButton from '../../components/AppButton';
-import SwitchProfileModal from '../../components/SwitchProfileModal';
-import ConfirmationModal from '../../components/ConfirmationModal';
-import EditItemModal from '../../components/EditItemModal';
-import EditProfileModal from '../../components/EditProfileModal';
-import DealbreakerAlert from '../../components/DealbreakerAlert';
-import FlagHistoryModal from '../../components/FlagHistoryModal';
-import ReasonInputModal from '../../components/ReasonInputModal';
 import { router } from 'expo-router';
 import useBoardManagement from '../../hooks/useBoardManagement';
 import BoardManagementModals from '../../components/BoardManagementModals';
@@ -15,11 +8,8 @@ import BoardManagementModals from '../../components/BoardManagementModals';
 export default function Lists() {
 	const {
 		// Core Data & Context
-		ScreenHeight,
-		params,
 		dealbreaker,
 		profiles,
-		user,
 		currentProfileId,
 
 		// Board State
@@ -43,7 +33,6 @@ export default function Lists() {
 		setDeleteModalVisible,
 		setEditModalVisible,
 		setEditProfileModalVisible,
-		setReasonModalVisible,
 		setAdditionalReasonModalVisible,
 		setHistoryModalVisible,
 		setDealbreakerAlertVisible,
@@ -92,7 +81,6 @@ export default function Lists() {
 
 		// Utility Functions
 		getCurrentProfileName,
-		debugModalState,
 	} = useBoardManagement();
 
 	return (

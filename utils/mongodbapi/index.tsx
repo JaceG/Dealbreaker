@@ -1,6 +1,7 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_BASE_URL } from '../../constants/api';
+import { HistoryEntry, Attachment } from '../../models/apiModels';
 
 // Your MongoDB Atlas Data API key and endpoint
 // Get these from your Atlas dashboard under Data API
@@ -36,18 +37,19 @@ export const generateId = () => {
 
 // Add flag history
 export const addFlagHistory = async (
-	profileId,
-	flagId,
-	flagTitle,
-	previousStatus,
-	newStatus,
-	reason = ''
-) => {
+	profileId: string | number,
+	flagId: string | number,
+	flagTitle: string,
+	previousStatus: string,
+	newStatus: string,
+	reason: string = ''
+): Promise<HistoryEntry | null> => {
 	try {
 		// Create the history entry object with a unique ID
-		const historyEntry = {
+		const historyEntry: HistoryEntry = {
 			_id: generateId(),
 			profileId,
+			profileName: '', // Default empty, should be passed from caller
 			flagId,
 			flagTitle,
 			timestamp: new Date(),
@@ -55,6 +57,10 @@ export const addFlagHistory = async (
 			newStatus,
 			reason,
 			attachments: [],
+			creatorId: null,
+			cardTypeChange: 'none',
+			previousCardType: 'none',
+			newCardType: 'none',
 		};
 
 		// Try to insert to MongoDB
@@ -81,9 +87,10 @@ export const addFlagHistory = async (
 
 		// Fallback to local storage
 		try {
-			const localEntry = {
+			const localEntry: HistoryEntry = {
 				_id: generateId(),
 				profileId,
+				profileName: '', // Default empty, should be passed from caller
 				flagId,
 				flagTitle,
 				timestamp: new Date(),
@@ -91,6 +98,10 @@ export const addFlagHistory = async (
 				newStatus,
 				reason,
 				attachments: [],
+				creatorId: null,
+				cardTypeChange: 'none',
+				previousCardType: 'none',
+				newCardType: 'none',
 			};
 
 			const existingHistory = await getFlagHistoryLocal(
@@ -118,7 +129,10 @@ export const addFlagHistory = async (
 };
 
 // Get flag history
-export const getFlagHistory = async (profileId, flagId) => {
+export const getFlagHistory = async (
+	profileId: string | number,
+	flagId: string | number
+): Promise<HistoryEntry[]> => {
 	try {
 		// Try to get from MongoDB first
 		const response = await mongoDbClient.post('/action/find', {
@@ -150,16 +164,24 @@ export const getFlagHistory = async (profileId, flagId) => {
 };
 
 // Local storage functions
-export const getFlagHistoryLocal = async (profileId, flagId) => {
+export const getFlagHistoryLocal = async (
+	profileId: string | number,
+	flagId: string | number
+): Promise<HistoryEntry[]> => {
 	try {
 		const history = await AsyncStorage.getItem(
 			`flagHistory_${profileId}_${flagId}`
 		);
-		const parsedHistory = history ? JSON.parse(history) : [];
+		const parsedHistory: HistoryEntry[] = history
+			? JSON.parse(history)
+			: [];
 
 		// Sort by timestamp (newest first)
-		return parsedHistory.sort((a, b) => {
-			return new Date(b.timestamp) - new Date(a.timestamp);
+		return parsedHistory.sort((a: HistoryEntry, b: HistoryEntry) => {
+			return (
+				new Date(b.timestamp).getTime() -
+				new Date(a.timestamp).getTime()
+			);
 		});
 	} catch (error) {
 		console.error('Error fetching local flag history:', error);
@@ -168,7 +190,10 @@ export const getFlagHistoryLocal = async (profileId, flagId) => {
 };
 
 // Store pending changes
-export const storePendingChange = async (action, data) => {
+export const storePendingChange = async (
+	action: string,
+	data: any
+): Promise<void> => {
 	try {
 		const pendingChanges = await AsyncStorage.getItem('pendingChanges');
 		const changes = pendingChanges ? JSON.parse(pendingChanges) : [];
@@ -186,7 +211,7 @@ export const storePendingChange = async (action, data) => {
 };
 
 // Sync pending changes
-export const syncPendingChanges = async () => {
+export const syncPendingChanges = async (): Promise<boolean> => {
 	try {
 		const pendingChanges = await AsyncStorage.getItem('pendingChanges');
 		if (!pendingChanges) return false;
@@ -235,7 +260,10 @@ export const syncPendingChanges = async () => {
 };
 
 // Add attachment to history
-export const addAttachmentToHistory = async (historyId, attachment) => {
+export const addAttachmentToHistory = async (
+	historyId: string,
+	attachment: Attachment
+): Promise<boolean> => {
 	try {
 		// Try to update in MongoDB
 		const response = await mongoDbClient.post('/action/updateOne', {
@@ -259,19 +287,21 @@ export const addAttachmentToHistory = async (historyId, attachment) => {
 		for (const key of historyKeys) {
 			const history = await AsyncStorage.getItem(key);
 			if (history) {
-				const parsedHistory = JSON.parse(history);
-				const updatedHistory = parsedHistory.map((item) => {
-					if (item._id === historyId) {
-						return {
-							...item,
-							attachments: [
-								...(item.attachments || []),
-								attachment,
-							],
-						};
+				const parsedHistory: HistoryEntry[] = JSON.parse(history);
+				const updatedHistory = parsedHistory.map(
+					(item: HistoryEntry) => {
+						if (item._id === historyId) {
+							return {
+								...item,
+								attachments: [
+									...(item.attachments || []),
+									attachment,
+								],
+							};
+						}
+						return item;
 					}
-					return item;
-				});
+				);
 
 				await AsyncStorage.setItem(key, JSON.stringify(updatedHistory));
 			}
@@ -292,20 +322,22 @@ export const addAttachmentToHistory = async (historyId, attachment) => {
 			for (const key of historyKeys) {
 				const history = await AsyncStorage.getItem(key);
 				if (history) {
-					const parsedHistory = JSON.parse(history);
-					const updatedHistory = parsedHistory.map((item) => {
-						if (item._id === historyId) {
-							updated = true;
-							return {
-								...item,
-								attachments: [
-									...(item.attachments || []),
-									attachment,
-								],
-							};
+					const parsedHistory: HistoryEntry[] = JSON.parse(history);
+					const updatedHistory = parsedHistory.map(
+						(item: HistoryEntry) => {
+							if (item._id === historyId) {
+								updated = true;
+								return {
+									...item,
+									attachments: [
+										...(item.attachments || []),
+										attachment,
+									],
+								};
+							}
+							return item;
 						}
-						return item;
-					});
+					);
 
 					await AsyncStorage.setItem(
 						key,
@@ -330,7 +362,10 @@ export const addAttachmentToHistory = async (historyId, attachment) => {
 	}
 };
 
-export const addDealbreakers = async (dealbreaker, userId) => {
+export const addDealbreakers = async (
+	dealbreaker: any,
+	userId: string | number
+): Promise<boolean | undefined> => {
 	try {
 		// Try to update in MongoDB
 		const response = await dealbreakerClient.post('/add-dealbreaker', {

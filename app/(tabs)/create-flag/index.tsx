@@ -1,10 +1,4 @@
-import React, {
-	useMemo,
-	useState,
-	useContext,
-	useEffect,
-	useCallback,
-} from 'react';
+import React from 'react';
 import {
 	StyleSheet,
 	Text,
@@ -12,10 +6,7 @@ import {
 	TextInput,
 	TouchableOpacity,
 } from 'react-native';
-import RadioGroup, { RadioButtonProps } from 'react-native-radio-buttons-group';
-import { showToast } from '../../../utils/functions';
-import StoreContext from '../../../store';
-import { router } from 'expo-router';
+import RadioGroup from 'react-native-radio-buttons-group';
 import { colors } from '../../../libs/board/constants';
 import useCreateFlag from '../../../hooks/useCreateFlag';
 

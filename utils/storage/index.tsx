@@ -3,7 +3,10 @@ import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 
 // Secure storage functions
-export const setSecureItem = async (key, value) => {
+export const setSecureItem = async (
+	key: string,
+	value: string
+): Promise<void> => {
 	try {
 		// Our mock automatically handles fallback
 		await SecureStore.setItemAsync(key, value);
@@ -18,7 +21,7 @@ export const setSecureItem = async (key, value) => {
 	}
 };
 
-export const getSecureItem = async (key) => {
+export const getSecureItem = async (key: string): Promise<string | null> => {
 	try {
 		// Our mock automatically handles fallback
 		return await SecureStore.getItemAsync(key);
@@ -34,7 +37,7 @@ export const getSecureItem = async (key) => {
 	}
 };
 
-export const deleteSecureItem = async (key) => {
+export const deleteSecureItem = async (key: string): Promise<void> => {
 	try {
 		// Our mock automatically handles fallback
 		await SecureStore.deleteItemAsync(key);
@@ -49,7 +52,7 @@ export const deleteSecureItem = async (key) => {
 	}
 };
 
-export const setList = async (key, value) => {
+export const setList = async (key: string, value: any[]): Promise<void> => {
 	try {
 		await AsyncStorage.setItem(key, JSON.stringify(value));
 	} catch (error) {
@@ -57,16 +60,20 @@ export const setList = async (key, value) => {
 	}
 };
 
-export const getList = async (key) => {
+export const getList = async (key: string): Promise<any[] | null> => {
 	try {
 		const value = await AsyncStorage.getItem(key);
 		return value ? JSON.parse(value) : null;
 	} catch (error) {
 		console.log(error);
+		return null;
 	}
 };
 
-export const setAtomicValue = async (key, value) => {
+export const setAtomicValue = async (
+	key: string,
+	value: string
+): Promise<void> => {
 	try {
 		await AsyncStorage.setItem(key, value);
 	} catch (error) {
@@ -74,16 +81,17 @@ export const setAtomicValue = async (key, value) => {
 	}
 };
 
-export const getAtomicValue = async (key) => {
+export const getAtomicValue = async (key: string): Promise<string | null> => {
 	try {
 		const value = await AsyncStorage.getItem(key);
 		return value ? value : null;
 	} catch (error) {
 		console.log(error);
+		return null;
 	}
 };
 
-export const clearStorage = async () => {
+export const clearStorage = async (): Promise<void> => {
 	try {
 		await AsyncStorage.clear();
 	} catch (error) {

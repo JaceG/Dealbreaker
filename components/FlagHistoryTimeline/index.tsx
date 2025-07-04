@@ -654,7 +654,7 @@ const FlagHistoryTimeline = ({
 		closeImagePreview();
 		return null;
 	}
-
+	console.log('History: ', JSON.stringify(history, null, 2));
 	return (
 		<View style={styles.container}>
 			<View style={styles.header}>
