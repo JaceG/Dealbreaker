@@ -7,7 +7,7 @@
     <key>CFBundleDevelopmentRegion</key>
     <string>$(DEVELOPMENT_LANGUAGE)</string>
     <key>CFBundleDisplayName</key>
-    <string>dealbreaker-v2</string>
+    <string>Dealbreaker</string>
     <key>CFBundleExecutable</key>
     <string>$(EXECUTABLE_NAME)</string>
     <key>CFBundleIdentifier</key>
@@ -27,14 +27,8 @@
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
-          <string>dealbreaker-v2</string>
-          <string>com.dealbreaker.v2</string>
-        </array>
-      </dict>
-      <dict>
-        <key>CFBundleURLSchemes</key>
-        <array>
-          <string>exp+dealbreaker-v2</string>
+          <string>dealbreaker-v3</string>
+          <string>com.dealbreaker.v3</string>
         </array>
       </dict>
     </array>

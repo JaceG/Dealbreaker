@@ -8,14 +8,10 @@ const AuthContext = createContext({});
 
 export const useAuth = () => useContext(AuthContext);
 
-// Get API URL from Expo constants or environment variables
-const API_BASE_URL =
-	Constants.expoConfig?.extra?.apiUrl || 'http://localhost:4000';
-
 // Initialize WebBrowser for auth session (needed for Expo)
 WebBrowser.maybeCompleteAuthSession();
 
-type User = {
+export type User = {
 	id: string;
 	[key: string]: any;
 } | null;
@@ -37,7 +33,13 @@ export const AuthProvider = ({
 	}
 	const logout = async () => {
 		await clearSecureStore();
-		router.replace('/login');
+		setTimeout(() => {
+			try {
+				router.replace('/login/');
+			} catch (error) {
+				console.log('Navigation error during logout:', error);
+			}
+		}, 100);
 	};
 
 	useEffect(() => {
@@ -54,10 +56,24 @@ export const AuthProvider = ({
 			if (token && userData) {
 				setAuthToken(token);
 				setUser(JSON.parse(userData));
-				router.replace('/(tabs)');
+				// Add delay to ensure navigation is ready
+				setTimeout(() => {
+					try {
+						router.replace('/(tabs)');
+					} catch (error) {
+						console.log('Navigation error to tabs:', error);
+					}
+				}, 100);
 				return;
 			}
-			router.replace('/login');
+			// Add delay to ensure navigation is ready
+			setTimeout(() => {
+				try {
+					router.replace('/login/');
+				} catch (error) {
+					console.log('Navigation error to login:', error);
+				}
+			}, 100);
 		} catch (error) {
 			setError(
 				error instanceof Error
@@ -70,6 +86,16 @@ export const AuthProvider = ({
 		}
 	};
 
+	function loginAuth(user: unknown, token: string) {
+		setUser(user as User);
+		setAuthToken(token);
+	}
+
+	function clearAuth() {
+		setUser(null);
+		setAuthToken('');
+	}
+
 	return (
 		<AuthContext.Provider
 			value={{
@@ -79,6 +105,8 @@ export const AuthProvider = ({
 				error,
 				checkAuthStatus,
 				logout,
+				loginAuth,
+				clearAuth,
 			}}>
 			{children}
 		</AuthContext.Provider>

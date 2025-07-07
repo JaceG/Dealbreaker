@@ -8,7 +8,7 @@ import {
   lineHeight
 } from 'styled-system'
 
-const ColumnWrapper = styled.View`
+const ColumnWrapper = styled.View<{ columnHeight: number }>`
   paddingHorizontal: 8;
   ${borderRadius};
   maxWidth: 400;
@@ -20,7 +20,6 @@ const ParagraphWrapper = styled.View`
   alignItems: center;
   justifyContent: center;
 `
-
 const RowContainer = styled.View`
   flexDirection: row;
   alignItems: center;
@@ -52,6 +51,6 @@ export {
   ParagraphWrapper,
   Paragraph,
   RowContainer,
-  RowWrapper,
-  SumWrapper
-}
+	RowWrapper,
+	SumWrapper,
+};

@@ -6,25 +6,42 @@ import {
 	Text,
 	TouchableWithoutFeedback,
 	ViewStyle,
+	TextStyle,
+	GestureResponderEvent,
 } from 'react-native';
 import { bool, func, number, object, shape, string } from 'prop-types';
-import { colors, fonts, deviceWidth } from '../../constants';
+import { colors } from '../../constants';
 import { Flag } from '../Icons';
 import {
 	CardContainer,
-	ColumnWrapper,
 	IconRowWrapper,
 	Paragraph,
 	RowWrapper,
 } from './Card.styled';
-const NEGATIVE_SPACE = 200;
-const Card = ({
-	cardBackground,
+
+interface CardProps {
+	cardBorderRadius: number;
+	cardContent?: (item: any) => React.ReactNode;
+	cardIconColor: string;
+	cardNameTextColor: string;
+	cardNameFontSize: number;
+	cardNameFontFamily: string;
+	hidden?: boolean;
+	item?: any;
+	isCardWithShadow: boolean;
+	onPress?: () => void;
+	onPressIn?: (pageY: number) => void;
+	style?: ViewStyle;
+	onFlagClicked?: (item: any) => void;
+	onDeleteItem?: (item: any) => void;
+	onEditItem?: (item: any) => void;
+}
+
+const NEGATIVE_SPACE = 150;
+
+const Card: React.FC<CardProps> = ({
 	cardBorderRadius,
 	cardContent,
-	cardDescriptionTextColor,
-	cardDescriptionFontSize,
-	cardDescriptionFontFamily,
 	cardIconColor,
 	cardNameTextColor,
 	cardNameFontSize,
@@ -34,7 +51,6 @@ const Card = ({
 	isCardWithShadow,
 	onPress,
 	onPressIn,
-	onLongPress,
 	style,
 	onFlagClicked,
 	onDeleteItem,
@@ -48,15 +64,15 @@ const Card = ({
 	const iconStyles: {
 		iconContainer: ViewStyle;
 		iconButton: ViewStyle;
-		iconText: ViewStyle;
+		iconText: TextStyle;
 		flagContainer: ViewStyle;
 	} = {
 		iconContainer: {
 			flexDirection: 'row',
 			alignItems: 'center',
-			justifyContent: 'flex-center',
+			justifyContent: 'center',
 			alignSelf: 'flex-end',
-			paddingTop: '20px',
+			paddingTop: 20,
 		},
 		iconButton: {
 			padding: 5,
@@ -78,28 +94,31 @@ const Card = ({
 		}
 	};
 
+	const handlePressIn = (evt: GestureResponderEvent) => {
+		console.log('page Y', evt.nativeEvent.pageY);
+		if (onPressIn) {
+			onPressIn(evt.nativeEvent.pageY - NEGATIVE_SPACE);
+		}
+	};
+
 	return (
 		<TouchableWithoutFeedback
-			onPressIn={(evt) =>
-				onPressIn
-					? onPressIn(evt.nativeEvent.pageY - NEGATIVE_SPACE)
-					: {}
-			}
-			onPress={handlePress}
-			collapsable={false}>
+			onPressIn={handlePressIn}
+			onPress={handlePress}>
 			<Animated.View style={styles}>
 				{cardContent !== undefined ? (
 					cardContent(item ? item.row() : {})
 				) : (
 					<CardContainer
-						backgroundColor={
-							item?.columnId() === 2
-								? colors.chiGong
-								: colors.exodusFruit
-						}
 						borderRadius={cardBorderRadius}
-						elevation={isCardWithShadow ? 5 : 0}
-						shadowOpacity={isCardWithShadow ? 0.1 : 0}>
+						style={{
+							backgroundColor:
+								item?.columnId() === 2
+									? colors.chiGong
+									: colors.exodusFruit,
+							elevation: isCardWithShadow ? 5 : 0,
+							shadowOpacity: isCardWithShadow ? 0.1 : 0,
+						}}>
 						<RowWrapper
 							style={{
 								justifyContent: 'center',
@@ -111,15 +130,12 @@ const Card = ({
 									width: '40%',
 									alignItems: 'center',
 									justifyContent: 'flex-start',
-
-									// backgroundColor: '#0f0',
-									// padding: '20px',
 								}}>
 								<Paragraph
-									fontSize={cardNameFontSize}
-									fontFamily={cardNameFontFamily}
-									color={cardNameTextColor}
 									style={{
+										fontSize: cardNameFontSize,
+										fontFamily: cardNameFontFamily,
+										color: cardNameTextColor,
 										textAlign: 'center',
 										fontWeight: 'bold',
 									}}>
@@ -185,27 +201,18 @@ const Card = ({
 };
 
 Card.defaultProps = {
-	cardBackground: colors.white,
 	cardBorderRadius: 10,
-	cardDescriptionTextColor: colors.bay,
-	cardDescriptionFontSize: 14,
-	cardDescriptionFontFamily: '',
 	cardIconColor: colors.blurple,
 	cardNameTextColor: colors.blurple,
 	cardNameFontSize: 18,
 	cardNameFontFamily: '',
 	isCardWithShadow: true,
-	onDeleteItem: null,
-	onEditItem: null,
+	hidden: false,
 };
 
 Card.propTypes = {
-	cardBackground: string.isRequired,
 	cardBorderRadius: number.isRequired,
 	cardContent: func,
-	cardDescriptionTextColor: string.isRequired,
-	cardDescriptionFontSize: number.isRequired,
-	cardDescriptionFontFamily: string.isRequired,
 	cardIconColor: string.isRequired,
 	cardNameTextColor: string.isRequired,
 	cardNameFontSize: number.isRequired,
@@ -215,8 +222,8 @@ Card.propTypes = {
 	isCardWithShadow: bool.isRequired,
 	onPress: func,
 	onPressIn: func,
-	onLongPress: func,
-	style: shape({ string }),
+	style: object,
+	onFlagClicked: func,
 	onDeleteItem: func,
 	onEditItem: func,
 };

@@ -1,7 +1,7 @@
-# Dealbreaker-v2
+# Dealbreaker-v3
 
 ## Description
-Dealbreaker-v2 is a React Native mobile application built with Expo that allows users to create and manage "flags" and "dealbreakers" for relationships or other situations. The app provides a simple interface for users to log flags (warning signs) and dealbreakers (non-negotiable issues).
+Dealbreaker-v3 is a React Native mobile application built with Expo that allows users to create and manage "flags" and "dealbreakers" for relationships or other situations. The app provides a simple interface for users to log flags (warning signs) and dealbreakers (non-negotiable issues).
 
 ## Installation
 ```bash
