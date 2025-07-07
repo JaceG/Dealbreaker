@@ -14,7 +14,7 @@ install! 'cocoapods',
 use_modular_headers!
 prepare_react_native_project!
 
-target 'dealbreakerv2' do
+target 'dealbreaker-v3' do
   use_expo_modules!
   config = use_native_modules!
 

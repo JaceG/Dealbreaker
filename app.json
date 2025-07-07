@@ -1,13 +1,13 @@
 {
   "expo": {
-    "name": "dealbreaker-v2",
-    "slug": "dealbreaker-v2",
-    "scheme": "dealbreaker-v2",
+    "name": "Dealbreaker",
+    "slug": "dealbreaker-v3",
+    "scheme": "dealbreaker-v3",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true, 
+    "newArchEnabled": true,
     "jsEngine": "hermes",
     "developmentClient": true,
     "splash": {
@@ -17,9 +17,8 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.dealbreaker.v2",
+      "bundleIdentifier": "com.dealbreaker.v3",
       "jsEngine": "jsc"
-    
     },
     "android": {
       "adaptiveIcon": {
@@ -27,7 +26,7 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.dealbreaker.v2"
+      "package": "com.dealbreaker.v3"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -37,8 +36,12 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "dealbreaker-v2"
+        "projectId": "1e0c271d-5abf-4c90-bac7-e34234803df8"
+      },
+      "router": {
+        "origin": false
       }
-    }
+    },
+    "owner": "jace88"
   }
 }
