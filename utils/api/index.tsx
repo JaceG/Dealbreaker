@@ -165,7 +165,8 @@ export const addFlagHistory = async (
 	creatorId: string | number | null = null,
 	cardTypeChange: string = 'none',
 	previousCardType: string = 'none',
-	newCardType: string = 'none'
+	newCardType: string = 'none',
+	attachments: Attachment[] = []
 ): Promise<HistoryEntry | null> => {
 	try {
 		// Create the history entry object
@@ -182,7 +183,7 @@ export const addFlagHistory = async (
 			cardTypeChange,
 			previousCardType,
 			newCardType,
-			attachments: [],
+			attachments,
 		};
 
 		console.log(
