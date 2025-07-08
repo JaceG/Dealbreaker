@@ -62,6 +62,7 @@ const Layout = () => {
 	const [currentProfileId, setCurrentProfileId] = useState('main');
 	const [isAuthenticated, setIsAuthenticated] = useState(false);
 	const isDealbreakerMountRef = useRef(false);
+	const isMountRef = useRef(false);
 	const isDealbreakerTimeoutRef = useRef<
 		boolean | ReturnType<typeof setTimeout>
 	>(false);
@@ -132,7 +133,10 @@ const Layout = () => {
 	};
 
 	useEffect(() => {
-		updateDealbreakers();
+		if (isMountRef.current) {
+			updateDealbreakers();
+		}
+		isMountRef.current = true;
 	}, [dealbreaker]);
 
 	useEffect(() => {
