@@ -468,7 +468,7 @@ const FlagHistoryTimeline = ({
 							Attachments: {item.attachments.length}
 						</Text>
 
-						{/* Debug section to see raw attachment data */}
+						{/* Debug section to see raw attachment data
 						<View style={styles.debugContainer}>
 							<Text style={styles.debugTitle}>
 								Attachment Debug Info:
@@ -489,7 +489,7 @@ const FlagHistoryTimeline = ({
 										: 'No Date'}
 								</Text>
 							))}
-						</View>
+						</View> */}
 
 						<View style={styles.attachmentsGrid}>
 							{item.attachments.map((attachment, i) => {
