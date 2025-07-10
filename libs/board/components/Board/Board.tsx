@@ -9,6 +9,7 @@ import {
 	PanResponderGestureState,
 	NativeSyntheticEvent,
 	NativeTouchEvent,
+	Dimensions,
 } from 'react-native';
 import { func, object, string } from 'prop-types';
 import { colors, deviceWidth, ios, isX } from '../../constants';
@@ -19,7 +20,7 @@ import { BoardWrapper } from './Board.styled';
 
 const MAX_RANGE = 100;
 const MAX_DEG = 30;
-let CARD_WIDTH = 0.85 * deviceWidth;
+// const CARD_WIDTH = 0.85 * deviceWidth;
 const STATUSBAR_HEIGHT = ios ? (isX() ? 44 : 20) : StatusBar.currentHeight || 0;
 
 // Type definitions
@@ -47,6 +48,9 @@ interface BoardState {
 	movingMode: boolean;
 	draggedItem?: any;
 	srcColumnId?: number;
+	isHorizontal: boolean;
+	deviceWidth: number;
+	cardWidth: number;
 }
 
 interface CarouselRef {
@@ -69,10 +73,8 @@ class Board extends React.Component<BoardProps, BoardState> {
 
 	constructor(props: BoardProps) {
 		super(props);
-
-		if (this.props.columnWidth) {
-			CARD_WIDTH = this.props.columnWidth;
-		}
+		const { width, height } = Dimensions.get('window');
+		const isHorizontal = width > height;
 		this.state = {
 			boardPositionY: 0,
 			rotate: new Animated.Value(0),
@@ -80,6 +82,9 @@ class Board extends React.Component<BoardProps, BoardState> {
 			startingX: 0,
 			startingY: 0,
 			movingMode: false,
+			isHorizontal,
+			deviceWidth: width,
+			cardWidth: 0.85 * width,
 		};
 
 		this.panResponder = PanResponder.create({
@@ -91,14 +96,29 @@ class Board extends React.Component<BoardProps, BoardState> {
 	}
 
 	componentDidMount() {
+		Dimensions.addEventListener('change', this.onOrientationChange);
 		this.val = { x: 0, y: 0 };
 		// eslint-disable-next-line no-return-assign
 		this.state.pan.addListener(
 			(value: { x: number; y: number }) => (this.val = value)
 		);
 	}
+	onOrientationChange = ({
+		window,
+	}: {
+		window: { width: number; height: number };
+	}) => {
+		const isHorizontal = window.width > window.height;
+		// CARD_WIDTH = isHorizontal ? 0.45 * deviceWidth : 0.85 * deviceWidth;
+		this.setState({
+			isHorizontal,
+			deviceWidth: window.width,
+			cardWidth: 0.85 * deviceWidth,
+		});
+	};
 
 	componentWillUnmount() {
+		// Dimensions.removeEventListener('change', this.onOrientationChange);
 		this.unsubscribeFromMovingMode();
 	}
 
@@ -129,7 +149,8 @@ class Board extends React.Component<BoardProps, BoardState> {
 					this.carousel.snapToPrev();
 				}
 				if (
-					startingX + gesture.dx + CARD_WIDTH - 50 > deviceWidth &&
+					startingX + gesture.dx + this.state.cardWidth - 50 >
+						this.state.cardWidth &&
 					gesture.vx > 0 &&
 					this.carousel
 				) {
@@ -387,7 +408,10 @@ class Board extends React.Component<BoardProps, BoardState> {
 			zIndex,
 			top: startingY,
 			left: startingX,
-			width: CARD_WIDTH - 16,
+			width:
+				this.state.deviceWidth *
+					(this.state.isHorizontal ? 0.45 : 0.85) -
+				16,
 			transform: [
 				{ translateX: pan.x },
 				{ translateY: pan.y },
@@ -416,7 +440,7 @@ class Board extends React.Component<BoardProps, BoardState> {
 			item={data.item}
 			onDeleteItem={this.props.onDeleteItem}
 			onEditItem={this.props.onEditItem}
-			width={CARD_WIDTH}
+			width={this.state.deviceWidth}
 		/>
 	);
 
@@ -470,8 +494,8 @@ class Board extends React.Component<BoardProps, BoardState> {
 									} as any)}
 								/>
 							),
-							sliderWidth: deviceWidth,
-							itemWidth: CARD_WIDTH,
+							sliderWidth: this.state.deviceWidth,
+							itemWidth: this.state.cardWidth,
 							oneColumn: boardRepository.columns().length === 1,
 						} as any)}
 					/>

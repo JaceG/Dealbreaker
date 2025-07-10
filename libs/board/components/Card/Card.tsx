@@ -37,7 +37,7 @@ interface CardProps {
 	onEditItem?: (item: any) => void;
 }
 
-const NEGATIVE_SPACE = 150;
+const NEGATIVE_SPACE = 50;
 
 const Card: React.FC<CardProps> = ({
 	cardBorderRadius,
