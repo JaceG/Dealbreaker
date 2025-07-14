@@ -5,6 +5,7 @@ import {
 	View,
 	TextInput,
 	TouchableOpacity,
+	useWindowDimensions,
 } from 'react-native';
 import RadioGroup from 'react-native-radio-buttons-group';
 import { colors } from '../../../libs/board/constants';
@@ -39,22 +40,37 @@ const CreateFlags: React.FC<{}> = () => {
 		setSelectedId,
 	} = useCreateFlag();
 	// Context type is not strongly typed in store, so use 'any' for now
-
+	const { width, height } = useWindowDimensions();
+	const isPortrait = height >= width;
 	return (
-		<View style={styles.container}>
-			<View style={styles.row}>
-				<Text style={styles.text}>Flag Name:</Text>
-				<TextInput
-					value={title}
-					onChangeText={handleTitleChange}
-					style={styles.textInput}
-					placeholder='Enter Name'
-					placeholderTextColor={'white'}
-				/>
-				{error.title ? (
-					<Text style={styles.errorText}>{error.title}</Text>
+		<View
+			style={isPortrait ? styles.container : styles.horizontalContainer}>
+			<View style={styles.horizontalRow}>
+				<View style={styles.flexRow}>
+					<Text style={styles.text}>Flag Name:</Text>
+					<TextInput
+						value={title}
+						onChangeText={handleTitleChange}
+						style={styles.textInput}
+						placeholder='Enter Name'
+						placeholderTextColor={'white'}
+					/>
+					{error.title ? (
+						<Text style={styles.errorText}>{error.title}</Text>
+					) : null}
+				</View>
+				{!isPortrait ? (
+					<View>
+						<RadioGroup
+							containerStyle={styles.radioButtonStyle}
+							radioButtons={radioButtons}
+							onPress={setSelectedId}
+							selectedId={selectedId}
+						/>
+					</View>
 				) : null}
 			</View>
+
 			<View style={styles.row}>
 				<Text style={styles.text}>Description:</Text>
 				<TextInput
@@ -69,14 +85,16 @@ const CreateFlags: React.FC<{}> = () => {
 					<Text style={styles.errorText}>{error.description}</Text>
 				) : null}
 			</View>
-			<View>
-				<RadioGroup
-					containerStyle={styles.radioButtonStyle}
-					radioButtons={radioButtons}
-					onPress={setSelectedId}
-					selectedId={selectedId}
-				/>
-			</View>
+			{isPortrait ? (
+				<View>
+					<RadioGroup
+						containerStyle={styles.radioButtonStyle}
+						radioButtons={radioButtons}
+						onPress={setSelectedId}
+						selectedId={selectedId}
+					/>
+				</View>
+			) : null}
 			<View style={{ width: '100%', marginTop: 20 }}>
 				<TouchableOpacity
 					style={styles.button}
@@ -90,9 +108,19 @@ const CreateFlags: React.FC<{}> = () => {
 };
 
 const styles = StyleSheet.create({
+	horizontalContainer: {
+		flex: 1,
+		backgroundColor: '#fff',
+		width: '100%',
+		paddingHorizontal: 70,
+		paddingTop: 10,
+		alignItems: 'center',
+	},
 	container: {
 		flex: 1,
 		backgroundColor: '#fff',
+		width: '100%',
+		alignItems: 'center',
 		padding: 10,
 	},
 	row: {
@@ -100,6 +128,16 @@ const styles = StyleSheet.create({
 		width: '100%',
 		justifyContent: 'center',
 		alignItems: 'flex-start',
+		marginBottom: 10,
+	},
+	flexRow: {
+		flex: 1,
+	},
+	horizontalRow: {
+		flexDirection: 'row',
+		width: '100%',
+		justifyContent: 'space-between',
+		alignItems: 'flex-end',
 		marginBottom: 10,
 	},
 	textInput: {
@@ -116,13 +154,15 @@ const styles = StyleSheet.create({
 		color: '#000',
 	},
 	description: {
-		height: 120,
+		height: 70,
 		textAlignVertical: 'top',
 		color: '#000',
 	},
 	radioButtonStyle: {
 		flexDirection: 'row',
 		justifyContent: 'space-between',
+		alignItems: 'center',
+		paddingTop: 10,
 	},
 	errorText: {
 		color: '#000',
