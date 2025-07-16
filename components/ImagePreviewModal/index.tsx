@@ -26,6 +26,13 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
 			transparent={true}
 			visible={visible}
 			statusBarTranslucent={true}
+			supportedOrientations={[
+				'portrait',
+				'portrait-upside-down',
+				'landscape',
+				'landscape-left',
+				'landscape-right',
+			]}
 			onRequestClose={onClose}>
 			<SafeAreaView style={styles.container}>
 				<StatusBar barStyle='light-content' backgroundColor='#000' />

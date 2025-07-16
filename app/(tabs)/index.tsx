@@ -1,4 +1,10 @@
-import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
+import {
+	StyleSheet,
+	Text,
+	View,
+	TouchableOpacity,
+	ScrollView,
+} from 'react-native';
 import { Board } from '../../libs/board/components';
 import AppButton from '../../components/AppButton';
 import { router } from 'expo-router';
@@ -134,118 +140,106 @@ export default function Lists() {
 			(dealbreaker[currentProfileId]?.flag?.length > 0 ||
 				dealbreaker[currentProfileId]?.dealbreaker?.length > 0) ? (
 				<>
-					<View>
-						<View style={styles.profileButtonContainer}>
-							<View style={styles.innerProfileButtonContainer}>
-								<View style={styles.profileSwitchTextContainer}>
-									<Text style={styles.profileLabel}>
-										Profile:{' '}
+					<View style={styles.profileButtonContainer}>
+						<View style={styles.innerProfileButtonContainer}>
+							<View style={styles.profileSwitchTextContainer}>
+								<Text style={styles.profileLabel}>
+									Profile:{' '}
+								</Text>
+								<View style={styles.profileNameContainer}>
+									<Text style={styles.profileText}>
+										{getCurrentProfileName()}
 									</Text>
-									<View style={styles.profileNameContainer}>
-										<Text style={styles.profileText}>
-											{getCurrentProfileName()}
-										</Text>
-										{currentProfileId !== 'main' && (
-											<TouchableOpacity
-												style={styles.editProfileButton}
-												onPress={handleEditProfile}>
-												<Text
-													style={
-														styles.editProfileText
-													}>
-													✏️
-												</Text>
-											</TouchableOpacity>
-										)}
-									</View>
+									{currentProfileId !== 'main' && (
+										<TouchableOpacity
+											style={styles.editProfileButton}
+											onPress={handleEditProfile}>
+											<Text
+												style={styles.editProfileText}>
+												✏️
+											</Text>
+										</TouchableOpacity>
+									)}
 								</View>
 							</View>
 						</View>
-
-						{!isRemount ? (
-							<Board
-								cardBorderRadius='10px'
-								key={`board-${currentProfileId}-${refreshKey}`}
-								boardRepository={list}
-								open={() => {}}
-								onFlagClicked={handleFlagClick}
-								onDragEnd={(
-									_: any,
-									__: any,
-									draggedItem: any
-								) => {
-									if (!dealbreaker?.[currentProfileId])
-										return;
-
-									// Safety checks for draggedItem structure
-									if (
-										!draggedItem ||
-										!draggedItem.attributes ||
-										!draggedItem.attributes.row ||
-										!draggedItem.attributes.row.id
-									) {
-										console.warn(
-											'Invalid draggedItem structure:',
-											draggedItem
-										);
-										return;
-									}
-
-									// Set the flag to indicate this is a user drag operation
-									isDragOperationRef.current = true;
-
-									let isDealbreaker = false;
-									if (draggedItem.attributes.columnId === 2) {
-										isDealbreaker = true;
-									}
-
-									const itemId =
-										draggedItem.attributes.row.id;
-									let oldIndex =
-										flagListIndexRef.current.get(itemId);
-									console.log('oldIndex: ', oldIndex);
-									console.log('draggedItem: ', itemId);
-
-									if (!oldIndex && oldIndex !== 0) {
-										oldIndex =
-											dealbreakerListIndexRef.current.get(
-												itemId
-											);
-									}
-
-									// Safety check for required properties
-									if (
-										draggedItem.attributes.index ===
-											undefined ||
-										oldIndex === undefined
-									) {
-										console.warn(
-											'Missing required properties for updateListOrder:',
-											{
-												newIndex:
-													draggedItem.attributes
-														.index,
-												oldIndex: oldIndex,
-												itemId: itemId,
-											}
-										);
-										return;
-									}
-
-									updateListOrder(
-										draggedItem.attributes.index,
-										oldIndex as number,
-										itemId,
-										isDealbreaker
-									);
-								}}
-								onDeleteItem={handleDeleteItem}
-								onEditItem={handleEditItem}
-								isWithCountBadge={false}
-								cardNameTextColor='white'
-							/>
-						) : null}
 					</View>
+					{!isRemount ? (
+						<Board
+							cardBorderRadius='10px'
+							key={`board-${currentProfileId}-${refreshKey}`}
+							boardRepository={list}
+							open={() => {}}
+							onFlagClicked={handleFlagClick}
+							onDragEnd={(_: any, __: any, draggedItem: any) => {
+								if (!dealbreaker?.[currentProfileId]) return;
+
+								// Safety checks for draggedItem structure
+								if (
+									!draggedItem ||
+									!draggedItem.attributes ||
+									!draggedItem.attributes.row ||
+									!draggedItem.attributes.row.id
+								) {
+									console.warn(
+										'Invalid draggedItem structure:',
+										draggedItem
+									);
+									return;
+								}
+
+								// Set the flag to indicate this is a user drag operation
+								isDragOperationRef.current = true;
+
+								let isDealbreaker = false;
+								if (draggedItem.attributes.columnId === 2) {
+									isDealbreaker = true;
+								}
+
+								const itemId = draggedItem.attributes.row.id;
+								let oldIndex =
+									flagListIndexRef.current.get(itemId);
+								console.log('oldIndex: ', oldIndex);
+								console.log('draggedItem: ', itemId);
+
+								if (!oldIndex && oldIndex !== 0) {
+									oldIndex =
+										dealbreakerListIndexRef.current.get(
+											itemId
+										);
+								}
+
+								// Safety check for required properties
+								if (
+									draggedItem.attributes.index ===
+										undefined ||
+									oldIndex === undefined
+								) {
+									console.warn(
+										'Missing required properties for updateListOrder:',
+										{
+											newIndex:
+												draggedItem.attributes.index,
+											oldIndex: oldIndex,
+											itemId: itemId,
+										}
+									);
+									return;
+								}
+
+								updateListOrder(
+									draggedItem.attributes.index,
+									oldIndex as number,
+									itemId,
+									isDealbreaker
+								);
+							}}
+							onDeleteItem={handleDeleteItem}
+							onEditItem={handleEditItem}
+							isWithCountBadge={false}
+							cardNameTextColor='white'
+						/>
+					) : null}
 				</>
 			) : (
 				<View style={styles.noDealbreakerContainer}>

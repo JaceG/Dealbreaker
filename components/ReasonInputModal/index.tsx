@@ -364,21 +364,6 @@ const ReasonInputModal = ({
 		}
 	};
 
-	// Mock media picker - for use when real ImagePicker isn't available
-	const useMockMediaPicker = () => {
-		// Ask user to select number and type of mock media
-		Alert.alert('Simulator Mode', 'What would you like to add?', [
-			{ text: 'Cancel', style: 'cancel' },
-			{ text: 'Images', onPress: () => showImageOptions() },
-			{ text: 'Videos', onPress: () => showVideoOptions() },
-			// Show mock audio option if enabled
-			...(MOCK_AUDIO_ENABLED
-				? [{ text: 'Audio', onPress: () => addMockAudio() }]
-				: []),
-			{ text: 'Mixed Media', onPress: () => showMixedOptions() },
-		]);
-	};
-
 	// Always use the mock picker since native modules aren't available
 	const pickMedia = async () => {
 		debugLog('Opening media picker...');
@@ -823,6 +808,13 @@ const ReasonInputModal = ({
 			statusBarTranslucent={true}
 			hardwareAccelerated={true}
 			presentationStyle='overFullScreen'
+			supportedOrientations={[
+				'portrait',
+				'portrait-upside-down',
+				'landscape',
+				'landscape-left',
+				'landscape-right',
+			]}
 			onRequestClose={() => onClose()}>
 			<View
 				style={[

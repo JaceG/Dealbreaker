@@ -1,6 +1,12 @@
 import React from 'react';
-import { StyleSheet, View, Text, Modal, TouchableOpacity } from 'react-native';
-import AppButton from '../AppButton';
+import {
+	StyleSheet,
+	View,
+	Text,
+	Modal,
+	TouchableOpacity,
+	useWindowDimensions,
+} from 'react-native';
 import { ConfirmationModalProps } from '../../models/modalModels';
 
 const ConfirmationModal = ({
@@ -10,17 +16,37 @@ const ConfirmationModal = ({
 	title,
 	message,
 }: ConfirmationModalProps) => {
+	const { width, height } = useWindowDimensions();
+	const isPortrait = height >= width;
+
 	return (
 		<Modal
 			animationType='fade'
 			transparent={true}
 			visible={visible}
+			supportedOrientations={[
+				'portrait',
+				'portrait-upside-down',
+				'landscape',
+				'landscape-left',
+				'landscape-right',
+			]}
 			onRequestClose={onClose}>
 			<View style={styles.centeredView}>
-				<View style={styles.modalView}>
+				<View
+					style={
+						isPortrait
+							? styles.modalView
+							: styles.modalViewHorizontal
+					}>
 					<Text style={styles.modalTitle}>{title}</Text>
 					<Text style={styles.modalText}>{message}</Text>
-					<View style={styles.buttonContainer}>
+					<View
+						style={
+							isPortrait
+								? styles.buttonContainer
+								: styles.buttonContainerHorizontal
+						}>
 						<TouchableOpacity
 							style={styles.cancelButton}
 							onPress={onClose}>
@@ -61,6 +87,22 @@ const styles = StyleSheet.create({
 		elevation: 5,
 		width: '80%',
 	},
+	modalViewHorizontal: {
+		margin: 20,
+		backgroundColor: 'white',
+		borderRadius: 10,
+		padding: 20,
+		alignItems: 'center',
+		shadowColor: '#000',
+		shadowOffset: {
+			width: 0,
+			height: 2,
+		},
+		shadowOpacity: 0.25,
+		shadowRadius: 4,
+		elevation: 5,
+		width: '60%',
+	},
 	modalTitle: {
 		fontSize: 20,
 		fontWeight: 'bold',
@@ -76,6 +118,12 @@ const styles = StyleSheet.create({
 		flexDirection: 'row',
 		justifyContent: 'space-between',
 		width: '100%',
+	},
+	buttonContainerHorizontal: {
+		flexDirection: 'row',
+		justifyContent: 'center',
+		width: '100%',
+		gap: 20,
 	},
 	cancelButton: {
 		backgroundColor: '#ccc',

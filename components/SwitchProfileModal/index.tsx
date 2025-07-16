@@ -1,5 +1,12 @@
 import { Dropdown } from 'react-native-element-dropdown';
-import { StyleSheet, Modal, View, Text, Alert } from 'react-native';
+import {
+	StyleSheet,
+	Modal,
+	View,
+	Text,
+	Alert,
+	useWindowDimensions,
+} from 'react-native';
 import { useState, useContext, useEffect, useCallback, memo } from 'react';
 import AppButton from '../AppButton';
 import StoreContext from '../../store';
@@ -21,6 +28,9 @@ const SwitchProfileModal = memo<SwitchProfileModalProps>(
 		const [data, setData] = useState<
 			Array<{ label: string; value: string }>
 		>([]);
+
+		const { width, height } = useWindowDimensions();
+		const isPortrait = height >= width;
 
 		// Update dropdown data and selected value when modal becomes visible
 		useEffect(() => {
@@ -141,9 +151,28 @@ const SwitchProfileModal = memo<SwitchProfileModalProps>(
 		);
 
 		return (
-			<Modal visible={visible} animationType='slide'>
-				<View style={styles.modalContainer}>
-					<View style={styles.modalInnerContainer}>
+			<Modal
+				visible={visible}
+				animationType='slide'
+				supportedOrientations={[
+					'portrait',
+					'portrait-upside-down',
+					'landscape',
+					'landscape-left',
+					'landscape-right',
+				]}>
+				<View
+					style={
+						isPortrait
+							? styles.modalContainer
+							: styles.modalContainerHorizontal
+					}>
+					<View
+						style={
+							isPortrait
+								? styles.modalInnerContainer
+								: styles.modalInnerContainerHorizontal
+						}>
 						<Text style={styles.modalTitle}>Switch Profile</Text>
 						<Dropdown
 							data={data}
@@ -166,10 +195,20 @@ const SwitchProfileModal = memo<SwitchProfileModalProps>(
 							onBlur={() => setIsFocus(false)}
 							onChange={handleDropdownChange}
 						/>
-						<View style={styles.buttonContainer}>
+						<View
+							style={
+								isPortrait
+									? styles.buttonContainer
+									: styles.buttonContainerHorizontal
+							}>
 							<AppButton
 								title='Select Profile'
 								onPress={handleProfileChange}
+							/>
+							<AppButton
+								title='Close'
+								onPress={onClose}
+								color='#6c757d'
 							/>
 							{selectedId && canDeleteProfile(selectedId) ? (
 								<AppButton
@@ -178,11 +217,6 @@ const SwitchProfileModal = memo<SwitchProfileModalProps>(
 									color='#d9534f'
 								/>
 							) : null}
-							<AppButton
-								title='Close'
-								onPress={onClose}
-								color='#6c757d'
-							/>
 						</View>
 					</View>
 				</View>
@@ -235,6 +269,13 @@ const styles = StyleSheet.create({
 		alignItems: 'center',
 		gap: 10,
 	},
+	modalContainerHorizontal: {
+		flex: 1,
+		justifyContent: 'center',
+		alignItems: 'center',
+		gap: 10,
+		paddingHorizontal: 40,
+	},
 	buttonContainer: {
 		flexDirection: 'column',
 		width: '100%',
@@ -243,10 +284,24 @@ const styles = StyleSheet.create({
 		marginTop: 20,
 		gap: 10,
 	},
+	buttonContainerHorizontal: {
+		flexDirection: 'row',
+		width: '100%',
+		justifyContent: 'center',
+		alignItems: 'center',
+		marginTop: 20,
+		gap: 15,
+	},
 	modalInnerContainer: {
 		justifyContent: 'center',
 		alignItems: 'center',
 		gap: 10,
+	},
+	modalInnerContainerHorizontal: {
+		justifyContent: 'center',
+		alignItems: 'center',
+		gap: 10,
+		width: '100%',
 	},
 	modalTitle: {
 		fontSize: 20,

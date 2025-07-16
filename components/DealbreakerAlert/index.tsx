@@ -1,5 +1,11 @@
 import React from 'react';
-import { StyleSheet, View, Text, Modal, TouchableOpacity } from 'react-native';
+import {
+	StyleSheet,
+	View,
+	Text,
+	Modal,
+	useWindowDimensions,
+} from 'react-native';
 import AppButton from '../AppButton';
 import { DealbreakerAlertProps } from '../../models/modalModels';
 
@@ -9,14 +15,29 @@ const DealbreakerAlert = ({
 	onUndo,
 	itemTitle,
 }: DealbreakerAlertProps) => {
+	const { width, height } = useWindowDimensions();
+	const isPortrait = height >= width;
+
 	return (
 		<Modal
 			animationType='fade'
 			transparent={true}
 			visible={visible}
+			supportedOrientations={[
+				'portrait',
+				'portrait-upside-down',
+				'landscape',
+				'landscape-left',
+				'landscape-right',
+			]}
 			onRequestClose={onClose}>
 			<View style={styles.centeredView}>
-				<View style={styles.modalView}>
+				<View
+					style={
+						isPortrait
+							? styles.modalView
+							: styles.modalViewHorizontal
+					}>
 					<Text style={styles.alertIcon}>⚠️</Text>
 					<Text style={styles.modalTitle}>Dealbreaker Alert!</Text>
 
@@ -27,7 +48,12 @@ const DealbreakerAlert = ({
 						profile.
 					</Text>
 
-					<View style={styles.buttonContainer}>
+					<View
+						style={
+							isPortrait
+								? styles.buttonContainer
+								: styles.buttonContainerHorizontal
+						}>
 						<View style={styles.buttonWrapper}>
 							<AppButton
 								title='Keep as Dealbreaker'
@@ -71,6 +97,33 @@ const styles = StyleSheet.create({
 		shadowRadius: 4,
 		elevation: 5,
 	},
+	modalViewHorizontal: {
+		width: '70%',
+		backgroundColor: 'white',
+		borderRadius: 10,
+		padding: 20,
+		alignItems: 'center',
+		shadowColor: '#000',
+		shadowOffset: {
+			width: 0,
+			height: 2,
+		},
+		shadowOpacity: 0.25,
+		shadowRadius: 4,
+		elevation: 5,
+	},
+	buttonContainer: {
+		flexDirection: 'row',
+		justifyContent: 'space-between',
+		width: '100%',
+		gap: 10,
+	},
+	buttonContainerHorizontal: {
+		flexDirection: 'row',
+		justifyContent: 'center',
+		width: '100%',
+		gap: 20,
+	},
 	alertIcon: {
 		fontSize: 40,
 		marginBottom: 10,
@@ -89,12 +142,6 @@ const styles = StyleSheet.create({
 	},
 	itemName: {
 		fontWeight: 'bold',
-	},
-	buttonContainer: {
-		flexDirection: 'row',
-		justifyContent: 'space-between',
-		width: '100%',
-		gap: 10,
 	},
 	buttonWrapper: {
 		flex: 1,

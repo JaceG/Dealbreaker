@@ -50,6 +50,7 @@ interface BoardState {
 	srcColumnId?: number;
 	isHorizontal: boolean;
 	deviceWidth: number;
+	deviceHeight: number;
 	cardWidth: number;
 }
 
@@ -84,6 +85,7 @@ class Board extends React.Component<BoardProps, BoardState> {
 			movingMode: false,
 			isHorizontal,
 			deviceWidth: width,
+			deviceHeight: height,
 			cardWidth: 0.85 * width,
 		};
 
@@ -113,6 +115,7 @@ class Board extends React.Component<BoardProps, BoardState> {
 		this.setState({
 			isHorizontal,
 			deviceWidth: window.width,
+			deviceHeight: window.height,
 			cardWidth: 0.85 * deviceWidth,
 		});
 	};
@@ -492,9 +495,15 @@ class Board extends React.Component<BoardProps, BoardState> {
 											boardRepository.columns().length ===
 											1,
 									} as any)}
+									columnHeight={
+										this.state.isHorizontal
+											? this.state.deviceHeight - 75
+											: undefined
+									}
 								/>
 							),
 							sliderWidth: this.state.deviceWidth,
+							sliderHeight: this.state.deviceHeight,
 							itemWidth: this.state.cardWidth,
 							oneColumn: boardRepository.columns().length === 1,
 						} as any)}
