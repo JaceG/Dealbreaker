@@ -36,19 +36,19 @@ const useLogin = (): LoginHookReturn => {
 		}
 	}, [error]);
 
-	const handleSubmit = async () => {
+	const handleSubmit = async (isGuest: boolean = false) => {
 		if (isLoading) return;
 
 		// Reset error state
 		setLocalError('');
 
 		// Basic validation
-		if (isLogin && (!email || !password)) {
+		if (!isGuest && isLogin && (!email || !password)) {
 			setLocalError('Please enter both email and password');
 			return;
 		}
 
-		if (!isLogin && (!name || !email || !password)) {
+		if (!isGuest && !isLogin && (!name || !email || !password)) {
 			setLocalError('Please fill in all fields');
 			return;
 		}
@@ -57,7 +57,11 @@ const useLogin = (): LoginHookReturn => {
 			let success;
 
 			if (isLogin) {
-				success = await login(email, password);
+				success = await login(
+					email,
+					password,
+					isGuest ? 'guest' : 'user'
+				);
 			} else {
 				// success = await register(name, email, password);
 			}
@@ -83,7 +87,11 @@ const useLogin = (): LoginHookReturn => {
 		}
 	};
 
-	const login = async (email: string, password: string) => {
+	const login = async (
+		email: string,
+		password: string,
+		role: string = 'user'
+	) => {
 		try {
 			console.log(
 				`Attempting to login with API: ${API_BASE_URL}/api/auth/login`
@@ -95,7 +103,7 @@ const useLogin = (): LoginHookReturn => {
 				headers: {
 					'Content-Type': 'application/json',
 				},
-				body: JSON.stringify({ email, password }),
+				body: JSON.stringify({ email, password, role }),
 			}).catch((error) => {
 				console.error('Network error during login:', error);
 				throw new Error(
@@ -136,7 +144,7 @@ const useLogin = (): LoginHookReturn => {
 
 			// The backend only returns a token, so we need to fetch user info
 			const token = data.token;
-
+			console.log('Token:', token);
 			// Save token first
 			await SecureStore.setItemAsync('authToken', token);
 
@@ -151,7 +159,6 @@ const useLogin = (): LoginHookReturn => {
 				console.error('Error fetching user data:', error);
 				throw new Error('Failed to fetch user information after login');
 			});
-
 			console.log('User info response status:', userResponse.status);
 
 			if (!userResponse.ok) {
@@ -161,6 +168,7 @@ const useLogin = (): LoginHookReturn => {
 			}
 
 			const userData = await userResponse.json();
+			console.log('User info response:', userData);
 			console.log('User data received:', {
 				...userData,
 				_id: userData._id ? '••••••••' : undefined,

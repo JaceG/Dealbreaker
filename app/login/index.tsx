@@ -115,7 +115,7 @@ const Auth: React.FC<AuthProps> = () => {
 							styles.button,
 							isLoading ? styles.buttonDisabled : null,
 						]}
-						onPress={handleSubmit}
+						onPress={() => handleSubmit(false)}
 						disabled={isLoading}>
 						{isLoading ? (
 							<ActivityIndicator color='#fff' />
@@ -123,6 +123,19 @@ const Auth: React.FC<AuthProps> = () => {
 							<Text style={styles.buttonText}>
 								{isLogin ? 'Login' : 'Register'}
 							</Text>
+						)}
+					</TouchableOpacity>
+					<TouchableOpacity
+						style={[
+							styles.button2,
+							isLoading ? styles.buttonDisabled : null,
+						]}
+						onPress={() => handleSubmit(true)}
+						disabled={isLoading}>
+						{isLoading ? (
+							<ActivityIndicator color='#fff' />
+						) : (
+							<Text style={styles.buttonText}>Just Try It</Text>
 						)}
 					</TouchableOpacity>
 
@@ -194,6 +207,15 @@ const styles = StyleSheet.create({
 	},
 	button: {
 		backgroundColor: colors.exodusFruit,
+		padding: 15,
+		borderRadius: 10,
+		alignItems: 'center',
+		marginBottom: 15,
+	},
+	button2: {
+		backgroundColor: colors.deepComaru,
+		width: '75%',
+		margin: 'auto',
 		padding: 15,
 		borderRadius: 10,
 		alignItems: 'center',
