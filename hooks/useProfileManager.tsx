@@ -58,6 +58,10 @@ export const useProfileManager = (
 		console.log('totalFlags', { totalFlags });
 		return totalFlags < allowedCard;
 	};
+	const isValidNoProfileItems = (allowedProfile: number) => {
+		console.log('isValidNoProfileItems', { allowedProfile });
+		return profiles.length < allowedProfile;
+	};
 	// Add item to all profiles
 	const addItemToAllProfiles = (
 		item: FlagItem,
@@ -174,5 +178,6 @@ export const useProfileManager = (
 		deleteProfile,
 		renameProfile,
 		isValidNoCardItems,
+		isValidNoProfileItems,
 	};
 };

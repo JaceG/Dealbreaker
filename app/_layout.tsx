@@ -97,6 +97,7 @@ const Layout = () => {
 		deleteProfile,
 		renameProfile,
 		isValidNoCardItems,
+		isValidNoProfileItems,
 	} = useProfileManager(
 		dealbreaker,
 		updateDealbreaker,
@@ -176,6 +177,7 @@ const Layout = () => {
 					isOnline,
 					syncData: syncOfflineData,
 					isValidNoCardItems,
+					isValidNoProfileItems,
 				} as any
 			}>
 			<AuthProvider>

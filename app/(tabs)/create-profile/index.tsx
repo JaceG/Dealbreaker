@@ -18,6 +18,7 @@ export interface Profile {
 export interface StoreContextType {
 	profiles: Profile[];
 	createProfile: (name: string) => string | null;
+	isValidNoProfileItems: (allowedProfile: number) => boolean;
 }
 
 export interface ErrorState {
