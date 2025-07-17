@@ -8,9 +8,11 @@ import {
 	initialErrorState,
 	FlagItem,
 } from '../app/(tabs)/create-flag';
+import * as SecureStore from 'expo-secure-store';
 
 const useCreateFlag = () => {
-	const { addItemToAllProfiles } = useContext<any>(StoreContext);
+	const { addItemToAllProfiles, isValidNoCardItems } =
+		useContext<any>(StoreContext);
 	const radioButtons: RadioButtonProps[] = useMemo(
 		() => [
 			{
@@ -53,7 +55,10 @@ const useCreateFlag = () => {
 		};
 	}, []);
 
-	function handleSubmit() {
+	async function handleSubmit() {
+		const userData = await SecureStore.getItemAsync('userData');
+		const userDataObj = JSON.parse(userData as string);
+		const role = userDataObj.role; // user, guest and admin
 		if (validate()) {
 			const type = selectedId === '1' ? 'flag' : 'dealbreaker';
 
@@ -68,6 +73,20 @@ const useCreateFlag = () => {
 				flag: 'white',
 			};
 
+			// Check the count of flag if guest is user
+			if (role === 'guest') {
+				console.log('Guest is creating flag');
+				const allowedNumber = 5;
+				const isValid = isValidNoCardItems(allowedNumber);
+				console.log('isValid', isValid);
+				if (!isValid) {
+					showToast(
+						'error',
+						`Guest only allowed to create ${allowedNumber} cards.`
+					);
+					return;
+				}
+			}
 			// Use the central function to add the item to all profiles
 			addItemToAllProfiles(newItem, type);
 
