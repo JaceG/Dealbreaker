@@ -1,4 +1,4 @@
-import { Tabs } from 'expo-router';
+import { router, Tabs } from 'expo-router';
 import { FontAwesome } from '@expo/vector-icons';
 import Feather from '@expo/vector-icons/Feather';
 import { Button, useWindowDimensions } from 'react-native';
@@ -12,6 +12,7 @@ import { useLayoutModals } from '../../hooks/useLayoutModals';
 
 const Layout = () => {
 	const { user } = useAuth() as AuthContextType;
+	console.log('user: ', user);
 	const { width, height } = useWindowDimensions();
 	const isPortrait = height >= width;
 	const { logout } = useAuthActions();
@@ -42,9 +43,19 @@ const Layout = () => {
 							/>
 						),
 						tabBarActiveTintColor: colors.exodusFruit,
-						headerRight: () => (
-							<Button title='Logout' onPress={logout} />
-						),
+						headerRight: () => {
+							if (user?.role == 'guest') {
+								return (
+									<Button
+										title='Register'
+										onPress={() => {
+											router.push('/register');
+										}}
+									/>
+								);
+							}
+							return <Button title='Logout' onPress={logout} />;
+						},
 						headerLeft: () => (
 							<Button
 								title='Switch Profile'

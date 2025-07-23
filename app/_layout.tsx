@@ -210,6 +210,7 @@ const Layout = () => {
 							name='(tabs)'
 							options={{
 								headerShown: false,
+								headerTitle: 'Back',
 							}}
 						/>
 					</Stack>
