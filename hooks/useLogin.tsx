@@ -79,6 +79,40 @@ const useLogin = (): LoginHookReturn => {
 		}
 	};
 
+	const socialLogin = async (
+		email: string,
+		password: string,
+		role: string = 'user',
+		type: string,
+		social_id: string,
+		social_name: string
+	) => {
+		try {
+			let success;
+
+			success = await login(
+				email,
+				password,
+				role,
+				type,
+				social_id,
+				social_name
+			);
+			if (success) {
+				setEmail('');
+				setPassword('');
+				await checkAuthStatus();
+				router.replace('/(tabs)');
+			}
+			return success;
+		} catch (error: unknown) {
+			console.error('Auth error:', error);
+			setLocalError(
+				error instanceof Error ? error.message : 'Authentication failed'
+			);
+		}
+	};
+
 	// Toggle dev options with a secret tap
 	const handleTitlePress = () => {
 		// Track number of taps to reveal dev options after 5 taps
@@ -90,7 +124,10 @@ const useLogin = (): LoginHookReturn => {
 	const login = async (
 		email: string,
 		password: string,
-		role: string = 'user'
+		role: string = 'user',
+		type?: string,
+		social_id?: string,
+		social_name?: string
 	) => {
 		try {
 			console.log(
@@ -103,7 +140,14 @@ const useLogin = (): LoginHookReturn => {
 				headers: {
 					'Content-Type': 'application/json',
 				},
-				body: JSON.stringify({ email, password, role }),
+				body: JSON.stringify({
+					email,
+					password,
+					role,
+					type,
+					social_id,
+					social_name,
+				}),
 			}).catch((error) => {
 				console.error('Network error during login:', error);
 				throw new Error(
@@ -216,6 +260,7 @@ const useLogin = (): LoginHookReturn => {
 		setLocalError,
 		showDevOptions,
 		setShowDevOptions,
+		socialLogin,
 	};
 };
 

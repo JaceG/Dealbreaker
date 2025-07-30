@@ -20,6 +20,8 @@ import * as SecureStore from 'expo-secure-store';
 import { AuthContextType } from '../../models/authModels';
 import { colors } from '../../libs/board/constants';
 import useRegister from '../../hooks/useRegister';
+import * as Google from 'expo-auth-session/providers/google';
+import useLogin from '../../hooks/useLogin';
 
 // Initialize WebBrowser for auth session
 WebBrowser.maybeCompleteAuthSession();
@@ -46,6 +48,60 @@ const Auth: React.FC<AuthProps> = () => {
 		handleSubmit,
 		isLoading,
 	} = useRegister();
+
+	const { socialLogin } = useLogin();
+	const [request, response, promptAsync] = Google.useAuthRequest({
+		iosClientId: process.env.EXPO_PUBLIC_OAUTH_IOS_CLIENT_ID,
+		webClientId: process.env.EXPO_PUBLIC_OAUTH_EXPO_CLIENT_ID,
+		redirectUri:
+			'com.googleusercontent.apps.255602929152-pjcbt99ocrr14vr7r3c3r1rko77ns74q:/oauth/callback',
+	});
+
+	useEffect(() => {
+		if (response?.type === 'success') {
+			const { authentication } = response;
+			if (authentication?.accessToken) {
+				handleGoogleSignIn(authentication.accessToken);
+			}
+		}
+	}, [response]);
+
+	const promptGoogleSignIn = async () => {
+		if (!request) {
+			Alert.alert('Error', 'Google sign-in is not configured properly');
+			return;
+		}
+
+		try {
+			const result = await promptAsync();
+			// The useEffect will handle the result
+		} catch (error) {
+			Alert.alert('Error', 'Failed to sign in with Google');
+			console.error('Google sign-in error:', error);
+		}
+	};
+
+	const handleGoogleSignIn = async (accessToken: string) => {
+		try {
+			// Fetch user info from Google
+			const userInfoResponse = await fetch(
+				`https://www.googleapis.com/oauth2/v2/userinfo?access_token=${accessToken}`
+			);
+			const googleUser = await userInfoResponse.json();
+			console.log('Google user:', googleUser);
+			await socialLogin(
+				googleUser.email,
+				googleUser.name,
+				'user',
+				'google',
+				googleUser.id,
+				googleUser.name
+			);
+		} catch (error) {
+			console.error('Google auth error:', error);
+			Alert.alert('Error', 'Failed to authenticate with Google');
+		}
+	};
 
 	return (
 		<KeyboardAvoidingView
@@ -103,6 +159,17 @@ const Auth: React.FC<AuthProps> = () => {
 						) : (
 							<Text style={styles.buttonText}>Register</Text>
 						)}
+					</TouchableOpacity>
+					<TouchableOpacity
+						style={[
+							styles.googleButton,
+							isLoading ? styles.buttonDisabled : null,
+						]}
+						onPress={promptGoogleSignIn}
+						disabled={isLoading}>
+						<Text style={styles.googleButtonText}>
+							Continue with Google
+						</Text>
 					</TouchableOpacity>
 					<TouchableOpacity
 						style={styles.switchButton}

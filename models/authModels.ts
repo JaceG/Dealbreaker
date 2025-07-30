@@ -71,6 +71,13 @@ export interface LoginHookReturn {
 	handleSubmit: (isGuest?: boolean) => Promise<void>;
 	handleTitlePress: () => void;
 	login: (email: string, password: string, role?: string) => Promise<boolean>;
+	socialLogin: (
+		email: string,
+		password: string,
+		role: string,
+		type: string,
+		social_id: string
+	) => Promise<boolean>;
 
 	// Loading state
 	isLoading: boolean;
