@@ -157,6 +157,15 @@ const useRegister = () => {
 			setLocalError('Please fill in all fields');
 			return;
 		}
+		console.log(email);
+		if (
+			!/^[a-z0-9\._%+!$&*=^|~#%'`?{}\/\-]+@([a-z0-9\-]+\.){1,}([a-z]{2,16})$/.test(
+				email
+			)
+		) {
+			setLocalError('Please enter a valid email address');
+			return;
+		}
 
 		try {
 			let success;
