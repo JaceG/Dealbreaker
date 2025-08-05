@@ -1,7 +1,7 @@
-import { Tabs } from 'expo-router';
+import { router, Tabs } from 'expo-router';
 import { FontAwesome } from '@expo/vector-icons';
 import Feather from '@expo/vector-icons/Feather';
-import { Button } from 'react-native';
+import { Button, useWindowDimensions } from 'react-native';
 import { AuthContextType } from '../../models/authModels';
 import { useAuth } from '../../context/Auth';
 import SwitchProfileModal from '../../components/SwitchProfileModal';
@@ -12,6 +12,9 @@ import { useLayoutModals } from '../../hooks/useLayoutModals';
 
 const Layout = () => {
 	const { user } = useAuth() as AuthContextType;
+	console.log('user: ', user);
+	const { width, height } = useWindowDimensions();
+	const isPortrait = height >= width;
 	const { logout } = useAuthActions();
 	const {
 		switchProfileModalVisible,
@@ -33,12 +36,26 @@ const Layout = () => {
 						headerTitle: 'Home',
 						title: 'Home',
 						tabBarIcon: ({ color }) => (
-							<FontAwesome name='home' color={color} size={28} />
+							<FontAwesome
+								name='home'
+								color={color}
+								size={isPortrait ? 28 : 18}
+							/>
 						),
 						tabBarActiveTintColor: colors.exodusFruit,
-						headerRight: () => (
-							<Button title='Logout' onPress={logout} />
-						),
+						headerRight: () => {
+							if (user?.role == 'guest') {
+								return (
+									<Button
+										title='Register'
+										onPress={() => {
+											router.push('/register');
+										}}
+									/>
+								);
+							}
+							return <Button title='Logout' onPress={logout} />;
+						},
 						headerLeft: () => (
 							<Button
 								title='Switch Profile'
@@ -53,7 +70,11 @@ const Layout = () => {
 						headerTitle: 'Create Flag',
 						title: 'Create Flag',
 						tabBarIcon: ({ color }) => (
-							<Feather name='flag' size={28} color={color} />
+							<Feather
+								name='flag'
+								size={isPortrait ? 28 : 18}
+								color={color}
+							/>
 						),
 						tabBarActiveTintColor: colors.exodusFruit,
 						headerRight: () => (
@@ -67,7 +88,11 @@ const Layout = () => {
 						headerTitle: 'Create Profile',
 						title: 'Create Profile',
 						tabBarIcon: ({ color }) => (
-							<Feather name='user' size={28} color={color} />
+							<Feather
+								name='user'
+								size={isPortrait ? 28 : 18}
+								color={color}
+							/>
 						),
 						tabBarActiveTintColor: colors.exodusFruit,
 						headerRight: () => (

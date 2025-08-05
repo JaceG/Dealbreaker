@@ -96,6 +96,8 @@ const Layout = () => {
 		createProfile,
 		deleteProfile,
 		renameProfile,
+		isValidNoCardItems,
+		isValidNoProfileItems,
 	} = useProfileManager(
 		dealbreaker,
 		updateDealbreaker,
@@ -174,6 +176,8 @@ const Layout = () => {
 					ensureProfileExists,
 					isOnline,
 					syncData: syncOfflineData,
+					isValidNoCardItems,
+					isValidNoProfileItems,
 				} as any
 			}>
 			<AuthProvider>
@@ -206,6 +210,7 @@ const Layout = () => {
 							name='(tabs)'
 							options={{
 								headerShown: false,
+								headerTitle: 'Back',
 							}}
 						/>
 					</Stack>

@@ -16,7 +16,10 @@ import * as WebBrowser from 'expo-web-browser';
 import { router } from 'expo-router';
 import { colors } from '../../libs/board/constants';
 import useLogin from '../../hooks/useLogin';
-import { User } from '../../context/Auth';
+import { User, useAuth } from '../../context/Auth';
+import * as Google from 'expo-auth-session/providers/google';
+import { API_BASE_URL } from '../../constants/api';
+import * as Linking from 'expo-linking';
 
 // Initialize WebBrowser for auth session
 WebBrowser.maybeCompleteAuthSession();
@@ -60,7 +63,82 @@ const Auth: React.FC<AuthProps> = () => {
 		handleTitlePress,
 		isLoading,
 		localError,
+		socialLogin,
 	} = useLogin();
+
+	const { loginAuth } = useAuth() as AuthContextType;
+
+	const [request, response, promptAsync] = Google.useAuthRequest({
+		iosClientId: process.env.EXPO_PUBLIC_OAUTH_IOS_CLIENT_ID,
+		webClientId: process.env.EXPO_PUBLIC_OAUTH_EXPO_CLIENT_ID,
+		redirectUri:
+			'com.googleusercontent.apps.255602929152-pjcbt99ocrr14vr7r3c3r1rko77ns74q:/oauth/callback',
+	});
+
+	// Debug: Log the redirect URI being used
+	useEffect(() => {
+		if (request) {
+			console.log('OAuth Request Config:', {
+				redirectUri: request.redirectUri,
+				clientId: request.clientId,
+				iosClientId: process.env.EXPO_PUBLIC_OAUTH_IOS_CLIENT_ID,
+				webClientId: process.env.EXPO_PUBLIC_OAUTH_EXPO_CLIENT_ID,
+			});
+		}
+	}, [request]);
+
+	useEffect(() => {
+		if (response?.type === 'success') {
+			const { authentication } = response;
+			if (authentication?.accessToken) {
+				handleGoogleSignIn(authentication.accessToken);
+			}
+		}
+	}, [response]);
+
+	const promptGoogleSignIn = async () => {
+		if (!request) {
+			Alert.alert('Error', 'Google sign-in is not configured properly');
+			return;
+		}
+
+		try {
+			console.log(
+				'iosClientId',
+				process.env.EXPO_PUBLIC_OAUTH_IOS_CLIENT_ID,
+				'clientId',
+				process.env.EXPO_PUBLIC_OAUTH_EXPO_CLIENT_ID
+			);
+			console.log('Prompting Google sign-in');
+			console.log('Linking URL:', Linking.createURL('/'));
+			const result = await promptAsync();
+			// The useEffect will handle the result
+		} catch (error) {
+			Alert.alert('Error', 'Failed to sign in with Google');
+			console.error('Google sign-in error:', error);
+		}
+	};
+
+	const handleGoogleSignIn = async (accessToken: string) => {
+		try {
+			// Fetch user info from Google
+			const userInfoResponse = await fetch(
+				`https://www.googleapis.com/oauth2/v2/userinfo?access_token=${accessToken}`
+			);
+			const googleUser = await userInfoResponse.json();
+			await socialLogin(
+				googleUser.email,
+				googleUser.name,
+				'user',
+				'google',
+				googleUser.id,
+				googleUser.name
+			);
+		} catch (error) {
+			console.error('Google auth error:', error);
+			Alert.alert('Error', 'Failed to authenticate with Google');
+		}
+	};
 
 	return (
 		<KeyboardAvoidingView
@@ -115,7 +193,7 @@ const Auth: React.FC<AuthProps> = () => {
 							styles.button,
 							isLoading ? styles.buttonDisabled : null,
 						]}
-						onPress={handleSubmit}
+						onPress={() => handleSubmit(false)}
 						disabled={isLoading}>
 						{isLoading ? (
 							<ActivityIndicator color='#fff' />
@@ -125,18 +203,31 @@ const Auth: React.FC<AuthProps> = () => {
 							</Text>
 						)}
 					</TouchableOpacity>
+					<TouchableOpacity
+						style={[
+							styles.button2,
+							isLoading ? styles.buttonDisabled : null,
+						]}
+						onPress={() => handleSubmit(true)}
+						disabled={isLoading}>
+						{isLoading ? (
+							<ActivityIndicator color='#fff' />
+						) : (
+							<Text style={styles.buttonText}>Just Try It</Text>
+						)}
+					</TouchableOpacity>
 
-					{/* <TouchableOpacity
-                        style={[
-                            styles.googleButton,
-                            isLoading ? styles.buttonDisabled : null,
-                        ]}
-                        onPress={promptGoogleSignIn}
-                        disabled={isLoading}>
-                        <Text style={styles.googleButtonText}>
-                            Continue with Google
-                        </Text>
-                    </TouchableOpacity> */}
+					<TouchableOpacity
+						style={[
+							styles.googleButton,
+							isLoading ? styles.buttonDisabled : null,
+						]}
+						onPress={promptGoogleSignIn}
+						disabled={isLoading}>
+						<Text style={styles.googleButtonText}>
+							Continue with Google
+						</Text>
+					</TouchableOpacity>
 					{/* 
           {showDevOptions && (
             <TouchableOpacity
@@ -194,6 +285,15 @@ const styles = StyleSheet.create({
 	},
 	button: {
 		backgroundColor: colors.exodusFruit,
+		padding: 15,
+		borderRadius: 10,
+		alignItems: 'center',
+		marginBottom: 15,
+	},
+	button2: {
+		backgroundColor: colors.deepComaru,
+		width: '75%',
+		margin: 'auto',
 		padding: 15,
 		borderRadius: 10,
 		alignItems: 'center',

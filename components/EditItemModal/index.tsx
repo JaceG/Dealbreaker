@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Text, Modal, TextInput, Alert } from 'react-native';
+import {
+	Modal,
+	View,
+	StyleSheet,
+	TextInput,
+	Text,
+	Alert,
+	useWindowDimensions,
+} from 'react-native';
 import AppButton from '../AppButton';
 import { colors } from '../../libs/board/constants';
 import { EditItemModalProps } from '../../models/modalModels';
@@ -94,14 +102,29 @@ const EditItemModal = ({
 		}
 	};
 
+	const { width, height } = useWindowDimensions();
+	const isPortrait = height >= width;
+
 	return (
 		<Modal
 			animationType='slide'
 			transparent={true}
 			visible={visible}
+			supportedOrientations={[
+				'portrait',
+				'portrait-upside-down',
+				'landscape',
+				'landscape-left',
+				'landscape-right',
+			]}
 			onRequestClose={onClose}>
 			<View style={styles.centeredView}>
-				<View style={styles.modalView}>
+				<View
+					style={
+						isPortrait
+							? styles.modalView
+							: styles.modalViewHorizontal
+					}>
 					<Text style={styles.modalTitle}>Edit Item</Text>
 
 					<View style={styles.inputContainer}>
@@ -134,7 +157,12 @@ const EditItemModal = ({
 						) : null}
 					</View>
 
-					<View style={styles.buttonContainer}>
+					<View
+						style={
+							isPortrait
+								? styles.buttonContainer
+								: styles.buttonContainerHorizontal
+						}>
 						<View style={styles.buttonWrapper}>
 							<AppButton
 								title='Cancel'
@@ -177,6 +205,21 @@ const styles = StyleSheet.create({
 		shadowRadius: 4,
 		elevation: 5,
 	},
+	modalViewHorizontal: {
+		width: '80%',
+		height: '80%',
+		backgroundColor: 'white',
+		borderRadius: 10,
+		padding: 10,
+		shadowColor: '#000',
+		shadowOffset: {
+			width: 0,
+			height: 2,
+		},
+		shadowOpacity: 0.25,
+		shadowRadius: 4,
+		elevation: 5,
+	},
 	modalTitle: {
 		fontSize: 20,
 		fontWeight: 'bold',
@@ -184,12 +227,11 @@ const styles = StyleSheet.create({
 		textAlign: 'center',
 	},
 	inputContainer: {
-		marginBottom: 15,
+		marginBottom: 10,
 	},
 	inputLabel: {
 		fontSize: 16,
 		fontWeight: 'bold',
-		marginBottom: 5,
 	},
 	titleInput: {
 		borderWidth: 1,
@@ -210,6 +252,12 @@ const styles = StyleSheet.create({
 	buttonContainer: {
 		flexDirection: 'row',
 		justifyContent: 'space-between',
+		marginTop: 20,
+		gap: 15,
+	},
+	buttonContainerHorizontal: {
+		flexDirection: 'row',
+		justifyContent: 'center',
 		marginTop: 20,
 		gap: 15,
 	},

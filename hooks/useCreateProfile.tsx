@@ -7,9 +7,10 @@ import {
 	ErrorState,
 	StoreContextType,
 } from '../app/(tabs)/create-profile';
+import * as SecureStore from 'expo-secure-store';
 
 const useCreateProfile = () => {
-	const { profiles, createProfile } = useContext(
+	const { profiles, createProfile, isValidNoProfileItems } = useContext(
 		StoreContext
 	) as never as StoreContextType;
 
@@ -36,7 +37,7 @@ const useCreateProfile = () => {
 		});
 	}, []);
 
-	function handleSubmit(): void {
+	async function handleSubmit() {
 		if (validate()) {
 			// Check if profile name already exists
 			if (
@@ -47,7 +48,23 @@ const useCreateProfile = () => {
 				showToast('error', 'Profile name already exists');
 				return;
 			}
-
+			// Check the count of flag if guest is user
+			const userData = await SecureStore.getItemAsync('userData');
+			const userDataObj = JSON.parse(userData as string);
+			const role = userDataObj.role; // user, guest and admin
+			if (role === 'guest') {
+				console.log('Guest is creating profile');
+				const allowedNumber = 2;
+				const isValid = isValidNoProfileItems(allowedNumber);
+				console.log('isValid', isValid);
+				if (!isValid) {
+					showToast(
+						'error',
+						`Guest only allowed to create 1 profile.`
+					);
+					return;
+				}
+			}
 			// Create new profile with a unique ID
 			const newProfileId = createProfile(name);
 

@@ -10,6 +10,7 @@ import {
 	Alert,
 	Modal,
 	ScrollView,
+	useWindowDimensions,
 } from 'react-native';
 import { getFlagHistory } from '../../utils/mongodb';
 import { showToast } from '../../utils';
@@ -655,11 +656,18 @@ const FlagHistoryTimeline = ({
 		return null;
 	}
 	console.log('History: ', JSON.stringify(history, null, 2));
+	const { width, height } = useWindowDimensions();
+	const isPortrait = height >= width;
 	return (
 		<View style={styles.container}>
-			<View style={styles.header}>
+			<View style={isPortrait ? styles.header : styles.headerHorizontal}>
 				<Text style={styles.headerTitle}>{flagTitle}</Text>
-				<View style={styles.headerButtons}>
+				<View
+					style={
+						isPortrait
+							? styles.headerButtons
+							: styles.headerButtonsHorizontal
+					}>
 					<TouchableOpacity
 						style={styles.addButton}
 						onPress={onAddReason}>
@@ -713,13 +721,23 @@ const styles = StyleSheet.create({
 		backgroundColor: '#fff',
 		borderRadius: 10,
 		overflow: 'hidden',
-		margin: 10,
+		margin: 5,
 	},
 	header: {
 		flexDirection: 'column',
 		justifyContent: 'space-between',
 		alignItems: 'center',
 		padding: 16,
+		backgroundColor: '#f0f0f0',
+		borderBottomWidth: 1,
+		borderBottomColor: '#ccc',
+	},
+	headerHorizontal: {
+		flexDirection: 'row',
+		justifyContent: 'flex-start',
+		alignItems: 'center',
+		padding: 1,
+		paddingHorizontal: 30,
 		backgroundColor: '#f0f0f0',
 		borderBottomWidth: 1,
 		borderBottomColor: '#ccc',
@@ -732,6 +750,16 @@ const styles = StyleSheet.create({
 		flexDirection: 'row',
 		justifyContent: 'flex-end',
 		alignItems: 'center',
+		width: '100%',
+		marginTop: 10,
+	},
+	headerButtonsHorizontal: {
+		flexDirection: 'row',
+		justifyContent: 'flex-end',
+		alignItems: 'center',
+		paddingHorizontal: 30,
+		paddingTop: 10,
+		marginBottom: 10,
 		width: '100%',
 		marginTop: 10,
 	},

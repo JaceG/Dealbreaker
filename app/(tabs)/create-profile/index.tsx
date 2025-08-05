@@ -4,6 +4,7 @@ import {
 	View,
 	TextInput,
 	TouchableOpacity,
+	useWindowDimensions,
 } from 'react-native';
 import { colors } from '../../../libs/board/constants';
 import useCreateProfile from '../../../hooks/useCreateProfile';
@@ -17,6 +18,7 @@ export interface Profile {
 export interface StoreContextType {
 	profiles: Profile[];
 	createProfile: (name: string) => string | null;
+	isValidNoProfileItems: (allowedProfile: number) => boolean;
 }
 
 export interface ErrorState {
@@ -32,8 +34,11 @@ export interface CreateUsersProps {
 
 export default function CreateUsers({ navigation }: CreateUsersProps) {
 	const { name, error, handleSubmit, handleNameChange } = useCreateProfile();
+	const { width, height } = useWindowDimensions();
+	const isPortrait = height >= width;
 	return (
-		<View style={styles.container}>
+		<View
+			style={isPortrait ? styles.container : styles.horizontalContainer}>
 			<View style={styles.row}>
 				<Text style={styles.text}>Name:</Text>
 				<TextInput
@@ -69,6 +74,14 @@ const styles = StyleSheet.create({
 		flex: 1,
 		backgroundColor: 'white',
 		padding: 10,
+	},
+	horizontalContainer: {
+		flex: 1,
+		backgroundColor: '#fff',
+		width: '100%',
+		paddingHorizontal: 70,
+		paddingTop: 10,
+		alignItems: 'center',
 	},
 	row: {
 		flexDirection: 'column' as const,

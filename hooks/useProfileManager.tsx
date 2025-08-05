@@ -48,6 +48,20 @@ export const useProfileManager = (
 		updateDealbreaker(updatedDealbreaker);
 	};
 
+	const isValidNoCardItems = (allowedCard: number) => {
+		console.log('isValidNoCardItems', { allowedCard });
+		const updatedDealbreaker = { ...dealbreaker };
+		const flagProfileObject = updatedDealbreaker[profiles[0].id];
+		const totalFlags =
+			flagProfileObject.flag.length +
+			flagProfileObject.dealbreaker.length;
+		console.log('totalFlags', { totalFlags });
+		return totalFlags < allowedCard;
+	};
+	const isValidNoProfileItems = (allowedProfile: number) => {
+		console.log('isValidNoProfileItems', { allowedProfile });
+		return profiles.length < allowedProfile;
+	};
 	// Add item to all profiles
 	const addItemToAllProfiles = (
 		item: FlagItem,
@@ -163,5 +177,7 @@ export const useProfileManager = (
 		createProfile,
 		deleteProfile,
 		renameProfile,
+		isValidNoCardItems,
+		isValidNoProfileItems,
 	};
 };

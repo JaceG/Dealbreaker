@@ -33,7 +33,14 @@ const FlagHistoryModal = ({
 			animationType='slide'
 			transparent={true}
 			visible={visible}
-			onRequestClose={onClose}>
+			onRequestClose={onClose}
+			supportedOrientations={[
+				'portrait',
+				'portrait-upside-down',
+				'landscape',
+				'landscape-left',
+				'landscape-right',
+			]}>
 			<View style={styles.modalOverlay}>
 				<View style={styles.modalContent}>
 					<FlagHistoryTimeline
