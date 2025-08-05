@@ -13,15 +13,17 @@ import {
 // For local testing on iOS simulator, use http://localhost:4000
 // For local testing on Android emulator, use http://10.0.2.2:4000
 // For production, use your Render URL
-const API_URL = Platform.select({
-	ios: __DEV__
-		? 'http://localhost:4000/api'
-		: 'https://dealbreaker-api.onrender.com/api',
-	android: __DEV__
-		? 'http://10.0.2.2:4000/api'
-		: 'https://dealbreaker-api.onrender.com/api',
-	default: 'https://dealbreaker-api.onrender.com/api',
-});
+// const API_URL = Platform.select({
+// 	// ios: __DEV__
+// 	// 	? 'http://localhost:4000/api'
+// 	// 	: 'https://dealbreaker-api.onrender.com/api',
+// 	// android: __DEV__
+// 	// 	? 'http://10.0.2.2:4000/api'
+// 	// 	: 'https://dealbreaker-api.onrender.com/api',
+// 	default: 'https://dealbreaker-api.onrender.com/api',
+// });
+
+const API_URL = 'https://dealbreaker-api.onrender.com/api';
 
 // Create axios instance
 const api = axios.create({
@@ -187,7 +189,7 @@ export const addFlagHistory = async (
 		};
 
 		console.log(
-			'Sending flag history entry to API:',
+			'SSending flag history entry to API:',
 			JSON.stringify(historyEntry, null, 2)
 		);
 
@@ -334,10 +336,10 @@ export const syncPendingChanges = async () => {
 		}
 
 		// In offline-only dev mode, just pretend the sync worked
-		if (__DEV__ && process.env.OFFLINE_ONLY === 'true') {
-			console.log('DEV MODE: Simulating successful sync');
-			return { success: true, message: 'Simulated sync in dev mode' };
-		}
+		// if (__DEV__ && process.env.OFFLINE_ONLY === 'true') {
+		// 	console.log('DEV MODE: Simulating successful sync');
+		// 	return { success: true, message: 'Simulated sync in dev mode' };
+		// }
 
 		try {
 			// Try to send to API with timeout
