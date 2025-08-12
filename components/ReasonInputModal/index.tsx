@@ -133,12 +133,12 @@ const ReasonInputModal = ({
 		}
 
 		// Log simulator information in dev mode
-		if (__DEV__) {
-			debugLog('Running in development/simulator mode');
-			debugLog('Platform:', Platform.OS);
-			debugLog('IsPickerAvailable state:', isPickerAvailable);
-			debugLog('Audio enabled:', AUDIO_ENABLED);
-		}
+		// if (__DEV__) {
+		// 	debugLog('Running in development/simulator mode');
+		// 	debugLog('Platform:', Platform.OS);
+		// 	debugLog('IsPickerAvailable state:', isPickerAvailable);
+		// 	debugLog('Audio enabled:', AUDIO_ENABLED);
+		// }
 
 		// Cleanup audio recording and playback on unmount
 		return () => {
@@ -890,7 +890,7 @@ const ReasonInputModal = ({
 								</Text>
 							</View>
 
-							{isPickerAvailable || __DEV__ ? (
+							{isPickerAvailable ? (
 								<>
 									<Text style={styles.attachmentHelperText}>
 										Add photos or videos to provide more
