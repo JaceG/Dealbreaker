@@ -9,6 +9,8 @@ import { colors } from '../../libs/board/constants';
 import { useAuthActions } from '../../hooks/useAuthActions';
 import { useDealbreakerSync } from '../../hooks/useDealbreakerSync';
 import { useLayoutModals } from '../../hooks/useLayoutModals';
+import StoreContext from '../../store';
+import { useContext } from 'react';
 
 const Layout = () => {
 	const { user } = useAuth() as AuthContextType;
@@ -22,7 +24,11 @@ const Layout = () => {
 		closeSwitchProfileModal,
 	} = useLayoutModals();
 	useDealbreakerSync(user);
-
+	const { currentProfileId, profiles } = useContext<any>(StoreContext);
+	const isProfileMain = () => {
+		const profile = profiles.find((p: any) => p.id === currentProfileId);
+		return profile.id === 'main';
+	};
 	return (
 		<>
 			<SwitchProfileModal
@@ -30,6 +36,28 @@ const Layout = () => {
 				onClose={closeSwitchProfileModal}
 			/>
 			<Tabs>
+				<Tabs.Screen
+					name={'create-flag/index'}
+					options={{
+						href: isProfileMain() ? '/create-flag' : null,
+						headerTitle: 'Create Flag',
+						title: 'Create Flag',
+						tabBarStyle: {
+							display: isProfileMain() ? 'flex' : 'none',
+						},
+						tabBarIcon: ({ color }) => (
+							<Feather
+								name='flag'
+								size={isPortrait ? 28 : 18}
+								color={color}
+							/>
+						),
+						tabBarActiveTintColor: colors.exodusFruit,
+						headerRight: () => (
+							<Button title='Logout' onPress={logout} />
+						),
+					}}
+				/>
 				<Tabs.Screen
 					name='index'
 					options={{
@@ -65,28 +93,14 @@ const Layout = () => {
 					}}
 				/>
 				<Tabs.Screen
-					name='create-flag/index'
+					name={'create-profile/index'}
 					options={{
-						headerTitle: 'Create Flag',
-						title: 'Create Flag',
-						tabBarIcon: ({ color }) => (
-							<Feather
-								name='flag'
-								size={isPortrait ? 28 : 18}
-								color={color}
-							/>
-						),
-						tabBarActiveTintColor: colors.exodusFruit,
-						headerRight: () => (
-							<Button title='Logout' onPress={logout} />
-						),
-					}}
-				/>
-				<Tabs.Screen
-					name='create-profile/index'
-					options={{
+						href: isProfileMain() ? '/create-profile' : null,
 						headerTitle: 'Create Profile',
 						title: 'Create Profile',
+						tabBarStyle: {
+							display: isProfileMain() ? 'flex' : 'none',
+						},
 						tabBarIcon: ({ color }) => (
 							<Feather
 								name='user'
