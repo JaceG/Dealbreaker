@@ -170,6 +170,7 @@ export default function Lists() {
 							key={`board-${currentProfileId}-${refreshKey}`}
 							boardRepository={list}
 							open={() => {}}
+							showDeleteItem={currentProfileId === 'main'}
 							onFlagClicked={handleFlagClick}
 							onDragEnd={(_: any, __: any, draggedItem: any) => {
 								if (!dealbreaker?.[currentProfileId]) return;
