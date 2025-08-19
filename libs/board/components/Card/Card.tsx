@@ -35,6 +35,7 @@ interface CardProps {
 	onFlagClicked?: (item: any) => void;
 	onDeleteItem?: (item: any) => void;
 	onEditItem?: (item: any) => void;
+	showDeleteItem?: boolean;
 }
 
 const NEGATIVE_SPACE = 50;
@@ -55,6 +56,7 @@ const Card: React.FC<CardProps> = ({
 	onFlagClicked,
 	onDeleteItem,
 	onEditItem,
+	showDeleteItem,
 }) => {
 	const styles = [style];
 	if (hidden) {
@@ -146,15 +148,21 @@ const Card: React.FC<CardProps> = ({
 							{/* Second line - Icons and flag */}
 							<IconRowWrapper>
 								<View style={iconStyles.iconContainer}>
-									{!hidden && item && onDeleteItem && (
-										<TouchableOpacity
-											onPress={() => onDeleteItem(item)}
-											style={iconStyles.iconButton}>
-											<Text style={iconStyles.iconText}>
-												🗑️
-											</Text>
-										</TouchableOpacity>
-									)}
+									{!hidden &&
+										showDeleteItem &&
+										item &&
+										onDeleteItem && (
+											<TouchableOpacity
+												onPress={() =>
+													onDeleteItem(item)
+												}
+												style={iconStyles.iconButton}>
+												<Text
+													style={iconStyles.iconText}>
+													🗑️
+												</Text>
+											</TouchableOpacity>
+										)}
 									{!hidden && item && onEditItem && (
 										<TouchableOpacity
 											onPress={() => onEditItem(item)}

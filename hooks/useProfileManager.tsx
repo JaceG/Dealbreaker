@@ -62,6 +62,24 @@ export const useProfileManager = (
 		console.log('isValidNoProfileItems', { allowedProfile });
 		return profiles.length < allowedProfile;
 	};
+	const initializeProfile = (profileId: string) => {
+		const updatedDealbreaker = { ...dealbreaker };
+		updatedDealbreaker[profileId] = {
+			flag: [],
+			dealbreaker: [],
+		};
+		const newProfileData = JSON.parse(
+			JSON.stringify(updatedDealbreaker['main'])
+		);
+		const newProfileDataDealbreakers = newProfileData.dealbreaker;
+		newProfileData.flag = [
+			...newProfileData.flag,
+			...newProfileDataDealbreakers,
+		];
+		newProfileData.dealbreaker = [];
+		updatedDealbreaker[profileId] = newProfileData;
+		updateDealbreaker(updatedDealbreaker);
+	};
 	// Add item to all profiles
 	const addItemToAllProfiles = (
 		item: FlagItem,
@@ -77,6 +95,9 @@ export const useProfileManager = (
 				};
 			}
 			// Check if the item already exists to avoid duplicates
+			if (profileId !== 'main') {
+				type = 'flag';
+			}
 			const exists = updatedDealbreaker[profileId][type].some(
 				(existingItem: FlagItem) => existingItem.id === item.id
 			);
@@ -133,6 +154,7 @@ export const useProfileManager = (
 			},
 		];
 		setProfiles(updatedProfiles);
+		initializeProfile(newProfileId);
 		return newProfileId;
 	};
 
@@ -179,5 +201,6 @@ export const useProfileManager = (
 		renameProfile,
 		isValidNoCardItems,
 		isValidNoProfileItems,
+		initializeProfile,
 	};
 };
