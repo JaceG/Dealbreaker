@@ -11,7 +11,7 @@ import {
 	NativeTouchEvent,
 	Dimensions,
 } from 'react-native';
-import { func, object, string } from 'prop-types';
+import { bool, func, object, string } from 'prop-types';
 import { colors, deviceWidth, ios, isX } from '../../constants';
 import Column from '../Column/Column';
 import Card from '../Card/Card';
@@ -37,6 +37,7 @@ interface BoardProps {
 	onDeleteItem?: (item: any) => void;
 	onEditItem?: (item: any) => void;
 	data?: any;
+	showDeleteItem?: boolean;
 }
 
 interface BoardState {
@@ -444,6 +445,7 @@ class Board extends React.Component<BoardProps, BoardState> {
 			onDeleteItem={this.props.onDeleteItem}
 			onEditItem={this.props.onEditItem}
 			width={this.state.deviceWidth}
+			showDeleteItem={this.props.showDeleteItem}
 		/>
 	);
 
@@ -486,6 +488,8 @@ class Board extends React.Component<BoardProps, BoardState> {
 										onPressIn: this.onPressIn,
 										onPress: this.onPress,
 										renderWrapperRow: this.renderWrapperRow,
+										showDeleteItem:
+											this.props.showDeleteItem,
 										onScrollingStarted:
 											this.onScrollingStarted,
 										onScrollingEnded: this.onScrollingEnded,
@@ -530,6 +534,7 @@ class Board extends React.Component<BoardProps, BoardState> {
 		onFlagClicked: func,
 		onDeleteItem: func,
 		onEditItem: func,
+		showDeleteItem: bool,
 	};
 }
 

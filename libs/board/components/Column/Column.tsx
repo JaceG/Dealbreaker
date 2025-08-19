@@ -90,6 +90,7 @@ interface ColumnProps {
 		onFlagClicked?: (item: BoardItem) => void;
 		onDeleteItem?: (item: BoardItem) => void;
 		onEditItem?: (item: BoardItem) => void;
+		showDeleteItem?: boolean;
 	}) => React.ReactNode;
 	boardRepository: BoardRepository;
 	unsubscribeFromMovingMode: () => void;
@@ -97,6 +98,7 @@ interface ColumnProps {
 	onDeleteItem?: (item: BoardItem) => void;
 	onEditItem?: (item: BoardItem) => void;
 	columnWidth?: number;
+	showDeleteItem?: boolean;
 }
 
 interface ColumnState {}
@@ -163,8 +165,13 @@ class Column extends React.Component<ColumnProps, ColumnState> {
 			return null;
 		}
 
-		const { renderWrapperRow, onFlagClicked, onDeleteItem, onEditItem } =
-			this.props;
+		const {
+			renderWrapperRow,
+			onFlagClicked,
+			onDeleteItem,
+			onEditItem,
+			showDeleteItem,
+		} = this.props;
 		const props = {
 			onPressIn: (y: number) => this.onPressIn(item, y),
 			onPress: this.onPress(item),
@@ -173,6 +180,7 @@ class Column extends React.Component<ColumnProps, ColumnState> {
 			onFlagClicked,
 			onDeleteItem,
 			onEditItem,
+			showDeleteItem,
 		};
 		return (
 			<RowWrapper
@@ -295,6 +303,7 @@ class Column extends React.Component<ColumnProps, ColumnState> {
 			movingMode,
 			boardRepository,
 			columnWidth,
+			showDeleteItem,
 		} = this.props;
 
 		const colElements = boardRepository.items(column.id()).length - 1;
@@ -384,6 +393,7 @@ class Column extends React.Component<ColumnProps, ColumnState> {
 						scrollEnabled={!movingMode}
 						onContentSizeChange={this.onContentSizeChange}
 						showsVerticalScrollIndicator={false}
+						showDeleteItem={showDeleteItem}
 					/>
 				)}
 			</ColumnWrapper>
