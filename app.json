@@ -1,8 +1,8 @@
 {
   "expo": {
     "name": "Dealbreaker",
-    "slug": "dealbreaker-v3",
-    "scheme": "dealbreaker-v3",
+    "slug": "dealbreaker",
+    "scheme": "dealbreaker",
     "version": "1.0.0",
     "orientation": "default",
     "icon": "./assets/icon.png",
@@ -17,7 +17,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.dealbreaker.v3",
+      "bundleIdentifier": "com.dealbreaker",
       "jsEngine": "jsc",
       "infoPlist": {
         "CFBundleURLTypes": [
@@ -27,7 +27,7 @@
           },
           {
             "CFBundleURLName": "dealbreaker-scheme",
-            "CFBundleURLSchemes": ["dealbreaker-v3"]
+            "CFBundleURLSchemes": ["dealbreaker"]
           }
         ]
       },
@@ -43,7 +43,7 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.dealbreaker.v3"
+      "package": "com.dealbreaker"
     },
     "web": {
       "favicon": "./assets/favicon.png"
