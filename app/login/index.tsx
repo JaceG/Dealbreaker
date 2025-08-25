@@ -17,9 +17,16 @@ import { router } from 'expo-router';
 import { colors } from '../../libs/board/constants';
 import useLogin from '../../hooks/useLogin';
 import { User, useAuth } from '../../context/Auth';
-import * as Google from 'expo-auth-session/providers/google';
+import {
+	GoogleSignin,
+	statusCodes,
+} from '@react-native-google-signin/google-signin';
 import { API_BASE_URL } from '../../constants/api';
 import * as Linking from 'expo-linking';
+import {
+	EXPO_PUBLIC_OAUTH_IOS_CLIENT_ID,
+	EXPO_PUBLIC_OAUTH_EXPO_CLIENT_ID,
+} from '@env';
 
 // Initialize WebBrowser for auth session
 WebBrowser.maybeCompleteAuthSession();
@@ -68,75 +75,43 @@ const Auth: React.FC<AuthProps> = () => {
 
 	const { loginAuth } = useAuth() as AuthContextType;
 
-	const [request, response, promptAsync] = Google.useAuthRequest({
-		iosClientId: process.env.EXPO_PUBLIC_OAUTH_IOS_CLIENT_ID,
-		webClientId: process.env.EXPO_PUBLIC_OAUTH_EXPO_CLIENT_ID,
-		redirectUri:
-			'com.googleusercontent.apps.255602929152-pjcbt99ocrr14vr7r3c3r1rko77ns74q:/oauth/callback',
-	});
-
-	// Debug: Log the redirect URI being used
+	// Configure Google Sign-In
 	useEffect(() => {
-		if (request) {
-			console.log('OAuth Request Config:', {
-				redirectUri: request.redirectUri,
-				clientId: request.clientId,
-				iosClientId: process.env.EXPO_PUBLIC_OAUTH_IOS_CLIENT_ID,
-				webClientId: process.env.EXPO_PUBLIC_OAUTH_EXPO_CLIENT_ID,
-			});
-		}
-	}, [request]);
-
-	useEffect(() => {
-		if (response?.type === 'success') {
-			const { authentication } = response;
-			if (authentication?.accessToken) {
-				handleGoogleSignIn(authentication.accessToken);
-			}
-		}
-	}, [response]);
+		GoogleSignin.configure({
+			iosClientId: EXPO_PUBLIC_OAUTH_IOS_CLIENT_ID,
+			webClientId: EXPO_PUBLIC_OAUTH_EXPO_CLIENT_ID,
+		});
+	}, []);
 
 	const promptGoogleSignIn = async () => {
-		if (!request) {
-			Alert.alert('Error', 'Google sign-in is not configured properly');
-			return;
-		}
-
 		try {
-			console.log(
-				'iosClientId',
-				process.env.EXPO_PUBLIC_OAUTH_IOS_CLIENT_ID,
-				'clientId',
-				process.env.EXPO_PUBLIC_OAUTH_EXPO_CLIENT_ID
-			);
-			console.log('Prompting Google sign-in');
-			console.log('Linking URL:', Linking.createURL('/'));
-			const result = await promptAsync();
-			// The useEffect will handle the result
-		} catch (error) {
-			Alert.alert('Error', 'Failed to sign in with Google');
+			await GoogleSignin.hasPlayServices();
+			const userInfo = await GoogleSignin.signIn();
+
+			if (userInfo?.data?.user) {
+				const { user } = userInfo.data;
+				await socialLogin(
+					user.email,
+					user.name || '',
+					'user',
+					'google',
+					user.id,
+					user.name || ''
+				);
+			}
+		} catch (error: any) {
 			console.error('Google sign-in error:', error);
-		}
-	};
 
-	const handleGoogleSignIn = async (accessToken: string) => {
-		try {
-			// Fetch user info from Google
-			const userInfoResponse = await fetch(
-				`https://www.googleapis.com/oauth2/v2/userinfo?access_token=${accessToken}`
-			);
-			const googleUser = await userInfoResponse.json();
-			await socialLogin(
-				googleUser.email,
-				googleUser.name,
-				'user',
-				'google',
-				googleUser.id,
-				googleUser.name
-			);
-		} catch (error) {
-			console.error('Google auth error:', error);
-			Alert.alert('Error', 'Failed to authenticate with Google');
+			if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+				// User cancelled the login flow
+				console.log('User cancelled Google sign-in');
+			} else if (error.code === statusCodes.IN_PROGRESS) {
+				Alert.alert('Error', 'Google sign-in is already in progress');
+			} else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+				Alert.alert('Error', 'Google Play Services not available');
+			} else {
+				Alert.alert('Error', 'Failed to sign in with Google');
+			}
 		}
 	};
 
