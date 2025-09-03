@@ -11,6 +11,8 @@ import {
 	ScrollView,
 	Alert,
 } from 'react-native';
+import { AntDesign } from '@expo/vector-icons';
+import * as AppleAuthentication from 'expo-apple-authentication';
 // Uncomment these imports
 import * as WebBrowser from 'expo-web-browser';
 import { useAuth } from '../../context/Auth';
@@ -57,13 +59,22 @@ const Auth: React.FC<AuthProps> = () => {
 	} = useRegister();
 
 	const { socialLogin } = useLogin();
+	const [isAppleAvailable, setIsAppleAvailable] = useState(false);
 
-	// Configure Google Sign-In
+	// Configure Google Sign-In and check Apple availability
 	useEffect(() => {
 		GoogleSignin.configure({
 			iosClientId: EXPO_PUBLIC_OAUTH_IOS_CLIENT_ID,
 			webClientId: EXPO_PUBLIC_OAUTH_EXPO_CLIENT_ID,
 		});
+
+		// Check if Apple Authentication is available
+		const checkAppleAuth = async () => {
+			const isAvailable = await AppleAuthentication.isAvailableAsync();
+			setIsAppleAvailable(isAvailable);
+		};
+
+		checkAppleAuth();
 	}, []);
 
 	const promptGoogleSignIn = async () => {
@@ -75,7 +86,7 @@ const Auth: React.FC<AuthProps> = () => {
 				const { user } = userInfo.data;
 				await socialLogin(
 					user.email,
-					user.name || '',
+					'social_login_placeholder', // Placeholder password for social login
 					'user',
 					'google',
 					user.id,
@@ -94,6 +105,52 @@ const Auth: React.FC<AuthProps> = () => {
 				Alert.alert('Error', 'Google Play Services not available');
 			} else {
 				Alert.alert('Error', 'Failed to sign in with Google');
+			}
+		}
+	};
+
+	const promptAppleSignIn = async () => {
+		try {
+			const credential = await AppleAuthentication.signInAsync({
+				requestedScopes: [
+					AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+					AppleAuthentication.AppleAuthenticationScope.EMAIL,
+				],
+			});
+
+			// Handle successful Apple sign-in
+			if (credential) {
+				const { user, email, fullName, identityToken } = credential;
+
+				// Create a display name from fullName if available
+				let displayName = '';
+				if (fullName) {
+					const parts = [];
+					if (fullName.givenName) parts.push(fullName.givenName);
+					if (fullName.familyName) parts.push(fullName.familyName);
+					displayName = parts.join(' ');
+				}
+
+				// Use email or create a placeholder if not provided
+				const userEmail = email || `${user}@privaterelay.appleid.com`;
+
+				await socialLogin(
+					userEmail,
+					'social_login_placeholder', // Placeholder password for social login
+					'user',
+					'apple',
+					user,
+					displayName || 'Apple User'
+				);
+			}
+		} catch (error: any) {
+			console.error('Apple sign-in error:', error);
+
+			if (error.code === 'ERR_REQUEST_CANCELED') {
+				// User cancelled the sign-in flow
+				console.log('User cancelled Apple sign-in');
+			} else {
+				Alert.alert('Error', 'Failed to sign in with Apple');
 			}
 		}
 	};
@@ -162,10 +219,45 @@ const Auth: React.FC<AuthProps> = () => {
 						]}
 						onPress={promptGoogleSignIn}
 						disabled={isLoading}>
-						<Text style={styles.googleButtonText}>
-							Continue with Google
-						</Text>
+						<View style={styles.googleButtonContent}>
+							<AntDesign
+								name='google'
+								size={20}
+								color='#4285F4'
+							/>
+							<Text style={styles.googleButtonText}>
+								Continue with Google
+							</Text>
+						</View>
 					</TouchableOpacity>
+
+					{isAppleAvailable ? (
+						<AppleAuthentication.AppleAuthenticationButton
+							buttonType={
+								AppleAuthentication
+									.AppleAuthenticationButtonType.SIGN_UP
+							}
+							buttonStyle={
+								AppleAuthentication
+									.AppleAuthenticationButtonStyle.BLACK
+							}
+							cornerRadius={10}
+							style={styles.appleButton}
+							onPress={promptAppleSignIn}
+						/>
+					) : (
+						Platform.OS === 'ios' && (
+							<Text
+								style={{
+									textAlign: 'center',
+									color: '#666',
+									marginBottom: 15,
+								}}>
+								Apple Sign-In not available on this
+								device/platform
+							</Text>
+						)
+					)}
 					<TouchableOpacity
 						style={styles.switchButton}
 						onPress={() => router.replace('/login')}
@@ -230,11 +322,30 @@ const styles = StyleSheet.create({
 		marginBottom: 15,
 		borderWidth: 1,
 		borderColor: '#ddd',
+		shadowColor: '#000',
+		shadowOffset: {
+			width: 0,
+			height: 2,
+		},
+		shadowOpacity: 0.1,
+		shadowRadius: 3.84,
+		elevation: 5,
+	},
+	googleButtonContent: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		justifyContent: 'center',
 	},
 	googleButtonText: {
 		color: '#333',
 		fontSize: 16,
 		fontWeight: '500',
+		marginLeft: 10,
+	},
+	appleButton: {
+		width: '100%',
+		height: 44,
+		marginBottom: 15,
 	},
 	testUserButton: {
 		backgroundColor: '#28a745',

@@ -18,7 +18,11 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.jace88.dealbreaker",
+      "usesAppleSignIn": true,
       "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "Dealbreaker needs access to your photo library so you can upload photos to add to your flags if needed.",
+        "NSCameraUsageDescription": "Dealbreaker uses the camera so you can take a photo to add to your flags if needed.",
+        "CFBundleAllowMixedLocalizations": true,
         "CFBundleURLTypes": [
           {
             "CFBundleURLName": "google-oauth",
@@ -54,7 +58,8 @@
     },
     "plugins": [
       "expo-router",
-      "@react-native-google-signin/google-signin"
+      "@react-native-google-signin/google-signin",
+      "expo-apple-authentication"
     ],
     "extra": {
       "router": {

@@ -90,14 +90,50 @@ const useLogin = (): LoginHookReturn => {
 		try {
 			let success;
 
+			// For social logins, try register first, then login
+			console.log(`Attempting social authentication for ${type}...`);
+
+			try {
+				// First try to register the user (in case they're new)
+				console.log('Attempting to register new social user...');
+				const registerResponse = await fetch(
+					`${API_BASE_URL}/api/auth/register`,
+					{
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json',
+						},
+						body: JSON.stringify({
+							name: social_name || `${type} User`,
+							email,
+							password: 'social_login_placeholder',
+							role,
+							type,
+							social_id,
+							social_name,
+						}),
+					}
+				);
+
+				if (registerResponse.ok) {
+					console.log('Social user registered successfully');
+				}
+			} catch (registerError) {
+				console.log(
+					'Registration attempt failed, continuing to login...'
+				);
+			}
+
+			// Now try to login (works for both new and existing users)
 			success = await login(
 				email,
-				password,
+				'social_login_placeholder', // Use consistent password for social logins
 				role,
 				type,
 				social_id,
 				social_name
 			);
+
 			if (success) {
 				setEmail('');
 				setPassword('');
@@ -106,9 +142,11 @@ const useLogin = (): LoginHookReturn => {
 			}
 			return success;
 		} catch (error: unknown) {
-			console.error('Auth error:', error);
+			console.error('Social auth error:', error);
 			setLocalError(
-				error instanceof Error ? error.message : 'Authentication failed'
+				error instanceof Error
+					? error.message
+					: 'Social authentication failed'
 			);
 		}
 	};
@@ -133,7 +171,14 @@ const useLogin = (): LoginHookReturn => {
 			console.log(
 				`Attempting to login with API: ${API_BASE_URL}/api/auth/login`
 			);
-			console.log('Login payload:', { email, password: '••••••••' });
+			console.log('Login payload:', {
+				email,
+				password: type ? 'social_login' : '••••••••',
+				role,
+				type,
+				social_id,
+				social_name,
+			});
 
 			const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
 				method: 'POST',
