@@ -4,9 +4,26 @@ import * as WebBrowser from 'expo-web-browser';
 import { router } from 'expo-router';
 import Constants from 'expo-constants';
 
-const AuthContext = createContext({});
+interface AuthContextType {
+	user: User;
+	authToken: string | null;
+	isLoading: boolean;
+	error: string | null;
+	checkAuthStatus: () => Promise<void>;
+	logout: () => Promise<void>;
+	loginAuth: (user: unknown, token: string) => void;
+	clearAuth: () => void;
+}
 
-export const useAuth = () => useContext(AuthContext);
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export const useAuth = () => {
+	const context = useContext(AuthContext);
+	if (context === undefined) {
+		throw new Error('useAuth must be used within an AuthProvider');
+	}
+	return context;
+};
 
 // Initialize WebBrowser for auth session (needed for Expo)
 WebBrowser.maybeCompleteAuthSession();

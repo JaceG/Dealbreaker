@@ -114,6 +114,28 @@ const Layout = () => {
 						),
 					}}
 				/>
+				<Tabs.Screen
+					name={'user-info/index'}
+					options={{
+						href: isProfileMain() ? '/user-info' : null,
+						headerTitle: 'My Account',
+						title: 'My Account',
+						tabBarStyle: {
+							display: isProfileMain() ? 'flex' : 'none',
+						},
+						tabBarIcon: ({ color }) => (
+							<Feather
+								name='user'
+								size={isPortrait ? 28 : 18}
+								color={color}
+							/>
+						),
+						tabBarActiveTintColor: colors.exodusFruit,
+						headerRight: () => (
+							<Button title='Logout' onPress={logout} />
+						),
+					}}
+				/>
 			</Tabs>
 		</>
 	);
