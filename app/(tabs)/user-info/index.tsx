@@ -12,6 +12,7 @@ import { colors } from '../../../libs/board/constants';
 import { useAuth } from '../../../context/Auth';
 import { useState, useEffect } from 'react';
 import { saveMyAccount } from '../../../utils/api';
+import { useAuthActions } from '../../../hooks/useAuthActions';
 
 export const UserInfo = () => {
 	const { user, updateUserName, authToken } = useAuth();
@@ -23,6 +24,7 @@ export const UserInfo = () => {
 	const [confirmPassword, setConfirmPassword] = useState('');
 	const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 	const [deleteConfirmationText, setDeleteConfirmationText] = useState('');
+	const { logout } = useAuthActions();
 	const handleNameChange = (text: string) => {
 		setName(text);
 	};
@@ -84,9 +86,6 @@ export const UserInfo = () => {
 			}
 		}
 
-		// TODO: Implement actual save logic for name and password changes
-		console.log('Save - validation passed');
-
 		// Clear password fields after successful save
 		setCurrentPassword('');
 		setNewPassword('');
@@ -97,18 +96,23 @@ export const UserInfo = () => {
 		setShowDeleteConfirmation(true);
 	};
 
-	const handleConfirmDelete = () => {
-		if (deleteConfirmationText.toLowerCase() !== 'Delete my account') {
+	const handleConfirmDelete = async () => {
+		if (deleteConfirmationText.toLowerCase() !== 'delete my account') {
 			alert(
 				'Please type "Delete my account" exactly to confirm deletion'
 			);
 			return;
 		}
 
-		// TODO: Implement actual account deletion logic
-		console.log('Account deletion confirmed');
+		const response = await saveMyAccount(3, '', '', '', authToken || '');
+		console.log(response);
 		setShowDeleteConfirmation(false);
-		setDeleteConfirmationText('');
+		if (response) {
+			alert('Account deleted successfully');
+			logout();
+		} else {
+			alert('Failed to delete account');
+		}
 	};
 
 	const handleCancelDelete = () => {
