@@ -283,7 +283,7 @@ export const saveMyAccount = async (
 				type,
 				name,
 				oldPassword,
-				password,
+				newPassword: password,
 			},
 			{ headers: header }
 		);

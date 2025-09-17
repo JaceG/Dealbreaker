@@ -45,7 +45,7 @@ export const UserInfo = () => {
 		}
 		setIsEditing((prev) => !prev);
 	};
-	const handleSave = () => {
+	const handleSave = async () => {
 		// If user is trying to change password, validate password fields
 		if (currentPassword || newPassword || confirmPassword) {
 			// Validate that all password fields are filled
@@ -69,6 +69,19 @@ export const UserInfo = () => {
 				alert('New password must be different from current password');
 				return;
 			}
+			const response = await saveMyAccount(
+				2,
+				'',
+				currentPassword,
+				newPassword,
+				authToken || ''
+			);
+			console.log(response);
+			if (response) {
+				alert('Password updated successfully');
+			} else {
+				alert('Failed to update password');
+			}
 		}
 
 		// TODO: Implement actual save logic for name and password changes
@@ -85,9 +98,9 @@ export const UserInfo = () => {
 	};
 
 	const handleConfirmDelete = () => {
-		if (deleteConfirmationText.toLowerCase() !== 'delete my account') {
+		if (deleteConfirmationText.toLowerCase() !== 'Delete my account') {
 			alert(
-				'Please type "delete my account" exactly to confirm deletion'
+				'Please type "Delete my account" exactly to confirm deletion'
 			);
 			return;
 		}
@@ -211,13 +224,14 @@ export const UserInfo = () => {
 							permanently deleted.
 						</Text>
 						<Text style={styles.modalInstruction}>
-							Type "delete my account" below to confirm:
+							Type "Delete my account" below to confirm:
 						</Text>
 						<TextInput
 							value={deleteConfirmationText}
 							onChangeText={setDeleteConfirmationText}
 							style={styles.confirmationInput}
-							placeholder='Type "delete my account"'
+							placeholder='Type "Delete my account"'
+							autoCapitalize='none'
 							placeholderTextColor={'#999'}
 						/>
 						<View style={styles.modalButtons}>
