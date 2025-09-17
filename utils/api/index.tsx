@@ -263,6 +263,44 @@ export const addFlagHistory = async (
 	}
 };
 
+export const saveMyAccount = async (
+	type: number,
+	name: string,
+	oldPassword: string,
+	password: string,
+	token: string
+): Promise<any> => {
+	try {
+		const header = {
+			'Content-Type': 'application/json',
+			'x-auth-token': `${token}`,
+		};
+		console.log('header: ', header);
+		// Send to API
+		const response = await api.post(
+			'/myAccount',
+			{
+				type,
+				name,
+				oldPassword,
+				password,
+			},
+			{ headers: header }
+		);
+
+		return response.data;
+	} catch (error) {
+		console.error('Error adding my account to API:', error);
+		const apiError = error as CustomApiError;
+		if (apiError.response) {
+			console.error('Server response:', apiError.response.data);
+			console.error('Status code:', apiError.response.status);
+		} else if (apiError.request) {
+			console.error('No response received from server');
+		}
+	}
+};
+
 // Local storage functions
 export const getFlagHistoryLocal = async (
 	profileId: string | number,

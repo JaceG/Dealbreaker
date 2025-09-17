@@ -11,9 +11,11 @@ import {
 import { colors } from '../../../libs/board/constants';
 import { useAuth } from '../../../context/Auth';
 import { useState, useEffect } from 'react';
+import { saveMyAccount } from '../../../utils/api';
 
 export const UserInfo = () => {
-	const { user } = useAuth();
+	const { user, updateUserName, authToken } = useAuth();
+	console.log('authToken: ', authToken);
 	const [name, setName] = useState('');
 	const [isEditing, setIsEditing] = useState(false);
 	const [currentPassword, setCurrentPassword] = useState('');
@@ -24,7 +26,23 @@ export const UserInfo = () => {
 	const handleNameChange = (text: string) => {
 		setName(text);
 	};
-	const handleEdit = () => {
+	const handleEdit = async () => {
+		if (isEditing && name) {
+			updateUserName(name);
+			const response = await saveMyAccount(
+				1,
+				name,
+				'',
+				'',
+				authToken || ''
+			);
+			console.log(response);
+			if (response) {
+				alert('Name updated successfully');
+			} else {
+				alert('Failed to update name');
+			}
+		}
 		setIsEditing((prev) => !prev);
 	};
 	const handleSave = () => {

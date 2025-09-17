@@ -13,6 +13,7 @@ interface AuthContextType {
 	logout: () => Promise<void>;
 	loginAuth: (user: unknown, token: string) => void;
 	clearAuth: () => void;
+	updateUserName: (name: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -108,6 +109,12 @@ export const AuthProvider = ({
 		setAuthToken(token);
 	}
 
+	function updateUserName(name: string) {
+		setUser((user) => {
+			return { ...user, name } as User;
+		});
+	}
+
 	function clearAuth() {
 		setUser(null);
 		setAuthToken('');
@@ -124,6 +131,7 @@ export const AuthProvider = ({
 				logout,
 				loginAuth,
 				clearAuth,
+				updateUserName,
 			}}>
 			{children}
 		</AuthContext.Provider>
