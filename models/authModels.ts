@@ -77,7 +77,8 @@ export interface LoginHookReturn {
 		role: string,
 		type: string,
 		social_id: string,
-		social_name: string
+		social_name: string,
+		idToken: string
 	) => Promise<boolean | undefined>;
 
 	// Loading state

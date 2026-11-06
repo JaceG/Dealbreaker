@@ -84,53 +84,23 @@ const useLogin = (): LoginHookReturn => {
 		role: string = 'user',
 		type: string,
 		social_id: string,
-		social_name: string
+		social_name: string,
+		idToken: string
 	) => {
 		try {
 			let success;
 
-			// For social logins, try register first, then login
 			console.log(`Attempting social authentication for ${type}...`);
 
-			try {
-				// First try to register the user (in case they're new)
-				console.log('Attempting to register new social user...');
-				const registerResponse = await fetch(
-					`${API_BASE_URL}/api/auth/register`,
-					{
-						method: 'POST',
-						headers: {
-							'Content-Type': 'application/json',
-						},
-						body: JSON.stringify({
-							name: social_name || `${type} User`,
-							email,
-							password: 'social_login_placeholder',
-							role,
-							type,
-							social_id,
-							social_name,
-						}),
-					}
-				);
-
-				if (registerResponse.ok) {
-					console.log('Social user registered successfully');
-				}
-			} catch (registerError) {
-				console.log(
-					'Registration attempt failed, continuing to login...'
-				);
-			}
-
-			// Now try to login (works for both new and existing users)
+			// The server verifies idToken with Google or Apple and creates the user if new.
 			success = await login(
 				email,
-				'social_login_placeholder', // Use consistent password for social logins
+				'social_login_placeholder', // Ignored by the server for social logins
 				role,
 				type,
 				social_id,
-				social_name
+				social_name,
+				idToken
 			);
 
 			if (success) {
@@ -147,6 +117,7 @@ const useLogin = (): LoginHookReturn => {
 					? error.message
 					: 'Social authentication failed'
 			);
+			return false;
 		}
 	};
 
@@ -164,7 +135,8 @@ const useLogin = (): LoginHookReturn => {
 		role: string = 'user',
 		type?: string,
 		social_id?: string,
-		social_name?: string
+		social_name?: string,
+		idToken?: string
 	) => {
 		try {
 			console.log(
@@ -191,6 +163,7 @@ const useLogin = (): LoginHookReturn => {
 					type,
 					social_id,
 					social_name,
+					idToken,
 				}),
 			}).catch((error) => {
 				console.error('Network error during login:', error);

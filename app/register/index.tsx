@@ -90,7 +90,8 @@ const Auth: React.FC<AuthProps> = () => {
 					'user',
 					'google',
 					user.id,
-					user.name || ''
+					user.name || '',
+					userInfo.data.idToken ?? ''
 				);
 			}
 		} catch (error: any) {
@@ -140,7 +141,8 @@ const Auth: React.FC<AuthProps> = () => {
 					'user',
 					'apple',
 					user,
-					displayName || 'Apple User'
+					displayName || 'Apple User',
+					identityToken ?? ''
 				);
 			}
 		} catch (error: any) {
