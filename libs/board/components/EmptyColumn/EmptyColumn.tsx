@@ -14,11 +14,11 @@ interface EmptyColumnProps {
 }
 
 const EmptyColumn: React.FC<EmptyColumnProps> = ({
-	emptyIconColor,
-	emptyText,
-	emptyTextColor,
-	emptyTextFontFamily,
-	emptyTextFontSize,
+	emptyIconColor = colors.blurple,
+	emptyText = 'No items',
+	emptyTextColor = colors.bay,
+	emptyTextFontFamily = '',
+	emptyTextFontSize = 16,
 	marginTop,
 }) => (
 	<EmptyWrapper style={{ marginTop }}>
@@ -33,15 +33,6 @@ const EmptyColumn: React.FC<EmptyColumnProps> = ({
 		</Paragraph>
 	</EmptyWrapper>
 );
-
-// @ts-ignore
-EmptyColumn.defaultProps = {
-	emptyIconColor: colors.blurple,
-	emptyText: 'No items',
-	emptyTextColor: colors.bay,
-	emptyTextFontFamily: '',
-	emptyTextFontSize: 16,
-};
 
 // @ts-ignore
 EmptyColumn.propTypes = {

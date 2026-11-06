@@ -6,8 +6,6 @@ import {
 	setAtomicValue,
 	syncPendingChanges,
 	showToast,
-	fetchAllUserData,
-	getSecureItem,
 } from '../utils';
 import { DealbreakerState, Profile } from '../models/boardManagementModel';
 
@@ -49,42 +47,6 @@ export const useNetworkSync = (
 						result.message ||
 							'Failed to sync changes with the server.'
 					);
-				}
-			}
-
-			// If forcing sync, then also pull data from MongoDB
-			if (forceSync) {
-				debugLog('Forcing fetch of data from MongoDB...');
-				try {
-					// Get the user ID from secure storage
-					const userId = await getSecureItem('userId');
-					if (userId) {
-						const mongoData = await fetchAllUserData(userId);
-
-						if (
-							mongoData.profiles &&
-							mongoData.profiles.length > 0
-						) {
-							await setList('profiles', mongoData.profiles);
-							setProfiles(mongoData.profiles);
-							debugLog('Profiles synced from MongoDB');
-						}
-
-						if (
-							mongoData.flags &&
-							Object.keys(mongoData.flags).length > 0
-						) {
-							await setList('dealbreaker', mongoData.flags);
-							setDealbreaker(mongoData.flags);
-							debugLog('Flags synced from MongoDB');
-						}
-
-						debugLog('Successfully synced all data from MongoDB');
-					} else {
-						debugLog('Cannot sync data: No user ID found');
-					}
-				} catch (fetchError) {
-					debugLog('Error fetching data from MongoDB:', fetchError);
 				}
 			}
 		} catch (error) {

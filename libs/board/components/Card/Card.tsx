@@ -32,7 +32,7 @@ interface CardProps {
 	onPress?: () => void;
 	onPressIn?: (pageY: number) => void;
 	style?: ViewStyle;
-	onFlagClicked?: (item: any) => void;
+	onFlagClicked?: (newFlag: string, item: any) => void;
 	onDeleteItem?: (item: any) => void;
 	onEditItem?: (item: any) => void;
 	showDeleteItem?: boolean;
@@ -41,15 +41,15 @@ interface CardProps {
 const NEGATIVE_SPACE = 50;
 
 const Card: React.FC<CardProps> = ({
-	cardBorderRadius,
+	cardBorderRadius = 10,
 	cardContent,
-	cardIconColor,
-	cardNameTextColor,
-	cardNameFontSize,
-	cardNameFontFamily,
-	hidden,
+	cardIconColor = colors.blurple,
+	cardNameTextColor = colors.blurple,
+	cardNameFontSize = 18,
+	cardNameFontFamily = '',
+	hidden = false,
 	item,
-	isCardWithShadow,
+	isCardWithShadow = true,
 	onPress,
 	onPressIn,
 	style,
@@ -206,16 +206,6 @@ const Card: React.FC<CardProps> = ({
 			</Animated.View>
 		</TouchableWithoutFeedback>
 	);
-};
-
-Card.defaultProps = {
-	cardBorderRadius: 10,
-	cardIconColor: colors.blurple,
-	cardNameTextColor: colors.blurple,
-	cardNameFontSize: 18,
-	cardNameFontFamily: '',
-	isCardWithShadow: true,
-	hidden: false,
 };
 
 Card.propTypes = {

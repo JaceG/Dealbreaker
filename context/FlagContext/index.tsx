@@ -222,7 +222,7 @@ export const FlagProvider = ({
 				currentProfileId,
 				currentProfile.name, // profileName
 				rowId, // flagId
-				item.attributes.row.name, // flagTitle
+				item.attributes.row.name as string, // flagTitle
 				previousStatus,
 				newFlag, // newStatus
 				reason,
@@ -363,7 +363,7 @@ export const FlagProvider = ({
 				selectedFlag.currentProfileId,
 				currentProfile.name,
 				selectedFlag.id,
-				selectedFlag.name || selectedFlag.title,
+				(selectedFlag.name || selectedFlag.title) as string,
 				selectedFlag.flag || 'white', // Current status as both prev and new
 				selectedFlag.flag || 'white', // Using same color - this indicates it's just a comment
 				reason,

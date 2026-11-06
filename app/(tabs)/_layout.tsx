@@ -2,7 +2,6 @@ import { router, Tabs } from 'expo-router';
 import { FontAwesome } from '@expo/vector-icons';
 import Feather from '@expo/vector-icons/Feather';
 import { Button, useWindowDimensions } from 'react-native';
-import { AuthContextType } from '../../models/authModels';
 import { useAuth } from '../../context/Auth';
 import SwitchProfileModal from '../../components/SwitchProfileModal';
 import { colors } from '../../libs/board/constants';
@@ -13,7 +12,7 @@ import StoreContext from '../../store';
 import { useContext } from 'react';
 
 const Layout = () => {
-	const { user } = useAuth() as AuthContextType;
+	const { user } = useAuth();
 	console.log('user: ', user);
 	const { width, height } = useWindowDimensions();
 	const isPortrait = height >= width;
@@ -49,7 +48,7 @@ const Layout = () => {
 							<Feather
 								name='flag'
 								size={isPortrait ? 28 : 18}
-								color={color}
+								color={color as string}
 							/>
 						),
 						tabBarActiveTintColor: colors.exodusFruit,
@@ -66,7 +65,7 @@ const Layout = () => {
 						tabBarIcon: ({ color }) => (
 							<FontAwesome
 								name='home'
-								color={color}
+								color={color as string}
 								size={isPortrait ? 28 : 18}
 							/>
 						),
@@ -105,7 +104,7 @@ const Layout = () => {
 							<Feather
 								name='user'
 								size={isPortrait ? 28 : 18}
-								color={color}
+								color={color as string}
 							/>
 						),
 						tabBarActiveTintColor: colors.exodusFruit,
@@ -127,7 +126,7 @@ const Layout = () => {
 							<Feather
 								name='user'
 								size={isPortrait ? 28 : 18}
-								color={color}
+								color={color as string}
 							/>
 						),
 						tabBarActiveTintColor: colors.exodusFruit,

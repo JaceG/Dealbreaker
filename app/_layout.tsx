@@ -183,7 +183,7 @@ const Layout = () => {
 			<AuthProvider>
 				<FlagProvider
 					profiles={profiles}
-					setDealbreaker={setDealbreaker}>
+					setDealbreaker={setDealbreaker as any}>
 					<Stack>
 						<Stack.Screen
 							name='index'

@@ -10,7 +10,7 @@ const PrivateRoute = ({
 	children: React.ReactNode;
 	redirectTo?: string;
 }) => {
-	const { isAuthenticated, isLoading } = useAuth() as {
+	const { isAuthenticated, isLoading } = useAuth() as unknown as {
 		isAuthenticated: boolean;
 		isLoading: boolean;
 	};

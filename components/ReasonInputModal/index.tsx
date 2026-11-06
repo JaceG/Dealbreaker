@@ -35,18 +35,7 @@ const debugLog = (...args: any[]) => {
 let Audio: any = null;
 let ImagePicker: any = null;
 
-// Try to load modules only if enabled
-if (AUDIO_ENABLED) {
-	try {
-		Audio = require('expo-av').Audio;
-		console.log('Audio module loaded successfully');
-	} catch (error: any) {
-		console.log(
-			'Audio module not available:',
-			error?.message || 'Unknown error'
-		);
-	}
-}
+// shortcut: expo-av left the SDK after 54, so audio stays off; port to expo-audio before setting AUDIO_ENABLED
 
 if (IMAGE_PICKER_ENABLED) {
 	try {
@@ -459,13 +448,12 @@ const ReasonInputModal = ({
 				}
 			} catch (error) {
 				console.error('MEDIA PICKER: Error using ImagePicker:', error);
-				// Fall back to mock picker if something goes wrong
-				useMockMediaPicker();
+				showToast('error', 'Could not open the media library');
 			}
 		} else {
 			console.log('MEDIA PICKER: ImagePicker not available, using mock');
 			debugLog('Using mock media picker as fallback...');
-			useMockMediaPicker();
+			showToast('error', 'Could not open the media library');
 		}
 	};
 

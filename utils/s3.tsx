@@ -1,5 +1,5 @@
 // Import only what we need for the simplified implementation
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import { API_BASE_URL } from '../constants/api';
 
 // Set this to true to enable console logs for debugging
@@ -41,7 +41,7 @@ const getUniqueFilename = (fileUri: string) => {
 	if (fileUri) {
 		const parts = fileUri.split('.');
 		if (parts.length > 1) {
-			extension = parts.pop().split('?')[0].toLowerCase();
+			extension = parts.pop()!.split('?')[0].toLowerCase();
 		}
 	}
 

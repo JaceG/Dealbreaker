@@ -7,14 +7,6 @@
     "orientation": "default",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
-    "jsEngine": "hermes",
-    "developmentClient": false,
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.jace88.dealbreaker",
@@ -38,11 +30,6 @@
           }
         ],
         "ITSAppUsesNonExemptEncryption": false
-      },
-      "config": {
-        "googleSignIn": {
-          "reservedClientId": "com.googleusercontent.apps.255602929152-pjcbt99ocrr14vr7r3c3r1rko77ns74q"
-        }
       }
     },
     "android": {
@@ -50,7 +37,6 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true,
       "package": "com.jace88.dealbreaker"
     },
     "web": {
@@ -58,8 +44,43 @@
     },
     "plugins": [
       "expo-router",
-      "@react-native-google-signin/google-signin",
-      "expo-apple-authentication"
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.255602929152-pjcbt99ocrr14vr7r3c3r1rko77ns74q"
+        }
+      ],
+      "expo-apple-authentication",
+      "@react-native-community/datetimepicker",
+      "expo-secure-store",
+      "expo-web-browser",
+      "expo-status-bar",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#ffffff"
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "extraPods": [
+              {
+                "name": "GoogleUtilities",
+                "modular_headers": true
+              },
+              {
+                "name": "RecaptchaInterop",
+                "modular_headers": true
+              }
+            ]
+          }
+        }
+      ],
+      "expo-font"
     ],
     "extra": {
       "router": {

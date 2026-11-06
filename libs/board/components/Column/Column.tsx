@@ -4,7 +4,7 @@ import {
 	NativeSyntheticEvent,
 	NativeScrollEvent,
 	ListRenderItem,
-	ViewabilityConfig,
+	FlatListProps,
 } from 'react-native';
 import { bool, func, object, number, string } from 'prop-types';
 import { colors, deviceWidth, ios } from '../../constants';
@@ -87,14 +87,14 @@ interface ColumnProps {
 		onPress: void;
 		hidden: boolean;
 		item: BoardItem;
-		onFlagClicked?: (item: BoardItem) => void;
+		onFlagClicked?: (newFlag: string, item: BoardItem) => void;
 		onDeleteItem?: (item: BoardItem) => void;
 		onEditItem?: (item: BoardItem) => void;
 		showDeleteItem?: boolean;
 	}) => React.ReactNode;
 	boardRepository: BoardRepository;
 	unsubscribeFromMovingMode: () => void;
-	onFlagClicked?: (item: BoardItem) => void;
+	onFlagClicked?: (newFlag: string, item: BoardItem) => void;
 	onDeleteItem?: (item: BoardItem) => void;
 	onEditItem?: (item: BoardItem) => void;
 	columnWidth?: number;
@@ -108,7 +108,7 @@ const PADDING = 32;
 const ONE_COLUMN_WIDTH = deviceWidth - PADDING;
 
 class Column extends React.Component<ColumnProps, ColumnState> {
-	private viewabilityConfig: ViewabilityConfig;
+	private viewabilityConfig: FlatListProps<BoardItem>['viewabilityConfig'];
 	private scrollingDown: boolean = false;
 
 	constructor(props: ColumnProps) {
@@ -393,7 +393,7 @@ class Column extends React.Component<ColumnProps, ColumnState> {
 						scrollEnabled={!movingMode}
 						onContentSizeChange={this.onContentSizeChange}
 						showsVerticalScrollIndicator={false}
-						showDeleteItem={showDeleteItem}
+						extraData={showDeleteItem}
 					/>
 				)}
 			</ColumnWrapper>

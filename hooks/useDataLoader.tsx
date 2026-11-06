@@ -6,7 +6,6 @@ import {
 	getAtomicValue,
 	syncPendingChanges,
 	showToast,
-	fetchAllUserData,
 	getSecureItem,
 } from '../utils';
 import {

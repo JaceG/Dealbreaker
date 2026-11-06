@@ -27,13 +27,16 @@ const STATUSBAR_HEIGHT = ios ? (isX() ? 44 : 20) : StatusBar.currentHeight || 0;
 interface BoardProps {
 	columnWidth?: number;
 	boardBackground?: string;
+	cardBorderRadius?: string | number;
+	cardNameTextColor?: string;
+	isWithCountBadge?: boolean;
 	clearTimeout: (timeoutId: NodeJS.Timeout) => void;
 	onDragEnd: (srcColumn: any, destColumn: any, draggedItem: any) => void;
 	open: (item: any) => void;
 	requestAnimationFrame: (callback: () => void) => void;
 	boardRepository: any;
 	setTimeout: (callback: () => void, delay: number) => NodeJS.Timeout;
-	onFlagClicked?: (item: any) => void;
+	onFlagClicked?: (newFlag: string, item: any) => void;
 	onDeleteItem?: (item: any) => void;
 	onEditItem?: (item: any) => void;
 	data?: any;
@@ -538,4 +541,7 @@ class Board extends React.Component<BoardProps, BoardState> {
 	};
 }
 
-export default ReactTimeout(Board);
+// react-timeout injects these three props
+export default ReactTimeout(Board) as unknown as React.ComponentClass<
+	Omit<BoardProps, 'clearTimeout' | 'requestAnimationFrame' | 'setTimeout'>
+>;

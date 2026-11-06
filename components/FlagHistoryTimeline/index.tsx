@@ -16,7 +16,6 @@ import { getFlagHistory } from '../../utils/mongodb';
 import { showToast } from '../../utils';
 import { colors } from '../../libs/board/constants/colors';
 import { FlagHistoryTimelineProps } from '../../models/modalModels';
-import { Audio } from 'expo-av';
 
 // Set to false to disable debug logs
 const DEBUG_LOGGING = false;
@@ -48,20 +47,8 @@ if (IMAGE_PREVIEW_ENABLED) {
 
 // Instead of directly importing Audio, which causes a crash
 // We'll create a feature flag to conditionally enable audio features
-let AudioModule: typeof Audio | null = null;
-
-// Try to load Audio module only if enabled
-if (AUDIO_ENABLED) {
-	try {
-		AudioModule = require('expo-av').Audio;
-		console.log('Audio module loaded successfully');
-	} catch (error: any) {
-		console.log(
-			'Audio module not available:',
-			error?.message || 'Unknown error'
-		);
-	}
-}
+// shortcut: expo-av left the SDK after 54, so audio stays off; port to expo-audio before setting AUDIO_ENABLED
+let AudioModule: any = null;
 
 interface HistoryItem {
 	_id?: string;
@@ -103,7 +90,7 @@ const FlagHistoryTimeline = ({
 	const [isTestingS3, setIsTestingS3] = useState(false);
 
 	// Audio playback states - only used if Audio is available
-	const [sound, setSound] = useState<Audio.Sound | null>(null);
+	const [sound, setSound] = useState<any>(null);
 	const [isPlaying, setIsPlaying] = useState(false);
 	const [playbackPosition, setPlaybackPosition] = useState(0);
 	const [playingAttachmentId, setPlayingAttachmentId] = useState<
@@ -144,7 +131,7 @@ const FlagHistoryTimeline = ({
 				return;
 			}
 
-			const historyData = await getFlagHistory(profileId, flagId);
+			const historyData = ((await getFlagHistory(profileId, flagId)) ?? []) as HistoryItem[];
 			console.log(
 				'FlagHistoryTimeline: History loaded:',
 				JSON.stringify(historyData, null, 2)

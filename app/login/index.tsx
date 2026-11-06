@@ -75,7 +75,7 @@ const Auth: React.FC<AuthProps> = () => {
 		socialLogin,
 	} = useLogin();
 
-	const { loginAuth } = useAuth() as AuthContextType;
+	const { loginAuth } = useAuth();
 	const [isAppleAvailable, setIsAppleAvailable] = useState(false);
 
 	// Configure Google Sign-In and check Apple availability

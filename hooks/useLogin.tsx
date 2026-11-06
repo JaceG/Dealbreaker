@@ -5,7 +5,6 @@ import { useAuth } from '../context/Auth';
 import { router } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import {
-	AuthContextType,
 	LoginHookReturn,
 	UserData,
 	LoginApiResponse,
@@ -22,7 +21,7 @@ const useLogin = (): LoginHookReturn => {
 
 	// Get auth functions from context
 	const { isLoading, error, checkAuthStatus, loginAuth } =
-		useAuth() as AuthContextType;
+		useAuth();
 
 	// Clear error when switching between login/register
 	useEffect(() => {

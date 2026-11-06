@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import {
 	ScrollView,
+	ScrollViewInstance,
 	NativeSyntheticEvent,
 	NativeScrollEvent,
 } from 'react-native';
@@ -47,7 +48,7 @@ class Carousel extends Component<CarouselProps, CarouselState> {
 	private positions: Position[];
 	private currentContentOffset: number;
 	private scrollOffsetRef: number | null;
-	private carouselRef: ScrollView | null;
+	private carouselRef: ScrollViewInstance | null;
 	private itemToSnapTo: number;
 	private scrollStartOffset: number;
 	private scrollStartActive: number;
@@ -151,7 +152,7 @@ class Carousel extends Component<CarouselProps, CarouselState> {
 		return index;
 	};
 
-	getWrappedRef = (): ScrollView | null => this.carouselRef;
+	getWrappedRef = (): ScrollViewInstance | null => this.carouselRef;
 
 	getKeyExtractor = (item: CarouselItem, index: number): string =>
 		`scrollview-item-${index}`;
@@ -394,7 +395,9 @@ class Carousel extends Component<CarouselProps, CarouselState> {
 		};
 
 		return {
-			ref: (c: ScrollView | null) => (this.carouselRef = c),
+			ref: (c: ScrollViewInstance | null) => {
+				this.carouselRef = c;
+			},
 			data,
 			style: containerStyle,
 			contentContainerStyle,

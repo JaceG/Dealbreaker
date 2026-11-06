@@ -3,5 +3,13 @@
   "compilerOptions": {
     "strict": true,
     "jsx": "react-jsx"
-  }
+  },
+  "exclude": [
+    "node_modules",
+    "babel.config.js",
+    "metro.config.js",
+    "ios",
+    "android",
+    "**/*.test.tsx"
+  ]
 }

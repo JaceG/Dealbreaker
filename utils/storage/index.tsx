@@ -52,7 +52,7 @@ export const deleteSecureItem = async (key: string): Promise<void> => {
 	}
 };
 
-export const setList = async (key: string, value: any[]): Promise<void> => {
+export const setList = async (key: string, value: any): Promise<void> => {
 	try {
 		await AsyncStorage.setItem(key, JSON.stringify(value));
 	} catch (error) {
@@ -60,7 +60,7 @@ export const setList = async (key: string, value: any[]): Promise<void> => {
 	}
 };
 
-export const getList = async (key: string): Promise<any[] | null> => {
+export const getList = async (key: string): Promise<any> => {
 	try {
 		const value = await AsyncStorage.getItem(key);
 		return value ? JSON.parse(value) : null;

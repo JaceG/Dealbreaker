@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Image, Pressable, View } from 'react-native';
 
-export const Flag = ({ color, onFlagClicked, item }) => {
+export const Flag = ({ color, onFlagClicked, item }: any) => {
 	const whiteFlag = 'white';
 	const yellowFlag = 'yellow';
 	const redFlag = 'red';

@@ -35,7 +35,7 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
 			]}
 			onRequestClose={onClose}>
 			<SafeAreaView style={styles.container}>
-				<StatusBar barStyle='light-content' backgroundColor='#000' />
+				<StatusBar barStyle='light-content' />
 
 				<View style={styles.header}>
 					<TouchableOpacity
