@@ -80,6 +80,8 @@ export interface LoginHookReturn {
 		social_name: string,
 		idToken: string
 	) => Promise<boolean | undefined>;
+	// 'user', 'guest', 'google' or 'apple' while that sign-in waits on the server.
+	signingInWith: string | null;
 
 	// Loading state
 	isLoading: boolean;

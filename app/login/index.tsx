@@ -73,7 +73,10 @@ const Auth: React.FC<AuthProps> = () => {
 		isLoading,
 		localError,
 		socialLogin,
+		signingInWith,
 	} = useLogin();
+	// A sign-in in progress disables the form; the button that started it shows the spinner.
+	const busy = isLoading || !!signingInWith;
 
 	const { loginAuth } = useAuth();
 	const [isAppleAvailable, setIsAppleAvailable] = useState(false);
@@ -195,7 +198,7 @@ const Auth: React.FC<AuthProps> = () => {
 							value={name}
 							onChangeText={setName}
 							autoCapitalize='words'
-							editable={!isLoading}
+							editable={!busy}
 						/>
 					)}
 
@@ -206,7 +209,7 @@ const Auth: React.FC<AuthProps> = () => {
 						onChangeText={setEmail}
 						keyboardType='email-address'
 						autoCapitalize='none'
-						editable={!isLoading}
+						editable={!busy}
 					/>
 
 					<TextInput
@@ -215,7 +218,7 @@ const Auth: React.FC<AuthProps> = () => {
 						value={password}
 						onChangeText={setPassword}
 						secureTextEntry
-						editable={!isLoading}
+						editable={!busy}
 					/>
 
 					{localError ? (
@@ -225,11 +228,11 @@ const Auth: React.FC<AuthProps> = () => {
 					<TouchableOpacity
 						style={[
 							styles.button,
-							isLoading ? styles.buttonDisabled : null,
+							busy ? styles.buttonDisabled : null,
 						]}
 						onPress={() => handleSubmit(false)}
-						disabled={isLoading}>
-						{isLoading ? (
+						disabled={busy}>
+						{isLoading || signingInWith === 'user' ? (
 							<ActivityIndicator color='#fff' />
 						) : (
 							<Text style={styles.buttonText}>
@@ -241,23 +244,36 @@ const Auth: React.FC<AuthProps> = () => {
 					<TouchableOpacity
 						style={[
 							styles.googleButton,
-							isLoading ? styles.buttonDisabled : null,
+							busy ? styles.buttonDisabled : null,
 						]}
 						onPress={promptGoogleSignIn}
-						disabled={isLoading}>
-						<View style={styles.googleButtonContent}>
-							<AntDesign
-								name='google'
-								size={20}
-								color='#4285F4'
-							/>
-							<Text style={styles.googleButtonText}>
-								Continue with Google
-							</Text>
-						</View>
+						disabled={busy}>
+						{signingInWith === 'google' ? (
+							<ActivityIndicator color='#4285F4' />
+						) : (
+							<View style={styles.googleButtonContent}>
+								<AntDesign
+									name='google'
+									size={20}
+									color='#4285F4'
+								/>
+								<Text style={styles.googleButtonText}>
+									Continue with Google
+								</Text>
+							</View>
+						)}
 					</TouchableOpacity>
 
-					{isAppleAvailable ? (
+					{signingInWith === 'apple' ? (
+						<View
+							style={[
+								styles.appleButton,
+								styles.appleButtonBusy,
+								styles.buttonDisabled,
+							]}>
+							<ActivityIndicator color='#fff' />
+						</View>
+					) : isAppleAvailable ? (
 						<AppleAuthentication.AppleAuthenticationButton
 							buttonType={
 								AppleAuthentication
@@ -268,8 +284,11 @@ const Auth: React.FC<AuthProps> = () => {
 									.AppleAuthenticationButtonStyle.BLACK
 							}
 							cornerRadius={10}
-							style={styles.appleButton}
-							onPress={promptAppleSignIn}
+							style={[
+								styles.appleButton,
+								busy ? styles.buttonDisabled : null,
+							]}
+							onPress={() => !busy && promptAppleSignIn()}
 						/>
 					) : (
 						<Text
@@ -297,11 +316,11 @@ const Auth: React.FC<AuthProps> = () => {
 					<TouchableOpacity
 						style={[
 							styles.button2,
-							isLoading ? styles.buttonDisabled : null,
+							busy ? styles.buttonDisabled : null,
 						]}
 						onPress={() => handleSubmit(true)}
-						disabled={isLoading}>
-						{isLoading ? (
+						disabled={busy}>
+						{isLoading || signingInWith === 'guest' ? (
 							<ActivityIndicator color='#fff' />
 						) : (
 							<Text style={styles.buttonText}>Just Try It</Text>
@@ -310,7 +329,7 @@ const Auth: React.FC<AuthProps> = () => {
 					<TouchableOpacity
 						style={styles.switchButton}
 						onPress={() => router.push('/register')}
-						disabled={isLoading}>
+						disabled={busy}>
 						<Text style={styles.switchButtonText}>
 							Don't have an account? Sign Up
 						</Text>
@@ -416,6 +435,12 @@ const styles = StyleSheet.create({
 		width: '100%',
 		height: 44,
 		marginBottom: 15,
+	},
+	// Matches the black Apple button while its sign-in runs.
+	appleButtonBusy: {
+		backgroundColor: '#000',
+		borderRadius: 10,
+		justifyContent: 'center',
 	},
 });
 

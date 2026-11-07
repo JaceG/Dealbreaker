@@ -18,6 +18,8 @@ const useLogin = (): LoginHookReturn => {
 	const [password, setPassword] = useState('');
 	const [localError, setLocalError] = useState('');
 	const [showDevOptions, setShowDevOptions] = useState(false);
+	// 'user', 'guest', 'google' or 'apple' while that sign-in waits on the server.
+	const [signingInWith, setSigningInWith] = useState<string | null>(null);
 
 	// Get auth functions from context
 	const { isLoading, error, checkAuthStatus, loginAuth } =
@@ -138,6 +140,7 @@ const useLogin = (): LoginHookReturn => {
 		social_name?: string,
 		idToken?: string
 	) => {
+		setSigningInWith(type || role);
 		try {
 			console.log(
 				`Attempting to login with API: ${API_BASE_URL}/api/auth/login`
@@ -258,6 +261,8 @@ const useLogin = (): LoginHookReturn => {
 					: 'Failed to login. Please try again.'
 			);
 			return false;
+		} finally {
+			setSigningInWith(null);
 		}
 	};
 	return {
@@ -278,6 +283,7 @@ const useLogin = (): LoginHookReturn => {
 		showDevOptions,
 		setShowDevOptions,
 		socialLogin,
+		signingInWith,
 	};
 };
 
