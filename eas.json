@@ -6,7 +6,8 @@
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "channel": "development"
     },
     "simulator": {
       "ios": {
@@ -14,15 +15,18 @@
       },
       "android": {
         "buildType": "apk"
-      }
+      },
+      "channel": "simulator"
     },
     "preview": {
       "distribution": "internal",
-      "developmentClient": false
+      "developmentClient": false,
+      "channel": "preview"
     },
     "production": {
       "autoIncrement": true,
-      "developmentClient": false
+      "developmentClient": false,
+      "channel": "production"
     }
   },
   "submit": {

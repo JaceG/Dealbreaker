@@ -90,6 +90,12 @@
         "projectId": "d4d5b012-6c93-4254-ae41-fbcbef3700e3"
       }
     },
-    "owner": "jace88"
+    "owner": "jace88",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/d4d5b012-6c93-4254-ae41-fbcbef3700e3"
+    }
   }
 }
