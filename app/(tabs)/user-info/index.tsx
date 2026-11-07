@@ -7,12 +7,53 @@ import {
 	Button,
 	Modal,
 	Alert,
+	ScrollView,
 } from 'react-native';
+import {
+	GoogleSignin,
+	statusCodes,
+	isCancelledResponse,
+} from '@react-native-google-signin/google-signin';
+import * as AppleAuthentication from 'expo-apple-authentication';
+import {
+	EXPO_PUBLIC_OAUTH_IOS_CLIENT_ID,
+	EXPO_PUBLIC_OAUTH_EXPO_CLIENT_ID,
+} from '@env';
 import { colors } from '../../../libs/board/constants';
 import { useAuth } from '../../../context/Auth';
-import { useState, useEffect } from 'react';
-import { saveMyAccount } from '../../../utils/api';
+import { useState, useEffect, useCallback } from 'react';
+import { useFocusEffect } from 'expo-router';
+import {
+	saveMyAccount,
+	getSignInMethods,
+	changeSignInMethod,
+} from '../../../utils/api';
 import { useAuthActions } from '../../../hooks/useAuthActions';
+import { SignInMethods, SignInType } from '../../../models/apiModels';
+
+const PROVIDER_NAME: Record<SignInType, string> = {
+	google: 'Google',
+	apple: 'Apple',
+};
+
+// Asks Google or Apple for a fresh identity token, which proves the person controls that account.
+// Returns null if the person cancels.
+const getIdToken = async (type: SignInType): Promise<string | null> => {
+	let idToken;
+	if (type === 'google') {
+		await GoogleSignin.hasPlayServices();
+		const response = await GoogleSignin.signIn();
+		if (isCancelledResponse(response)) return null;
+		idToken = response.data.idToken;
+	} else {
+		const credential = await AppleAuthentication.signInAsync({
+			requestedScopes: [AppleAuthentication.AppleAuthenticationScope.EMAIL],
+		});
+		idToken = credential.identityToken;
+	}
+	if (!idToken) throw new Error(`${type} returned no identity token`);
+	return idToken;
+};
 
 export const UserInfo = () => {
 	const { user, updateUserName, authToken } = useAuth();
@@ -25,6 +66,83 @@ export const UserInfo = () => {
 	const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 	const [deleteConfirmationText, setDeleteConfirmationText] = useState('');
 	const { logout } = useAuthActions();
+	// undefined while loading, null if loading failed
+	const [methods, setMethods] = useState<SignInMethods | null>();
+	const [isAppleAvailable, setIsAppleAvailable] = useState(false);
+	const hasPassword = methods?.hasPassword ?? true;
+
+	useEffect(() => {
+		GoogleSignin.configure({
+			iosClientId: EXPO_PUBLIC_OAUTH_IOS_CLIENT_ID,
+			webClientId: EXPO_PUBLIC_OAUTH_EXPO_CLIENT_ID,
+		});
+		AppleAuthentication.isAvailableAsync().then(setIsAppleAvailable);
+	}, []);
+
+	// Reload each time the tab opens, so a failed load can recover.
+	useFocusEffect(
+		useCallback(() => {
+			if (authToken) getSignInMethods(authToken).then(setMethods);
+		}, [authToken])
+	);
+
+	const handleConnect = async (type: SignInType) => {
+		let idToken;
+		try {
+			idToken = await getIdToken(type);
+		} catch (error: any) {
+			const cancelled =
+				error.code === statusCodes.SIGN_IN_CANCELLED ||
+				error.code === 'ERR_REQUEST_CANCELED';
+			if (!cancelled) alert(`Failed to sign in with ${PROVIDER_NAME[type]}`);
+			return;
+		}
+		if (!idToken) return;
+		try {
+			setMethods(
+				await changeSignInMethod('connect', type, authToken || '', idToken)
+			);
+			alert(`${PROVIDER_NAME[type]} connected successfully`);
+		} catch (error: any) {
+			alert(`Failed to connect ${PROVIDER_NAME[type]}. ${error.message}`);
+		}
+	};
+
+	const handleDisconnect = (type: SignInType) => {
+		const name = PROVIDER_NAME[type];
+		const ways = [methods?.hasPassword, methods?.google, methods?.apple];
+		if (ways.filter(Boolean).length < 2) {
+			alert(
+				`Set a password or connect another account before disconnecting ${name}.`
+			);
+			return;
+		}
+		Alert.alert(
+			`Disconnect ${name}?`,
+			`You won't be able to sign in with ${name} until you connect it again.`,
+			[
+				{ text: 'Cancel', style: 'cancel' },
+				{
+					text: 'Disconnect',
+					style: 'destructive',
+					onPress: async () => {
+						try {
+							setMethods(
+								await changeSignInMethod(
+									'disconnect',
+									type,
+									authToken || ''
+								)
+							);
+							alert(`${name} disconnected successfully`);
+						} catch (error: any) {
+							alert(`Failed to disconnect ${name}. ${error.message}`);
+						}
+					},
+				},
+			]
+		);
+	};
 	const handleNameChange = (text: string) => {
 		setName(text);
 	};
@@ -51,7 +169,7 @@ export const UserInfo = () => {
 		// If user is trying to change password, validate password fields
 		if (currentPassword || newPassword || confirmPassword) {
 			// Validate that all password fields are filled
-			if (!currentPassword.trim()) {
+			if (hasPassword && !currentPassword.trim()) {
 				alert('Please enter your current password');
 				return;
 			}
@@ -61,6 +179,10 @@ export const UserInfo = () => {
 			}
 			if (!confirmPassword.trim()) {
 				alert('Please confirm your new password');
+				return;
+			}
+			if (newPassword.length < 6) {
+				alert('Please enter a password with 6 or more characters');
 				return;
 			}
 			if (newPassword !== confirmPassword) {
@@ -80,9 +202,18 @@ export const UserInfo = () => {
 			);
 			console.log(response);
 			if (response) {
-				alert('Password updated successfully');
+				alert(
+					hasPassword
+						? 'Password updated successfully'
+						: 'Password set successfully'
+				);
+				if (methods) setMethods({ ...methods, hasPassword: true });
 			} else {
-				alert('Failed to update password');
+				alert(
+					hasPassword
+						? 'Failed to update password'
+						: 'Failed to set password'
+				);
 			}
 		}
 
@@ -126,138 +257,185 @@ export const UserInfo = () => {
 	const { width, height } = useWindowDimensions();
 	const isPortrait = height >= width;
 	return (
-		<View
-			style={isPortrait ? styles.container : styles.horizontalContainer}>
-			<Text style={styles.textHeader}>Personal Info</Text>
-			<View style={styles.seperator}></View>
-			<View style={styles.row}>
-				<Text style={styles.text}>Email:</Text>
-				<Text style={styles.textMuted}>
-					{user?.email || 'No email found'}
-				</Text>
-			</View>
-			<View style={styles.row}>
-				<Text style={styles.text}>Name:</Text>
-				<View style={styles.inputContainer}>
-					{!isEditing ? (
-						<Text style={styles.textMuted}>
-							{user?.name || 'No name found'}
-						</Text>
-					) : (
-						<TextInput
-							value={name}
-							onChangeText={handleNameChange}
-							style={styles.textInput}
-							placeholder='Enter Name'
-							placeholderTextColor={'white'}
-						/>
-					)}
-					<Button
-						title={isEditing ? 'Save New Name' : 'Edit'}
-						onPress={handleEdit}
-					/>
+		<ScrollView
+			style={styles.scroll}
+			keyboardShouldPersistTaps='handled'
+			automaticallyAdjustKeyboardInsets>
+			<View
+				style={isPortrait ? styles.container : styles.horizontalContainer}>
+				<Text style={styles.textHeader}>Personal Info</Text>
+				<View style={styles.seperator}></View>
+				<View style={styles.row}>
+					<Text style={styles.text}>Email:</Text>
+					<Text style={styles.textMuted}>
+						{user?.email || 'No email found'}
+					</Text>
 				</View>
-			</View>
-			<Text style={styles.textHeader}>Change Password</Text>
-			<View style={styles.seperator}></View>
-			<View style={styles.row}>
-				<Text style={styles.text}>Current Password:</Text>
-				<TextInput
-					value={currentPassword}
-					onChangeText={setCurrentPassword}
-					style={styles.passwordTextInput}
-					placeholder='Enter Current Password'
-					placeholderTextColor={'white'}
-					secureTextEntry={true}
-				/>
-			</View>
-			<View style={styles.row}>
-				<Text style={styles.text}>New Password:</Text>
-				<TextInput
-					value={newPassword}
-					onChangeText={setNewPassword}
-					style={styles.passwordTextInput}
-					placeholder='Enter New Password'
-					placeholderTextColor={'white'}
-					secureTextEntry={true}
-				/>
-			</View>
-			<View style={styles.row}>
-				<Text style={styles.text}>Confirm Password:</Text>
-				<TextInput
-					value={confirmPassword}
-					onChangeText={setConfirmPassword}
-					style={styles.passwordTextInput}
-					placeholder='Enter Confirm Password'
-					placeholderTextColor={'white'}
-					secureTextEntry={true}
-				/>
-			</View>
-			<View style={styles.passwordButtonContainer}>
-				<Button title='Save New Password' onPress={handleSave} />
-			</View>
-
-			<Text style={styles.dangerHeader}>Danger Zone</Text>
-			<View style={styles.seperator}></View>
-			<View style={styles.deleteSection}>
-				<Text style={styles.deleteWarningText}>
-					⚠️ Warning: This action cannot be undone. Deleting your
-					account will permanently remove all your data, profiles, and
-					flags.
-				</Text>
-				<Button
-					title='Delete Account'
-					onPress={handleDeleteAccount}
-					color='#dc3545'
-				/>
-			</View>
-
-			{/* Delete Confirmation Modal */}
-			<Modal
-				visible={showDeleteConfirmation}
-				transparent={true}
-				animationType='slide'>
-				<View style={styles.modalOverlay}>
-					<View style={styles.modalContent}>
-						<Text style={styles.modalTitle}>Delete Account</Text>
-						<Text style={styles.modalWarning}>
-							⚠️ This action is permanent and cannot be undone!
-						</Text>
-						<Text style={styles.modalDescription}>
-							All your data, profiles, and flags will be
-							permanently deleted.
-						</Text>
-						<Text style={styles.modalInstruction}>
-							Type "Delete my account" below to confirm:
-						</Text>
-						<TextInput
-							value={deleteConfirmationText}
-							onChangeText={setDeleteConfirmationText}
-							style={styles.confirmationInput}
-							placeholder='Type "Delete my account"'
-							autoCapitalize='none'
-							placeholderTextColor={'#999'}
+				<View style={styles.row}>
+					<Text style={styles.text}>Name:</Text>
+					<View style={styles.inputContainer}>
+						{!isEditing ? (
+							<Text style={styles.textMuted}>
+								{user?.name || 'No name found'}
+							</Text>
+						) : (
+							<TextInput
+								value={name}
+								onChangeText={handleNameChange}
+								style={styles.textInput}
+								placeholder='Enter Name'
+								placeholderTextColor={'white'}
+							/>
+						)}
+						<Button
+							title={isEditing ? 'Save New Name' : 'Edit'}
+							onPress={handleEdit}
 						/>
-						<View style={styles.modalButtons}>
-							<Button
-								title='Cancel'
-								onPress={handleCancelDelete}
-								color='#6c757d'
-							/>
-							<Button
-								title='Delete Account'
-								onPress={handleConfirmDelete}
-								color='#dc3545'
-							/>
-						</View>
 					</View>
 				</View>
-			</Modal>
-		</View>
+				<Text style={styles.textHeader}>Sign-in Methods</Text>
+				<View style={styles.seperator}></View>
+				{methods === null && (
+					<Text style={styles.textMuted}>
+						Couldn't load your sign-in methods.
+					</Text>
+				)}
+				{methods &&
+					(['google', 'apple'] as const).map((type) => (
+						<View style={styles.row} key={type}>
+							<Text style={styles.text}>{PROVIDER_NAME[type]}:</Text>
+							<View style={styles.methodStatus}>
+								<Text style={styles.textMuted}>
+									{methods[type] ? 'Connected' : 'Not connected'}
+								</Text>
+								{methods[type] ? (
+									<Button
+										title='Disconnect'
+										onPress={() => handleDisconnect(type)}
+									/>
+								) : (
+									(type === 'google' || isAppleAvailable) && (
+										<Button
+											title='Connect'
+											onPress={() => handleConnect(type)}
+										/>
+									)
+								)}
+							</View>
+						</View>
+					))}
+				<Text style={styles.textHeader}>
+					{hasPassword ? 'Change Password' : 'Set Password'}
+				</Text>
+				<View style={styles.seperator}></View>
+				{hasPassword && (
+					<View style={styles.row}>
+						<Text style={styles.text}>Current Password:</Text>
+						<TextInput
+							value={currentPassword}
+							onChangeText={setCurrentPassword}
+							style={styles.passwordTextInput}
+							placeholder='Enter Current Password'
+							placeholderTextColor={'white'}
+							secureTextEntry={true}
+						/>
+					</View>
+				)}
+				<View style={styles.row}>
+					<Text style={styles.text}>New Password:</Text>
+					<TextInput
+						value={newPassword}
+						onChangeText={setNewPassword}
+						style={styles.passwordTextInput}
+						placeholder='Enter New Password'
+						placeholderTextColor={'white'}
+						secureTextEntry={true}
+					/>
+				</View>
+				<View style={styles.row}>
+					<Text style={styles.text}>Confirm Password:</Text>
+					<TextInput
+						value={confirmPassword}
+						onChangeText={setConfirmPassword}
+						style={styles.passwordTextInput}
+						placeholder='Enter Confirm Password'
+						placeholderTextColor={'white'}
+						secureTextEntry={true}
+					/>
+				</View>
+				<View style={styles.passwordButtonContainer}>
+					<Button
+						title={hasPassword ? 'Save New Password' : 'Save Password'}
+						onPress={handleSave}
+					/>
+				</View>
+
+				<Text style={styles.dangerHeader}>Danger Zone</Text>
+				<View style={styles.seperator}></View>
+				<View style={styles.deleteSection}>
+					<Text style={styles.deleteWarningText}>
+						⚠️ Warning: This action cannot be undone. Deleting your
+						account will permanently remove all your data, profiles, and
+						flags.
+					</Text>
+					<Button
+						title='Delete Account'
+						onPress={handleDeleteAccount}
+						color='#dc3545'
+					/>
+				</View>
+
+				{/* Delete Confirmation Modal */}
+				<Modal
+					visible={showDeleteConfirmation}
+					transparent={true}
+					animationType='slide'>
+					<View style={styles.modalOverlay}>
+						<View style={styles.modalContent}>
+							<Text style={styles.modalTitle}>Delete Account</Text>
+							<Text style={styles.modalWarning}>
+								⚠️ This action is permanent and cannot be undone!
+							</Text>
+							<Text style={styles.modalDescription}>
+								All your data, profiles, and flags will be
+								permanently deleted.
+							</Text>
+							<Text style={styles.modalInstruction}>
+								Type "Delete my account" below to confirm:
+							</Text>
+							<TextInput
+								value={deleteConfirmationText}
+								onChangeText={setDeleteConfirmationText}
+								style={styles.confirmationInput}
+								placeholder='Type "Delete my account"'
+								autoCapitalize='none'
+								placeholderTextColor={'#999'}
+							/>
+							<View style={styles.modalButtons}>
+								<Button
+									title='Cancel'
+									onPress={handleCancelDelete}
+									color='#6c757d'
+								/>
+								<Button
+									title='Delete Account'
+									onPress={handleConfirmDelete}
+									color='#dc3545'
+								/>
+							</View>
+						</View>
+					</View>
+				</Modal>
+			</View>
+		</ScrollView>
 	);
 };
 
 const styles = StyleSheet.create({
+	scroll: {
+		flex: 1,
+		backgroundColor: 'white',
+	},
 	container: {
 		flex: 1,
 		backgroundColor: 'white',
@@ -297,6 +475,10 @@ const styles = StyleSheet.create({
 		borderRadius: 5,
 		flex: 1,
 		color: '#000',
+	},
+	methodStatus: {
+		flexDirection: 'row' as const,
+		alignItems: 'center' as const,
 	},
 	passwordTextInput: {
 		padding: 13,

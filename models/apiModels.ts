@@ -432,6 +432,16 @@ export interface CustomApiError extends Error {
 	request?: any;
 }
 
+export type SignInType = 'google' | 'apple';
+
+// The ways an account can sign in, from GET /api/myAccount/signInMethods.
+export interface SignInMethods {
+	email: string;
+	hasPassword: boolean;
+	google: boolean;
+	apple: boolean;
+}
+
 export interface UserData {
 	profiles?: any[];
 	flags?: { [key: string]: any };

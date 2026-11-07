@@ -7,6 +7,8 @@ import {
 	UserData,
 	ApiError,
 	CustomApiError,
+	SignInMethods,
+	SignInType,
 } from '../../models/apiModels';
 
 // API base URL - updated with Render URL
@@ -298,6 +300,45 @@ export const saveMyAccount = async (
 		} else if (apiError.request) {
 			console.error('No response received from server');
 		}
+	}
+};
+
+const authHeader = (token: string) => ({
+	headers: { 'x-auth-token': token },
+});
+
+// Returns null when the sign-in methods could not be loaded.
+export const getSignInMethods = async (
+	token: string
+): Promise<SignInMethods | null> => {
+	try {
+		return (await api.get('/myAccount/signInMethods', authHeader(token)))
+			.data;
+	} catch (error) {
+		console.error('Error loading sign-in methods:', error);
+		return null;
+	}
+};
+
+// Throws with the server's reason when it refuses, such as an account that belongs to someone else.
+export const changeSignInMethod = async (
+	action: 'connect' | 'disconnect',
+	type: SignInType,
+	token: string,
+	idToken?: string
+): Promise<SignInMethods> => {
+	try {
+		return (
+			await api.post(
+				`/myAccount/${action}`,
+				{ type, idToken },
+				authHeader(token)
+			)
+		).data;
+	} catch (error) {
+		const message = (error as CustomApiError).response?.data?.errors?.[0]
+			?.msg;
+		throw new Error(message || 'Something went wrong. Please try again.');
 	}
 };
 
