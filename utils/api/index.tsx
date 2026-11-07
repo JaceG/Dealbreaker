@@ -10,6 +10,7 @@ import {
 	SignInMethods,
 	SignInType,
 } from '../../models/apiModels';
+import { getSecureItem } from '../storage';
 
 // API base URL - updated with Render URL
 // For local testing on iOS simulator, use http://localhost:4000
@@ -34,6 +35,15 @@ const api = axios.create({
 		'Content-Type': 'application/json',
 	},
 	timeout: 10000, // 10 seconds
+});
+
+// Flag-history routes need the login token; a header a caller passes itself still wins.
+api.interceptors.request.use(async (config) => {
+	const token = await getSecureItem('authToken');
+	if (token && !config.headers['x-auth-token']) {
+		config.headers['x-auth-token'] = token;
+	}
+	return config;
 });
 
 // Get flag history from API
