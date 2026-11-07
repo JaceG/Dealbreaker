@@ -179,9 +179,12 @@ const Auth: React.FC<AuthProps> = () => {
 
 	return (
 		<KeyboardAvoidingView
-			behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+			behavior={Platform.OS === 'ios' ? undefined : 'height'}
 			style={styles.container}>
-			<ScrollView contentContainerStyle={styles.scrollContainer}>
+			{/* On iOS the keyboard adds scroll room below the form instead of squeezing it up under the see-through header. */}
+			<ScrollView
+				contentContainerStyle={styles.scrollContainer}
+				automaticallyAdjustKeyboardInsets>
 				<View style={styles.formContainer}>
 					<TouchableOpacity
 						onPress={handleTitlePress}
