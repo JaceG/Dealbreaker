@@ -21,7 +21,7 @@ import {
 } from '@env';
 import { colors } from '../../../libs/board/constants';
 import { useAuth } from '../../../context/Auth';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useFocusEffect } from 'expo-router';
 import {
 	saveMyAccount,
@@ -79,12 +79,28 @@ export const UserInfo = () => {
 		AppleAuthentication.isAvailableAsync().then(setIsAppleAvailable);
 	}, []);
 
-	// Reload each time the tab opens, so a failed load can recover.
-	useFocusEffect(
-		useCallback(() => {
-			if (authToken) getSignInMethods(authToken).then(setMethods);
-		}, [authToken])
-	);
+	// Counts connects, disconnects and password sets, so an older load can't undo them.
+	const changes = useRef(0);
+	const saveMethods = (updated: SignInMethods) => {
+		changes.current++;
+		setMethods(updated);
+	};
+	const loadMethods = useCallback(() => {
+		if (!authToken) return;
+		const seen = changes.current;
+		getSignInMethods(authToken).then((loaded) => {
+			// A failed reload keeps what was already shown.
+			if (changes.current === seen)
+				setMethods((shown) => loaded ?? shown ?? null);
+		});
+	}, [authToken]);
+	// Reload each time the tab opens.
+	useFocusEffect(loadMethods);
+	const retryLoadMethods = async () => {
+		const loaded = await getSignInMethods(authToken || '');
+		if (loaded) saveMethods(loaded);
+		else alert('Failed to load your sign-in methods');
+	};
 
 	const handleConnect = async (type: SignInType) => {
 		let idToken;
@@ -99,7 +115,7 @@ export const UserInfo = () => {
 		}
 		if (!idToken) return;
 		try {
-			setMethods(
+			saveMethods(
 				await changeSignInMethod('connect', type, authToken || '', idToken)
 			);
 			alert(`${PROVIDER_NAME[type]} connected successfully`);
@@ -127,7 +143,7 @@ export const UserInfo = () => {
 					style: 'destructive',
 					onPress: async () => {
 						try {
-							setMethods(
+							saveMethods(
 								await changeSignInMethod(
 									'disconnect',
 									type,
@@ -207,7 +223,8 @@ export const UserInfo = () => {
 						? 'Password updated successfully'
 						: 'Password set successfully'
 				);
-				if (methods) setMethods({ ...methods, hasPassword: true });
+				changes.current++;
+				setMethods((shown) => shown && { ...shown, hasPassword: true });
 			} else {
 				alert(
 					hasPassword
@@ -296,9 +313,12 @@ export const UserInfo = () => {
 				<Text style={styles.textHeader}>Sign-in Methods</Text>
 				<View style={styles.seperator}></View>
 				{methods === null && (
-					<Text style={styles.textMuted}>
-						Couldn't load your sign-in methods.
-					</Text>
+					<>
+						<Text style={styles.textMuted}>
+							Couldn't load your sign-in methods.
+						</Text>
+						<Button title='Try Again' onPress={retryLoadMethods} />
+					</>
 				)}
 				{methods &&
 					(['google', 'apple'] as const).map((type) => (
