@@ -1,0 +1,100 @@
+# Dealbreaker demo: walkthrough, findings and questions
+
+*Updated 2026-11-08 after Jace's answers: bugs 1, 2, 5 and 6 are fixed; Riley and Jordan use the new ended status.*
+
+Written 2026-11-08. The demo data lives in your account (jace.galloway@gmail.com) on the production database.
+
+## 1. How to see it on your phone
+
+1. Open the app and tap **Logout**. This clears the phone's saved copy of your old board.
+2. Force-close the app (swipe it away). This also clears the old profile list it keeps in memory.
+3. Open the app and sign in. The app downloads the demo board from the server.
+
+Why these steps: at launch the app uploads the phone's saved board to the server. If your phone's old test board gets there first, it replaces the demo. A guard script is running on the Mac until about 1:55 PM ET today. Every 15 seconds it checks the board, and if a phone has overwritten it, the guard writes the demo back. After that you can rerun the guard, or rerun the seed (see section 8).
+
+## 2. How I think the app is meant to be used
+
+- **Main Profile is your rulebook.** It holds your list of things to watch for. The **Flags** column has warning signs. The **Dealbreakers** column has your non-negotiables.
+- **Every other profile is one person.** It carries a copy of every card on your list. On a person's profile, a card's color is how that person scores on that point: white = not seen or fine, yellow = noticed, red = serious. Moving a card into their Dealbreakers column means they hit one of your dealbreakers.
+- **Every change asks you why.** Picking a flag color (tap the flag, choose one) or dragging a card between columns opens a "why" box with text and photos. Each card has its own timeline per person (the 📋 button), and **Add Context** adds a note without changing anything.
+- **Your rules flag things for you.** If a card is a dealbreaker on Main and you turn it red on a person, the app shows "Dealbreaker Alert!"
+- **New cards go everywhere.** A card you create on any profile is added to every profile, so things you learn from one person go onto your master list.
+
+On Main I used colors to mean "how much this matters to me in general", and its history records lessons learned. This is my biggest open question (see section 7).
+
+## 3. The demo, profile by profile
+
+There are 36 cards on Main (28 flags and 8 dealbreakers), 6 profiles and 80 history entries. 12 entries carry a fake screenshot, plus one voice memo and one video. The history was written to follow the old tap order (white → yellow → red → white), and a self-check in the seed script enforces that. You can now pick any color directly.
+
+| Profile | Story | What to look at |
+|---|---|---|
+| **Main Profile** | Rulebook set up on Jan 4 and updated after each relationship. | **Small lies** (now red): the Apr 21 entry after Riley has a "What Riley taught me" note. **Different stance on kids**: a flag moved to Dealbreakers on Aug 30 after Jordan. **Different politics**: white → yellow → red → white, de-escalated after Avery. **Disrespects boundaries**: a context note with a "My boundaries" screenshot. |
+| **Avery** (dating since Sep 13) | Going well. No red, three yellows, lots of notes. | **Slow to text back**: the yellow, then the apology screenshot. **Never asks about me**: concert ticket image plus a video. **Different stance on kids**: a good-news note on a Main dealbreaker. |
+| **Sam** (dating since Aug 10) | Three reds, and on the brink. | **Disrespects boundaries** is yellow, it's a dealbreaker on Main, and it has screenshots of the missed calls and the office visit. Pick **Red** on it to see the Dealbreaker Alert move it to Sam's Dealbreakers column, then try **Undo**. **Goes silent after fights** has a voice memo. **Asks who I'm texting** is a card created from Sam's profile, so it appears everywhere. |
+| **Casey** (new, Nov 1) | Two yellows and one good note. | A fresh profile. |
+| **Riley** (ended) | Ended over a dealbreaker: back on the dating apps while exclusive. | **Small lies** escalates over two screenshots. **Still on dating apps** goes yellow → red (a friend's screenshot) → moved to Dealbreakers. |
+| **Jordan** (ended) | Ended by mutual decision: Jordan doesn't want kids. | **Different stance on kids** shows every transition type: yellow → moved to Dealbreakers → moved back to Flags ("they said they're open to it") → yellow → red → Dealbreakers. **Cancels last minute** has a "raincheck" screenshot. |
+
+## 4. What the app can do, and when it helps
+
+| Feature | Where | Useful for |
+|---|---|---|
+| Master list of flags and dealbreakers | Main Profile, Create Flag tab | Deciding your standards while calm, before you're attached |
+| One profile per person | Create Profile, Switch Profile, ✏️ rename | Dating several people at once, and keeping exes for reference |
+| 3-level flag per person, pick a color | Flag icon on a card | Saying "I noticed this" without overreacting |
+| Drag between Flags and Dealbreakers | Board | Deciding something is a dealbreaker with this person, or taking that back |
+| A required reason plus photos for every change | The "why" box | Remembering what actually happened, not how you later feel about it |
+| Timeline per card per person, with Add Context | 📋 on a card | Seeing a pattern build up: "third time this month" |
+| Dealbreaker Alert | Red on a Main dealbreaker | Being stopped from explaining away a known dealbreaker (fixed: it now moves the card, and Undo works) |
+| Edit and delete cards (delete only on Main) | ✏️ and 🗑️ | Refining your list over time |
+| Guest mode (5 cards, 1 extra profile) | Login | Trying the app before signing up |
+| Account: name, password, Google and Apple connect/disconnect, delete account | User Info tab | Normal account management |
+
+Scenarios it fits: someone dating actively who wants to compare matches against one standard; someone just out of a relationship who wants to write down what to watch for next time (the Main history becomes a "lessons" log); someone in a relationship who wants an honest record of recurring problems (Sam's profile). Hypothesis I didn't demo: friends or a therapist using it to help someone track a relationship. Nothing in the code supports sharing, so I left that out.
+
+## 5. Bugs found (none of them blocked the demo)
+
+Ordered by impact. Everything is from reading the code. I didn't run the app, so the items marked "likely" are reasoned from the code and not observed.
+
+1. **Fixed 2026-11-08 (update a885e32b):** **The Dealbreaker Alert didn't do what it says.** It says the card "has been automatically moved to your dealbreaker list", but nothing moves it. The card name is blank, and **Undo** does nothing, because `transitionedItem` is never set anywhere. See `useTransitions.tsx` (`checkForDealbreakerTransition`) and `BoardManagementModals`.
+2. **Fixed 2026-11-08 (backend 6f9855b):** **Security: board and upload routes had no login check.** `POST /api/dealbreaker/get-dealbreakers` and `/add-dealbreaker` read or replace anyone's whole board if you know their user ID. `/api/upload/*` takes uploads from anyone, and `/upload/custom` writes to **any S3 bucket name** the caller passes, using what the old notes say is a root AWS key.
+3. **Privacy: all attachments are public.** Anyone with a URL can open a photo in the S3 bucket. In an app full of screenshots of private texts, that's a real risk.
+4. **Likely data loss at app launch.** The app uploads the phone's saved board about 1 second after launch, possibly before it downloads the server's copy. Whichever request reaches the server first wins. A phone that was offline, or a second phone, can wipe newer data. This is why section 1 says to log out first.
+5. **Fixed 2026-11-08 (update a885e32b):** tapping now offers the two other colors. **You couldn't go from yellow back to white without passing red.** The tap order is white → yellow → red → white. Calming a yellow down writes a fake "red" entry into the history, and on a Main dealbreaker it also triggers the alert.
+6. **Fixed 2026-11-08 (update a885e32b):** **"Add Context" notes showed as "Flag changed: 🟨 → 🟨".** The timeline checks `item.type === 'add-reason'`, which nothing ever sets.
+7. **Offline history never syncs.** Every launch sets `offlineMode = 'true'`, and the sync skips whenever offline mode is on, so queued entries stay on the phone forever. Offline entries also drop their attachments.
+8. **Logout leaves the old profile list in memory.** After logging out and back in without closing the app, old profiles can reappear. Opening one recreates it on the server.
+9. **Editing or deleting a card misses some profiles.** Both only touch the column the card is in on the current profile. Where a person has the card in the other column, the old title stays, and after a delete the card is orphaned.
+10. **Only photos are uploaded.** Videos and audio keep a local `file://` path, so they break on any other device. Videos show "VIDEO / preview not available", and audio playback is switched off (expo-av was removed in SDK 55+).
+11. **Deleting a profile leaves its history on the server.**
+12. **Latent:** `synchronizeProfileFlags` never runs on current data (it uses a stale copy of state). If someone fixes that, it will duplicate every dealbreaker into both columns. `cleanupDuplicates` computes a fix and throws it away.
+
+## 6. Missing or unfinished
+
+- ~~No "ended" status~~ Added 2026-11-08: Edit Profile → **Mark as Ended**. Ended people sort last in Switch Profile and show "(ended)".
+- **The card description is never shown,** not on the card and not in the timeline. You only see it in Edit.
+- No green flags (backend allows `green`). Jace: not needed for now.
+- **No overview:** there's no count of reds per person and no side-by-side comparison of people. This is the app's most obvious missing payoff.
+- **No onboarding or starter cards.** A new user faces an empty board.
+- **Dead code:** the `Profile` and `Flag` collections, `/api/user/data`, and the Atlas Data API client in `utils/mongodbapi` aren't used. The app stores the whole board as one blob in `dealbreakers`.
+- ~~New profile copies Main's colors~~ Fixed 2026-11-08: new people start all white.
+
+## 7. Questions (answered 2026-11-08)
+
+Answers: 1) Main colors = general weight, and a new person starts all white (done). 2) Ended status: built, test it. 3) No green flags for now.
+
+Original questions:
+
+1. **What do colors on Main mean?** *I assumed "how much this matters to me in general".* But creating a person copies Main's colors, so in the real app Casey would have started with Main's 4 reds and 12 yellows already set. I built the people as if each new person starts all white. Should new people start white? Or are Main colors not supposed to be used at all? If you create a test profile, you'll see the copy happen.
+2. **Should people have an ended or archived state** instead of a name suffix?
+3. **Do you want green (positive) flags?**
+
+## 8. What I changed, and how to undo it
+
+- **Board:** your old test board (1 card, "Flag 1 Jace", and 2 unnamed profiles) is backed up in `Dealbreaker-Backend/scripts/demo-seed/backups/`, then replaced with the demo.
+- **History:** 80 new entries, each tagged `demoSeed: true`. Your 28 older test entries are untouched; they belong to cards that no longer exist, so the app doesn't show them.
+- **S3:** 14 demo files uploaded through the app's own upload route, plus one 64-pixel test image.
+- **Scripts (in the backend repo, not committed):** `scripts/demo-seed/seed-demo.js` and `make-assets.js`.
+  - Rewrite the demo: `node scripts/demo-seed/seed-demo.js`
+  - Guard against a phone overwrite: `node scripts/demo-seed/seed-demo.js --watch=120`
+  - Remove the demo and restore the old board: `node scripts/demo-seed/seed-demo.js --undo`
