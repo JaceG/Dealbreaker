@@ -2,6 +2,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_BASE_URL } from '../../constants/api';
 import { HistoryEntry, Attachment } from '../../models/apiModels';
+import { getSecureItem } from '../storage';
 
 // Your MongoDB Atlas Data API key and endpoint
 // Get these from your Atlas dashboard under Data API
@@ -24,6 +25,12 @@ const dealbreakerClient = axios.create({
 	headers: {
 		'Content-Type': 'application/json',
 	},
+});
+// Board routes need the login token, same as the flag-history client in utils/api.
+dealbreakerClient.interceptors.request.use(async (config) => {
+	const token = await getSecureItem('authToken');
+	if (token) config.headers['x-auth-token'] = token;
+	return config;
 });
 
 // Helper to generate a unique ID

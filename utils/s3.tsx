@@ -1,6 +1,7 @@
 // Import only what we need for the simplified implementation
 import * as FileSystem from 'expo-file-system/legacy';
 import { API_BASE_URL } from '../constants/api';
+import { getSecureItem } from './storage';
 
 // Set this to true to enable console logs for debugging
 const DEBUG = true;
@@ -111,6 +112,7 @@ export const uploadToS3 = async (fileUri: string, fileName?: string) => {
 			body: formData,
 			headers: {
 				'Content-Type': 'multipart/form-data',
+				'x-auth-token': (await getSecureItem('authToken')) || '',
 			},
 		});
 
