@@ -1,16 +1,24 @@
 # Dealbreaker demo: walkthrough, findings and questions
 
-*Updated 2026-11-08: bugs 1, 2, 4–9 and 11 are fixed, 10 partly; 3 (public photos) waits on an AWS change. New: card descriptions, overview bars, ranked people list, Compare People. Riley and Jordan use the ended status.*
+*Updated 2026-11-08 (update 2): bugs 1, 2, 4–9 and 11 are fixed, 10 partly; 3 (public photos) waits on an AWS change. New: card descriptions, overview bars, ranked people list, Compare People, ended status. Section 1 has the phone test.*
 
 Written 2026-11-08. The demo data lives in your account (jace.galloway@gmail.com) on the production database.
 
 ## 1. How to see it on your phone
 
-1. Open the app and tap **Logout**. This clears the phone's saved copy of your old board.
-2. Force-close the app (swipe it away). This also clears the old profile list it keeps in memory.
-3. Open the app and sign in. The app downloads the demo board from the server.
+1. Force-close and reopen the app twice (the first launch downloads the update, the second applies it).
+2. If the board isn't the demo, tap **Logout**, force-close, reopen and sign in.
 
-Why these steps: at launch the app uploads the phone's saved board to the server. If your phone's old test board gets there first, it replaces the demo. A guard script is running on the Mac until about 1:55 PM ET today. Every 15 seconds it checks the board, and if a phone has overwritten it, the guard writes the demo back. After that you can rerun the guard, or rerun the seed (see section 8).
+Since update 2 (below) the app doesn't save the board until it has loaded the server's copy, so a phone's old saved board can no longer overwrite the server. Before that, launching could do exactly that, which is why the first version of these steps said to log out first. If the demo ever gets wiped, `node scripts/demo-seed/seed-demo.js` in the backend writes it again (section 8).
+
+### Phone test for update 2 (published 2026-11-08)
+
+1. **Sam:** tap the red count in the bar above the board, and the board should show only red cards. Drag a card: it goes back, with "Clear the filter to move cards". Tap the count again to clear.
+2. **Sam:** tap the chevron in the bar. "Disrespects boundaries" has a red "!"; tap it for the explanation.
+3. **Main:** open the people bar ("3 dating · 2 ended"), tap a person to open their board, come back, tap **Compare**.
+4. **Compare:** five people at most; toggle names; "Show all 36 cards".
+5. **Any card:** edit its description (✏️) and check it under the title on the card and in its history (📋).
+6. **Profile switcher and Edit Profile:** Riley and Jordan sit at the bottom with "(ended)"; Mark as Ended / Mark as Active works.
 
 ## 2. How I think the app is meant to be used
 
@@ -47,6 +55,10 @@ There are 36 cards on Main (28 flags and 8 dealbreakers), 6 profiles and 80 hist
 | Timeline per card per person, with Add Context | 📋 on a card | Seeing a pattern build up: "third time this month" |
 | Dealbreaker Alert | Red on a Main dealbreaker | Being stopped from explaining away a known dealbreaker (fixed: it now moves the card, and Undo works) |
 | Edit and delete cards (delete only on Main) | ✏️ and 🗑️ | Refining your list over time |
+| Overview bar on each person: counts, tap a count to filter, "!" for Main dealbreakers | Above a person's board | Finding what matters on a long board |
+| Ranked people list and Compare People | Above Main's board | Seeing who worries you most; comparing people card by card |
+| Ended status | Edit Profile (✏️) | Keeping past relationships as a record without cluttering the list |
+| Card descriptions | Card, history header | Remembering what a flag means to you |
 | Guest mode (5 cards, 1 extra profile) | Login | Trying the app before signing up |
 | Account: name, password, Google and Apple connect/disconnect, delete account | User Info tab | Normal account management |
 
@@ -65,7 +77,7 @@ Ordered by impact. Everything is from reading the code. I didn't run the app, so
 7. **Fixed 2026-11-08 (app c0f808a):** **Offline history never synced.** Every launch sets `offlineMode = 'true'`, and the sync skips whenever offline mode is on, so queued entries stay on the phone forever. Offline entries also drop their attachments.
 8. **Fixed 2026-11-08 (app c0f808a):** **Logout left the old profile list in memory.** After logging out and back in without closing the app, old profiles can reappear. Opening one recreates it on the server.
 9. **Fixed 2026-11-08 (app c0f808a):** **Editing or deleting a card missed some profiles.** Both only touch the column the card is in on the current profile. Where a person has the card in the other column, the old title stays, and after a delete the card is orphaned.
-10. **Partly fixed (app c0f808a): videos and audio now upload.** Playback still needs a native video/audio package and a new build. **Only photos were uploaded.** Videos and audio keep a local `file://` path, so they break on any other device. Videos show "VIDEO / preview not available", and audio playback is switched off (expo-av was removed in SDK 55+).
+10. **Partly fixed (app c0f808a, b356872): videos and audio now upload; a file over 10 MB is left off with a message.** Playback still needs a native video/audio package and a new build. **Only photos were uploaded.** Videos and audio keep a local `file://` path, so they break on any other device. Videos show "VIDEO / preview not available", and audio playback is switched off (expo-av was removed in SDK 55+).
 11. **Fixed 2026-11-08 (backend cb8fd7e, app c0f808a):** **Deleting a profile left its history on the server.**
 12. **Removed 2026-11-08 (app bd6261a):** **Latent:** `synchronizeProfileFlags` never runs on current data (it uses a stale copy of state). If someone fixes that, it will duplicate every dealbreaker into both columns. `cleanupDuplicates` computes a fix and throws it away.
 
@@ -78,6 +90,13 @@ Ordered by impact. Everything is from reading the code. I didn't run the app, so
 - **No onboarding or starter cards.** A new user faces an empty board.
 - ~~Dead code~~ Removed 2026-11-08 (app bd6261a, backend 7dde0ed). Still to do with the next native build: unused packages (`@react-native-picker/picker`, `react-native-url-polyfill`, `expo-auth-session`, `@react-navigation/native`).
 - ~~New profile copies Main's colors~~ Fixed 2026-11-08: new people start all white.
+
+### Still open after update 2
+
+- **Public photos (bug 3):** the S3 bucket is public-read. Making it private with expiring links needs an AWS setting change, which is your call.
+- **Video and audio playback:** needs a native package, a version bump and a new build. Remove the unused packages in that same build.
+- **Small gaps:** an expired login retries the board load every 15 s until logout; two history entries saved within milliseconds of a sync could collide; closing the app within about a minute of deleting a person can leave their history on the server; a deleted person's photos stay in S3; Main's people bar hides while Main has no cards.
+- **Onboarding:** on hold until this round is tested.
 
 ## 7. Questions (answered 2026-11-08)
 
