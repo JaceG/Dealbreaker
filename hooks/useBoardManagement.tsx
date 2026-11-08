@@ -1,4 +1,4 @@
-import { useContext, useEffect } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { Dimensions } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import StoreContext from '../store';
@@ -26,6 +26,9 @@ const useBoardManagement = () => {
 		renameProfile,
 		removeItemFromAllProfiles,
 	} = useContext<any>(StoreContext);
+	// Overview filter: show only flags of one color on the board
+	const [colorFilter, setColorFilter] = useState<string | null>(null);
+	useEffect(() => setColorFilter(null), [currentProfileId]);
 	const {
 		pendingFlagChange,
 		reasonModalVisible,
@@ -92,7 +95,8 @@ const useBoardManagement = () => {
 		currentProfileId,
 		ensureProfileExists,
 		params,
-		handleViewFlagHistory
+		handleViewFlagHistory,
+		colorFilter
 	);
 
 	// Item operations hook
@@ -337,6 +341,8 @@ const useBoardManagement = () => {
 		list,
 		isRemount,
 		refreshKey,
+		colorFilter,
+		setColorFilter,
 
 		// Modal Visibility States
 		visible,

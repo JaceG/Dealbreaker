@@ -10,6 +10,12 @@ import { colors } from '../../libs/board/constants';
 import { router } from 'expo-router';
 import useBoardManagement from '../../hooks/useBoardManagement';
 import BoardManagementModals from '../../components/BoardManagementModals';
+import ProfileOverview from '../../components/ProfileOverview';
+import PeopleOverview from '../../components/PeopleOverview';
+import CompareProfilesModal from '../../components/CompareProfilesModal';
+import StoreContext from '../../store';
+import { showToast } from '../../utils/functions';
+import { useContext, useState } from 'react';
 
 export default function Lists() {
 	const {
@@ -82,7 +88,20 @@ export default function Lists() {
 
 		// Utility Functions
 		getCurrentProfileName,
+		updateBoard,
+		handleViewFlagHistory,
+		colorFilter,
+		setColorFilter,
 	} = useBoardManagement();
+	const { setCurrentProfileId, ensureProfileExists } = useContext<any>(StoreContext);
+	const [compareVisible, setCompareVisible] = useState(false);
+	const mainDealbreakerIds = new Set<string>(
+		(dealbreaker?.main?.dealbreaker || []).map((item: any) => item.id)
+	);
+	const openProfile = (profileId: string) => {
+		ensureProfileExists(profileId);
+		setCurrentProfileId(profileId);
+	};
 
 	return (
 		<View style={styles.container}>
@@ -162,6 +181,27 @@ export default function Lists() {
 							</View>
 						</View>
 					</View>
+					{currentProfileId === 'main' ? (
+						<PeopleOverview
+							dealbreaker={dealbreaker}
+							profiles={profiles}
+							onOpenProfile={openProfile}
+							onCompare={() => setCompareVisible(true)}
+						/>
+					) : (
+						<ProfileOverview
+							profileId={currentProfileId}
+							profile={dealbreaker[currentProfileId]}
+							mainDealbreakerIds={mainDealbreakerIds}
+							colorFilter={colorFilter}
+							onFilterChange={setColorFilter}
+							onOpenCard={handleViewFlagHistory}
+						/>
+					)}
+					<CompareProfilesModal
+						visible={compareVisible}
+						onClose={() => setCompareVisible(false)}
+					/>
 					{!isRemount ? (
 						<Board
 							cardBorderRadius='10px'
@@ -172,6 +212,13 @@ export default function Lists() {
 							onFlagClicked={handleFlagClick}
 							onDragEnd={(_: any, __: any, draggedItem: any) => {
 								if (!dealbreaker?.[currentProfileId]) return;
+
+								// Hidden cards would make the drop position wrong, so put the card back.
+								if (colorFilter) {
+									showToast('info', 'Clear the filter to move cards');
+									updateBoard(true);
+									return;
+								}
 
 								// Safety checks for draggedItem structure
 								if (

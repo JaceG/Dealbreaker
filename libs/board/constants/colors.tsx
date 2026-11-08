@@ -9,6 +9,10 @@ const colors = {
 	wildWatermelon: '#ff6b81',
 	chiGong: '#d63031',
 	white: '#FFFFFF',
+	// Flag colors as the history timeline draws them (white needs a border to show)
+	flagRed: '#FF0000',
+	flagYellow: '#FFD700',
+	flagWhite: '#f0f0f0',
 };
 
 export { colors };

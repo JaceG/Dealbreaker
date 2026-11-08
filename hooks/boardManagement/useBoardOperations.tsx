@@ -7,7 +7,8 @@ export const useBoardOperations = (
 	currentProfileId: string,
 	ensureProfileExists: (profileId: string) => boolean,
 	params: any,
-	handleViewFlagHistory?: (item: any) => void
+	handleViewFlagHistory?: (item: any) => void,
+	colorFilter: string | null = null
 ) => {
 	// Board state
 	const [list, setList] = useState<BoardRepository | null>(null);
@@ -153,9 +154,18 @@ export const useBoardOperations = (
 			};
 		});
 
+		// The overview's color filter hides other flags; the index maps above still hold full-list positions.
+		if (colorFilter) {
+			newData[0].rows = newData[0].rows.filter((row: any) => row.flag === colorFilter);
+		}
+
 		// Set the board with the processed data
 		setList(new BoardRepository(newData));
 	};
+
+	useEffect(() => {
+		if (dealbreaker?.[currentProfileId]) updateBoard(true);
+	}, [colorFilter]);
 
 	// Effects for board management
 	useEffect(() => {
