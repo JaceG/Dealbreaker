@@ -235,3 +235,16 @@ Pie and line charts, axes and tap-for-detail wait for the chart library in the n
 - **Zoom:** − / + buttons for 1×, 2×, 4× and 8×. The chart scrolls sideways and keeps the middle in view. Pinch-to-zoom needs react-native-reanimated, so it waits for the next native build.
 - **Tap a dot** (from 2×): a panel shows the card, the person, what happened, the date, day N of the relationship and the note you wrote then. Tap the dot again or the X to close it. Dots too close to tap on their own merge into one with a number, and tapping it lists every flag in it. Zoom in to split them apart. VoiceOver reads the panel aloud.
 
+## 13. Native build 1.1.0 (2026-11-08, not built yet)
+
+Version 1.0.0 → 1.1.0. Over-the-air updates from now on only reach 1.1.0 installs, so your phone needs the new build (an EAS link). Old 1.0.0 installs keep update 6.
+
+- **Real voice memos:** the VOICE MEMO button used to add a sample *song* from the web. It now records from the microphone (it asks permission the first time), stops on its own at 3 minutes, can be cancelled, plays back before you submit, and uploads like a photo (about 1 MB per minute).
+- **Audio in history:** voice memos play in a card's history (one at a time), including the demo's Sam memo.
+- **Video:** tapping a video in history or in the "why" box opens a full-screen player.
+- **Fake media removed:** the leftover sample pictures and videos from picsum and mixkit are gone from the picker code.
+- **Pinch-to-zoom** on the Relationship Timeline, from 1× to 8×. The buttons still work.
+- **New chart, Flags Over Time:** a step line per person counting flags as they show up, with a Calendar/Aligned toggle. Press and hold to read each person's count at that point.
+- **Removed unused packages:** `@react-native-picker/picker`, `react-native-url-polyfill`, `expo-auth-session` and `@react-navigation/native`.
+- **Added:** expo-video, expo-audio (and expo-asset), react-native-reanimated, react-native-worklets, Skia, and Victory Native 42. Version 43 needs a Skia package that Expo SDK 58 doesn't use yet.
+

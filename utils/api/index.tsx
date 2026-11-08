@@ -97,6 +97,7 @@ export const getFlagHistory = async (
 							timestamp:
 								attachment.timestamp ||
 								new Date().toISOString(),
+							duration: attachment.duration,
 						};
 					})
 					.filter((att: any) => att !== null && att.url); // Remove nulls and attachments without URLs

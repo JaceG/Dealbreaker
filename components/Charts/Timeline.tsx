@@ -1,9 +1,9 @@
 // Relationship timeline: one line per person with a dot each time a flag showed up.
 // Calendar lines up real dates; Aligned starts everyone at day 0, so you can compare when in a relationship flags appear.
-// Zoom with the buttons (the chart scrolls sideways); from 2x the dots can be tapped to see what happened.
-// shortcut: buttons instead of pinch; pinch needs react-native-reanimated, which waits for the next native build.
-import { type ComponentRef, useEffect, useRef, useState } from 'react';
+// Pinch the chart or use the buttons to zoom (the chart scrolls sideways); from 2x the dots can be tapped.
+import { type ComponentRef, useLayoutEffect, useRef, useState } from 'react';
 import { AccessibilityInfo, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { GestureDetector, usePinchGesture } from 'react-native-gesture-handler';
 import Feather from '@expo/vector-icons/Feather';
 import CloseButton from '../CloseButton';
 import { colors } from '../../libs/board/constants';
@@ -21,7 +21,7 @@ export type TimelinePerson = {
 type Mode = 'calendar' | 'aligned';
 
 const DAY = 86400000;
-const ZOOMS = [1, 2, 4, 8];
+const ZOOMS = [1, 2, 4, 8]; // the buttons step between these; a pinch can stop anywhere from the first to the last
 const TAP_ZOOM = 2; // dots are too close together to tap below this
 const ROW = 44; // also the dot's tap target
 const NAME_WIDTH = 70;
@@ -115,15 +115,16 @@ const ticksFor = (mode: Mode, from: number, span: number, inner: number, width: 
 
 export const Timeline = ({ from, to, people }: { from: number; to: number; people: TimelinePerson[] }) => {
 	const [mode, setMode] = useState<Mode>('calendar');
-	const [zoomIndex, setZoomIndex] = useState(0);
+	const [zoom, setZoom] = useState(1);
 	const [visibleWidth, setVisibleWidth] = useState(0);
 	// Kept by event keys, so reloaded history can't point the panel at a different event.
 	const [selected, setSelected] = useState<{ personId: string; keys: string[] } | null>(null);
 	const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
 	const scrollX = useRef(0);
 	const lastZoom = useRef(1);
+	const focal = useRef(0); // x within the visible chart that stays put while zooming
+	const pinchFrom = useRef<number | null>(null); // zoom when the current pinch started
 
-	const zoom = ZOOMS[zoomIndex];
 	const width = visibleWidth * zoom;
 	const inner = Math.max(1, width - PAD * 2);
 	const span = mode === 'calendar' ? Math.max(DAY, to - from) : Math.max(DAY, ...people.map((p) => p.end - p.start));
@@ -131,12 +132,43 @@ export const Timeline = ({ from, to, people }: { from: number; to: number; peopl
 		PAD + inner * Math.min(1, Math.max(0, (t - (mode === 'calendar' ? from : p.start)) / span));
 	const tappable = zoom >= TAP_ZOOM;
 
-	// Zooming keeps the middle of what you were looking at in the middle.
-	useEffect(() => {
+	const zoomTo = (z: number, at = visibleWidth / 2) => {
+		focal.current = at;
+		setZoom(Math.min(ZOOMS[ZOOMS.length - 1], Math.max(ZOOMS[0], z)));
+	};
+	const zoomOut = [...ZOOMS].reverse().find((z) => z < zoom - 0.01);
+	const zoomIn = ZOOMS.find((z) => z > zoom + 0.01);
+	const zoomLabel = +zoom.toFixed(1);
+
+	// Plain JS callbacks: every step re-lays out the dots anyway, so there is nothing to run on the UI thread.
+	// A pinch only starts with two fingers, so one-finger scrolling and dot taps are left alone; on iOS, whichever of
+	// the pinch and the scroll view's pan starts first makes the other fail.
+	const pinch = usePinchGesture({
+		disableReanimated: true,
+		onActivate: () => {
+			pinchFrom.current = lastZoom.current;
+		},
+		onUpdate: (e) => {
+			if (pinchFrom.current === null || !visibleWidth) return;
+			zoomTo(pinchFrom.current * e.scale, Math.min(visibleWidth, Math.max(0, e.focalX - NAME_WIDTH)));
+		},
+		onFinalize: () => {
+			if (pinchFrom.current === null) return;
+			pinchFrom.current = null;
+			// Settle on a button level when the pinch stops close to one, so 1.97x doesn't leave the dots untappable.
+			const near = ZOOMS.find((z) => Math.abs(lastZoom.current / z - 1) < 0.05);
+			if (near) zoomTo(near, focal.current);
+		},
+	});
+
+	// Zooming keeps the point under the fingers (or, with the buttons, the middle) where it was.
+	// A layout effect, so the scroll moves in the same frame as the wider track.
+	useLayoutEffect(() => {
 		if (!visibleWidth) return;
-		const center = (scrollX.current + visibleWidth / 2) * (zoom / lastZoom.current);
+		const before = Math.max(1, visibleWidth * lastZoom.current - PAD * 2);
+		const point = PAD + ((scrollX.current + focal.current - PAD) * inner) / before;
 		lastZoom.current = zoom;
-		const target = Math.max(0, center - visibleWidth / 2);
+		const target = Math.max(0, Math.min(point - focal.current, width - visibleWidth));
 		scrollRef.current?.scrollTo({ x: target, animated: false });
 		scrollX.current = target;
 		// Dots merge differently at each zoom, so a selection wouldn't keep its shape.
@@ -187,22 +219,25 @@ export const Timeline = ({ from, to, people }: { from: number; to: number; peopl
 					<Pressable
 						accessibilityRole='button'
 						accessibilityLabel='Zoom out'
-						accessibilityState={{ disabled: zoomIndex === 0 }}
-						disabled={zoomIndex === 0}
-						style={[styles.zoomButton, zoomIndex === 0 && styles.disabled]}
-						onPress={() => setZoomIndex(zoomIndex - 1)}>
+						accessibilityState={{ disabled: !zoomOut }}
+						disabled={!zoomOut}
+						style={[styles.zoomButton, !zoomOut && styles.disabled]}
+						onPress={() => zoomOut && zoomTo(zoomOut)}>
 						<Feather name='zoom-out' size={22} color={colors.blurple} />
 					</Pressable>
-					<Text style={styles.zoomText} accessibilityLabel={`Zoom ${zoom} times`}>
-						{zoom}×
+					<Text
+						style={styles.zoomText}
+						accessibilityLabel={`Zoom ${zoomLabel} times`}
+						accessibilityHint='Pinch or use the zoom buttons'>
+						{zoomLabel}×
 					</Text>
 					<Pressable
 						accessibilityRole='button'
 						accessibilityLabel='Zoom in'
-						accessibilityState={{ disabled: zoomIndex === ZOOMS.length - 1 }}
-						disabled={zoomIndex === ZOOMS.length - 1}
-						style={[styles.zoomButton, zoomIndex === ZOOMS.length - 1 && styles.disabled]}
-						onPress={() => setZoomIndex(zoomIndex + 1)}>
+						accessibilityState={{ disabled: !zoomIn }}
+						disabled={!zoomIn}
+						style={[styles.zoomButton, !zoomIn && styles.disabled]}
+						onPress={() => zoomIn && zoomTo(zoomIn)}>
 						<Feather name='zoom-in' size={22} color={colors.blurple} />
 					</Pressable>
 				</View>
@@ -230,94 +265,104 @@ export const Timeline = ({ from, to, people }: { from: number; to: number; peopl
 				))}
 			</View>
 
-			<View style={styles.chart} accessible={!tappable} accessibilityLabel={tappable ? undefined : summary}>
-				<View style={{ width: NAME_WIDTH }}>
-					{people.map((p) => (
-						<Text key={p.id} style={[styles.name, p.ended && styles.ended]} numberOfLines={1}>
-							{p.name}
-						</Text>
-					))}
-				</View>
-				<ScrollView
-					ref={scrollRef}
-					horizontal
-					style={{ flex: 1 }}
-					onLayout={(e) => setVisibleWidth(e.nativeEvent.layout.width)}
-					onScroll={(e) => (scrollX.current = e.nativeEvent.contentOffset.x)}
-					scrollEventThrottle={32}
-					showsHorizontalScrollIndicator={zoom > 1}>
-					<View style={{ width }}>
+			<GestureDetector gesture={pinch}>
+				<View
+					style={styles.chart}
+					accessible={!tappable}
+					accessibilityLabel={tappable ? undefined : summary}
+					accessibilityHint={tappable ? undefined : 'Pinch or use the zoom buttons'}>
+					<View style={{ width: NAME_WIDTH }}>
 						{people.map((p) => (
-							<View key={p.id} style={styles.track}>
-								{/* Nothing is drawn until the width is known, so the first frame doesn't flash dots at the left edge. */}
-								{visibleWidth ? (
-									<>
-										<View
-											style={[
-												styles.line,
-												{
-													left: x(p, p.start),
-													width: Math.max(2, x(p, p.end) - x(p, p.start)),
-													backgroundColor: p.ended ? colors.bay : colors.blurple,
-												},
-											]}
-										/>
-										{p.ended ? <View style={[styles.endMark, { left: x(p, p.end) - 1 }]} /> : null}
-										{clusterize(p.events, (t) => x(p, t), tappable ? ROW : 14).map((c) => {
-											const on = selected?.personId === p.id && c.events.some((e) => selected.keys.includes(keyOf(e)));
-											const many = c.events.length > 1;
-											const size = (many ? 18 : 12) + (on ? 6 : 0);
-											const dot = (
-												<View
-													style={[
-														styles.dot,
-														{
-															width: size,
-															height: size,
-															borderRadius: c.kind === 'dealbreaker' ? 3 : size / 2,
-															backgroundColor: KIND[c.kind].color,
-															borderColor: on ? colors.black : colors.officer,
-															borderWidth: on ? 3 : 1,
-														},
-													]}>
-													{many ? (
-														<Text style={[styles.count, c.kind === 'dealbreaker' && { color: colors.white }]}>
-															{c.events.length}
-														</Text>
-													) : null}
-												</View>
-											);
-											const box = [styles.dotBox, { left: c.x - ROW / 2 }];
-											return tappable ? (
-												<Pressable
-													key={keyOf(c.events[0])}
-													accessibilityRole='button'
-													accessibilityLabel={`${p.name}: ${c.events.map((e) => describe(p, e)).join('; ')}`}
-													accessibilityState={{ selected: on }}
-													style={box}
-													onPress={() => select(p, c, on)}>
-													{dot}
-												</Pressable>
-											) : (
-												<View key={keyOf(c.events[0])} style={box}>
-													{dot}
-												</View>
-											);
-										})}
-									</>
-								) : null}
-							</View>
+							<Text key={p.id} style={[styles.name, p.ended && styles.ended]} numberOfLines={1}>
+								{p.name}
+							</Text>
 						))}
-						<View style={styles.ticks}>
-							{ticks.map((t, i) => (
-								<Text key={i} numberOfLines={1} style={[styles.tick, { left: t.left }]}>
-									{t.label}
-								</Text>
-							))}
-						</View>
 					</View>
-				</ScrollView>
-			</View>
+					<ScrollView
+						ref={scrollRef}
+						horizontal
+						style={{ flex: 1 }}
+						onLayout={(e) => setVisibleWidth(e.nativeEvent.layout.width)}
+						// Ignored mid-pinch: a late event from an earlier step would move the point under the fingers.
+						onScroll={(e) => {
+							if (pinchFrom.current === null) scrollX.current = e.nativeEvent.contentOffset.x;
+						}}
+						scrollEventThrottle={32}
+						showsHorizontalScrollIndicator={zoom > 1}>
+						<View style={{ width }}>
+							{people.map((p) => (
+								<View key={p.id} style={styles.track}>
+									{/* Nothing is drawn until the width is known, so the first frame doesn't flash dots at the left edge. */}
+									{visibleWidth ? (
+										<>
+											<View
+												style={[
+													styles.line,
+													{
+														left: x(p, p.start),
+														width: Math.max(2, x(p, p.end) - x(p, p.start)),
+														backgroundColor: p.ended ? colors.bay : colors.blurple,
+													},
+												]}
+											/>
+											{p.ended ? <View style={[styles.endMark, { left: x(p, p.end) - 1 }]} /> : null}
+											{clusterize(p.events, (t) => x(p, t), tappable ? ROW : 14).map((c) => {
+												const on =
+													selected?.personId === p.id && c.events.some((e) => selected.keys.includes(keyOf(e)));
+												const many = c.events.length > 1;
+												const size = (many ? 18 : 12) + (on ? 6 : 0);
+												const dot = (
+													<View
+														style={[
+															styles.dot,
+															{
+																width: size,
+																height: size,
+																borderRadius: c.kind === 'dealbreaker' ? 3 : size / 2,
+																backgroundColor: KIND[c.kind].color,
+																borderColor: on ? colors.black : colors.officer,
+																borderWidth: on ? 3 : 1,
+															},
+														]}>
+														{many ? (
+															<Text style={[styles.count, c.kind === 'dealbreaker' && { color: colors.white }]}>
+																{c.events.length}
+															</Text>
+														) : null}
+													</View>
+												);
+												const box = [styles.dotBox, { left: c.x - ROW / 2 }];
+												return tappable ? (
+													<Pressable
+														key={keyOf(c.events[0])}
+														accessibilityRole='button'
+														accessibilityLabel={`${p.name}: ${c.events.map((e) => describe(p, e)).join('; ')}`}
+														accessibilityState={{ selected: on }}
+														style={box}
+														onPress={() => select(p, c, on)}>
+														{dot}
+													</Pressable>
+												) : (
+													<View key={keyOf(c.events[0])} style={box}>
+														{dot}
+													</View>
+												);
+											})}
+										</>
+									) : null}
+								</View>
+							))}
+							<View style={styles.ticks}>
+								{ticks.map((t, i) => (
+									<Text key={i} numberOfLines={1} style={[styles.tick, { left: t.left }]}>
+										{t.label}
+									</Text>
+								))}
+							</View>
+						</View>
+					</ScrollView>
+				</View>
+			</GestureDetector>
 
 			{person && shown.length ? (
 				<View style={styles.detail}>

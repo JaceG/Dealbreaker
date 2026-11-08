@@ -1,9 +1,10 @@
-import { useCallback, useContext, useEffect, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import AppButton from '../../../components/AppButton';
 import FlagDot from '../../../components/FlagDot';
 import { CHART, Legend, StackedColumns, StackedRows, Timeline } from '../../../components/Charts';
+import { FlagsOverTime } from '../../../components/Charts/FlagsOverTime';
 import StoreContext from '../../../store';
 import { colors } from '../../../libs/board/constants';
 import { getMyHistory } from '../../../utils/api';
@@ -70,7 +71,11 @@ const Stats = () => {
 		.filter((p: any) => p.id !== 'main' && board[p.id])
 		.sort((a: any, b: any) => Number(!!board[a.id]?.ended) - Number(!!board[b.id]?.ended));
 	// The people list has every name; the board blob only has names saved since names moved into it.
-	const names: Record<string, string> = Object.fromEntries(people.map((p: any) => [p.id, p.name]));
+	const namesKey = people.map((p: any) => `${p.id}:${p.name}`).join('|');
+	const names: Record<string, string> = useMemo(
+		() => Object.fromEntries(people.map((p: any) => [p.id, p.name])),
+		[namesKey]
+	);
 
 	return (
 		<View style={styles.screen}>
@@ -118,7 +123,8 @@ const Stats = () => {
 };
 
 const Overall = ({ board, history, names }: { board: Board; history: HistoryRow[]; names: Record<string, string> }) => {
-	const s = overallStats(board, history, names);
+	// Worked out once per load: re-running it moves 'today' and shifts the charts' data under an open detail panel.
+	const s = useMemo(() => overallStats(board, history, names), [board, history, names]);
 	const share = s.changes ? Math.round((s.stepDowns / s.changes) * 100) : 0;
 	return (
 		<>
@@ -150,6 +156,15 @@ const Overall = ({ board, history, names }: { board: Board; history: HistoryRow[
 					<Text style={styles.muted}>No people yet.</Text>
 				) : (
 					<Timeline from={s.timeline.from} to={s.timeline.to} people={s.timeline.people} />
+				)}
+			</Section>
+
+			<Section title='Flags Over Time'>
+				<Text style={styles.hint}>How many flags had shown up with each person, added up over time.</Text>
+				{s.timeline.people.every((p) => p.events.length === 0) ? (
+					<Text style={styles.muted}>{s.timeline.people.length ? 'No flags raised yet.' : 'No people yet.'}</Text>
+				) : (
+					<FlagsOverTime from={s.timeline.from} people={s.timeline.people} />
 				)}
 			</Section>
 

@@ -3,7 +3,7 @@
     "name": "Dealbreaker",
     "slug": "dealbreaker",
     "scheme": "dealbreaker",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "orientation": "default",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -80,7 +80,16 @@
           }
         }
       ],
-      "expo-font"
+      "expo-font",
+      "expo-video",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Dealbreaker uses the microphone so you can record a voice memo to add to your flags if needed.",
+          "enableBackgroundPlayback": false
+        }
+      ],
+      "expo-asset"
     ],
     "extra": {
       "router": {

@@ -280,3 +280,33 @@ export const personStats = (
 		latest: rows.slice(0, 10),
 	};
 };
+
+export type FlagsRow = { x: number; [personId: string]: number | null };
+
+// Running count of flags that showed up per person, one row per moment anyone's count changed, started or ended.
+// x is days since the earliest start (calendar) or since each person's own start (aligned); a person is null outside
+// their own start..end, so their line stops there. Shaped for Victory Native: one array, one key per person id.
+export const flagsOverTime = (
+	people: { id: string; start: number; end: number; events: TimelineEvent[] }[],
+	mode: 'calendar' | 'aligned',
+) => {
+	const from = Math.min(...people.map((p) => p.start));
+	const dayOf = (p: (typeof people)[number], t: number) => (t - (mode === 'calendar' ? from : p.start)) / DAY;
+	const xs = new Set<number>();
+	people.forEach((p) => [p.start, p.end, ...p.events.map((e) => e.t)].forEach((t) => xs.add(dayOf(p, t))));
+	const rows = [...xs]
+		.sort((a, b) => a - b)
+		.map((x) => {
+			const row: FlagsRow = { x };
+			people.forEach((p) => {
+				const outside = x < dayOf(p, p.start) || x > dayOf(p, p.end);
+				row[p.id] = outside ? null : p.events.filter((e) => dayOf(p, e.t) <= x).length;
+			});
+			return row;
+		});
+	return {
+		rows,
+		span: rows.length ? rows[rows.length - 1].x : 0,
+		max: Math.max(0, ...people.map((p) => p.events.length)),
+	};
+};

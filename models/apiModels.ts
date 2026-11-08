@@ -79,6 +79,7 @@ export interface FlagHistoryAttachment {
 	size?: number;
 	mimeType?: string;
 	timestamp: string;
+	duration?: number; // Seconds, for audio and video
 	isS3?: boolean; // Whether the file is stored in S3
 }
 
@@ -382,6 +383,7 @@ export interface Attachment {
 	originalUrl?: string;
 	name: string;
 	timestamp: string;
+	duration?: number; // Seconds, for audio and video
 	isS3?: boolean;
 }
 

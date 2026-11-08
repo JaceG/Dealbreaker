@@ -19,6 +19,10 @@ import { colors } from '../../libs/board/constants/colors';
 import { FlagHistoryTimelineProps } from '../../models/modalModels';
 import AppButton from '../AppButton';
 import CloseButton from '../CloseButton';
+import Feather from '@expo/vector-icons/Feather';
+import AudioAttachment from '../MediaPlayer/AudioAttachment';
+import VideoPlayerModal from '../MediaPlayer/VideoPlayerModal';
+import { useAttachmentAudio } from '../MediaPlayer/useAttachmentAudio';
 
 // Set to false to disable debug logs
 const DEBUG_LOGGING = false;
@@ -30,8 +34,6 @@ const debugLog = (...args: any[]) => {
 	}
 };
 
-// Feature flags to disable native modules
-const AUDIO_ENABLED = false;
 const IMAGE_PREVIEW_ENABLED = true;
 
 // Only import if feature is enabled
@@ -47,11 +49,6 @@ if (IMAGE_PREVIEW_ENABLED) {
 		);
 	}
 }
-
-// Instead of directly importing Audio, which causes a crash
-// We'll create a feature flag to conditionally enable audio features
-// shortcut: expo-av left the SDK after 54, so audio stays off; port to expo-audio before setting AUDIO_ENABLED
-let AudioModule: any = null;
 
 interface HistoryItem {
 	_id?: string;
@@ -105,13 +102,9 @@ const FlagHistoryTimeline = ({
 	const [everyone, setEveryone] = useState<HistoryItem[] | null>(null);
 	const [everyoneError, setEveryoneError] = useState(false);
 
-	// Audio playback states - only used if Audio is available
-	const [sound, setSound] = useState<any>(null);
-	const [isPlaying, setIsPlaying] = useState(false);
-	const [playbackPosition, setPlaybackPosition] = useState(0);
-	const [playingAttachmentId, setPlayingAttachmentId] = useState<
-		string | null
-	>(null);
+	// One memo plays at a time; the player is released (and stops) when the popup closes.
+	const audio = useAttachmentAudio();
+	const [videoUrl, setVideoUrl] = useState<string | null>(null);
 
 	// Add a state for tracking image loading errors
 	const [imageErrors, setImageErrors] = useState<{ [key: string]: boolean }>(
@@ -149,15 +142,6 @@ const FlagHistoryTimeline = ({
 		].filter(Boolean);
 		return notes.length ? `${name} (${notes.join(', ')})` : name;
 	};
-
-	// Clean up sound resources when component unmounts - only if Audio is available
-	useEffect(() => {
-		return () => {
-			if (AUDIO_ENABLED && sound) {
-				stopPlayback();
-			}
-		};
-	}, []);
 
 	const loadHistory = async () => {
 		setLoading(true);
@@ -273,67 +257,6 @@ const FlagHistoryTimeline = ({
 	const closeImagePreview = () => {
 		setPreviewVisible(false);
 		setPreviewImage(null);
-	};
-
-	// Play audio attachment - only if Audio is available
-	const playAudio = async (attachmentId: string, uri: string) => {
-		if (!AUDIO_ENABLED || !AudioModule) {
-			showToast('error', 'Audio playback is not available');
-			return;
-		}
-
-		try {
-			// Stop current playback if any
-			await stopPlayback();
-
-			debugLog('Loading sound from URI:', uri);
-			const { sound: newSound } = await AudioModule.Sound.createAsync(
-				{ uri },
-				{ shouldPlay: true },
-				onPlaybackStatusUpdate
-			);
-
-			setSound(newSound);
-			setIsPlaying(true);
-			setPlayingAttachmentId(attachmentId);
-
-			// Play the sound
-			await newSound.playAsync();
-		} catch (error) {
-			debugLog('Failed to play audio:', error);
-			setIsPlaying(false);
-			setPlayingAttachmentId(null);
-			Alert.alert('Error', 'Failed to play audio');
-		}
-	};
-
-	// Stop audio playback - only if Audio is available
-	const stopPlayback = async () => {
-		if (!AUDIO_ENABLED || !AudioModule || !sound) return;
-
-		try {
-			await sound.stopAsync();
-			await sound.unloadAsync();
-		} catch (error) {
-			debugLog('Error stopping sound:', error);
-		}
-
-		setSound(null);
-		setIsPlaying(false);
-		setPlaybackPosition(0);
-		setPlayingAttachmentId(null);
-	};
-
-	// Track playback status - only if Audio is available
-	const onPlaybackStatusUpdate = (status: any) => {
-		if (status.isLoaded) {
-			setPlaybackPosition(status.positionMillis / 1000);
-
-			if (status.didJustFinish) {
-				// Playback finished
-				stopPlayback();
-			}
-		}
 	};
 
 	const getStatusColor = (status: string) => {
@@ -608,59 +531,24 @@ const FlagHistoryTimeline = ({
 										<TouchableOpacity
 											key={`attachment-${i}`}
 											style={styles.attachmentThumbnail}
-											onPress={() => {
-												// Handle video preview or just show a message
-												Alert.alert(
-													'Video',
-													'Video preview is not available in this version'
-												);
-											}}>
+											accessibilityRole='button'
+											accessibilityLabel='Play video'
+											onPress={() => setVideoUrl(attachment.url)}>
 											<View style={styles.videoThumbnail}>
-												<Text style={styles.videoLabel}>
-													VIDEO
-												</Text>
+												<Feather name='play-circle' size={40} color={colors.white} />
+												<Text style={styles.videoLabel}>VIDEO</Text>
 											</View>
 										</TouchableOpacity>
 									);
 								} else if (attachment.type === 'audio') {
-									const isCurrentlyPlaying =
-										playingAttachmentId ===
-										`${item.id}-${i}`;
-
 									return (
-										<TouchableOpacity
+										<AudioAttachment
 											key={`attachment-${i}`}
+											url={attachment.url}
+											duration={attachment.duration}
+											audio={audio}
 											style={styles.audioButton}
-											onPress={() =>
-												isCurrentlyPlaying
-													? stopPlayback()
-													: playAudio(
-															`${item.id}-${i}`,
-															attachment.url
-													  )
-											}>
-											<Text
-												style={styles.audioButtonText}>
-												{isCurrentlyPlaying
-													? '■ Stop'
-													: '▶ Play'}
-												{' Audio'}
-											</Text>
-											{attachment.duration && (
-												<Text
-													style={
-														styles.audioDuration
-													}>
-													{Math.floor(
-														attachment.duration / 60
-													)}
-													:
-													{(attachment.duration % 60)
-														.toString()
-														.padStart(2, '0')}
-												</Text>
-											)}
-										</TouchableOpacity>
+										/>
 									);
 								} else {
 									// For any other type of attachment
@@ -811,6 +699,9 @@ const FlagHistoryTimeline = ({
 					imageUri={previewImage}
 					onClose={closeImagePreview}
 				/>
+			)}
+			{videoUrl && (
+				<VideoPlayerModal url={videoUrl} onClose={() => setVideoUrl(null)} />
 			)}
 		</View>
 	);
@@ -1065,6 +956,7 @@ const styles = StyleSheet.create({
 	videoThumbnail: {
 		width: '100%',
 		height: '100%',
+		backgroundColor: '#282828',
 		borderRadius: 6,
 		overflow: 'hidden',
 		justifyContent: 'center',
@@ -1084,16 +976,6 @@ const styles = StyleSheet.create({
 		borderWidth: 1,
 		borderColor: '#cfe7fa',
 		width: '100%',
-	},
-	audioButtonText: {
-		flex: 1,
-		fontSize: 14,
-		fontWeight: 'bold',
-		color: '#333',
-	},
-	audioDuration: {
-		fontSize: 12,
-		color: '#666',
 	},
 	attachmentLabel: {
 		position: 'absolute',

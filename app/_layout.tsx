@@ -21,6 +21,7 @@ import * as SecureStore from 'expo-secure-store';
 import { useState, useRef, useEffect } from 'react';
 import StoreContext from '../store';
 import Toast from 'react-native-toast-message';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { FlagProvider } from '../context/FlagContext';
 import { AuthProvider } from '../context/Auth';
 import { addDealbreakers } from '../utils/mongodbapi';
@@ -119,6 +120,8 @@ const Layout = () => {
 	}, []);
 
 	return (
+		// Gestures (timeline pinch-to-zoom, chart tap-to-inspect) need this at the root.
+		<GestureHandlerRootView style={{ flex: 1 }}>
 		<StoreContext.Provider
 			value={
 				{
@@ -182,6 +185,7 @@ const Layout = () => {
 			</AuthProvider>
 			<Toast />
 		</StoreContext.Provider>
+		</GestureHandlerRootView>
 	);
 };
 

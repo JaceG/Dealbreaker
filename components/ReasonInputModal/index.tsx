@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
 	Modal,
 	View,
@@ -8,45 +8,22 @@ import {
 	TouchableOpacity,
 	Image,
 	ScrollView,
-	Platform,
 	Alert,
+	Linking,
+	Pressable,
 } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
+import { requestRecordingPermissionsAsync } from 'expo-audio';
+import Feather from '@expo/vector-icons/Feather';
 import { showToast, uploadToS3 } from '../../utils';
 import { imageUtils } from '../../utils/functions';
 import AppButton from '../AppButton';
 import { SimpleAttachment } from '../../models';
-
-// Feature flags to disable native modules
-const AUDIO_ENABLED = false;
-const IMAGE_PICKER_ENABLED = true;
-const MOCK_AUDIO_ENABLED = true; // Enable mock audio without using native modules
-// Set to false to disable debug logs
-const DEBUG_LOGGING = false;
-
-// Helper to prevent excessive logging
-const debugLog = (...args: any[]) => {
-	if (DEBUG_LOGGING) {
-		console.log(...args);
-	}
-};
-
-// Conditionally import modules only if enabled
-let Audio: any = null;
-let ImagePicker: any = null;
-
-// shortcut: expo-av left the SDK after 54, so audio stays off; port to expo-audio before setting AUDIO_ENABLED
-
-if (IMAGE_PICKER_ENABLED) {
-	try {
-		ImagePicker = require('expo-image-picker');
-		console.log('ImagePicker module loaded successfully');
-	} catch (error: any) {
-		console.log(
-			'ImagePicker module not available:',
-			error?.message || 'Unknown error'
-		);
-	}
-}
+import { colors } from '../../libs/board/constants';
+import AudioAttachment from '../MediaPlayer/AudioAttachment';
+import VideoPlayerModal from '../MediaPlayer/VideoPlayerModal';
+import VoiceMemoRecorder from '../MediaPlayer/VoiceMemoRecorder';
+import { useAttachmentAudio } from '../MediaPlayer/useAttachmentAudio';
 
 const ReasonInputModal = ({
 	visible,
@@ -67,147 +44,55 @@ const ReasonInputModal = ({
 }) => {
 	const [reason, setReason] = useState('');
 	const [attachments, setAttachments] = useState<SimpleAttachment[]>([]);
-	const [isPickerAvailable, setIsPickerAvailable] = useState(true);
-
-	// Audio recording states - only used if Audio is available
-	const [recording, setRecording] = useState<any>(null);
-	const [recordingStatus, setRecordingStatus] = useState<
-		'idle' | 'recording' | 'saving'
-	>('idle');
-	const [recordingDuration, setRecordingDuration] = useState(0);
-	const [audioPermission, setAudioPermission] = useState(false);
-	const recordingInterval = useRef<NodeJS.Timeout | null>(null);
-
-	// Audio playback states - only used if Audio is available
-	const [sound, setSound] = useState<any>(null);
-	const [isPlaying, setIsPlaying] = useState(false);
-	const [playbackPosition, setPlaybackPosition] = useState(0);
-	const [playingAttachmentId, setPlayingAttachmentId] = useState<
-		string | null
-	>(null);
+	const [recording, setRecording] = useState(false);
+	const [videoUrl, setVideoUrl] = useState<string | null>(null);
+	const audio = useAttachmentAudio();
 
 	// Add state to track submission progress
 	const [isSubmitting, setIsSubmitting] = useState(false);
 
 	useEffect(() => {
-		// Check if the image picker is available
-		checkImagePickerAvailability();
-
-		// Check audio recording permissions only if Audio is enabled
-		if (AUDIO_ENABLED) {
-			checkAudioPermissions();
-		}
-
-		debugLog('ReasonInputModal visibility changed:', visible);
-		debugLog('Modal props:', {
-			flagTitle,
-			prevStatus,
-			newStatus,
-			modalType: modalTitle ? 'Additional Context' : 'Flag Change',
-		});
-
-		// IMPORTANT: Only reset form when modal is opened
 		if (visible) {
-			debugLog(
-				'🔴 MODAL SHOULD BE VISIBLE NOW - flagTitle:',
-				flagTitle,
-				'prevStatus:',
-				prevStatus,
-				'newStatus:',
-				newStatus
-			);
 			setReason('');
 			setAttachments([]);
+			return;
 		}
-
-
-		// Cleanup audio recording and playback on unmount
-		return () => {
-			if (AUDIO_ENABLED) {
-				stopRecording();
-				stopPlayback();
-			}
-		};
+		// Closing the popup discards a recording in progress and stops any memo or video.
+		setRecording(false);
+		setVideoUrl(null);
+		audio.stop();
 	}, [visible]);
 
-	// Function to check if image picker is available - always use mock in dev mode
-	const checkImagePickerAvailability = async () => {
-		if (!IMAGE_PICKER_ENABLED || !ImagePicker) {
-			debugLog('Image picker is disabled or not available');
-			setIsPickerAvailable(false);
-			return false;
+	const startVoiceMemo = async () => {
+		const { granted } = await requestRecordingPermissionsAsync();
+		if (!granted) {
+			Alert.alert(
+				'Microphone is off',
+				'To record a voice memo, allow microphone access for Dealbreaker in Settings.',
+				[
+					{ text: 'Not now', style: 'cancel' },
+					{ text: 'Open Settings', onPress: () => Linking.openSettings() },
+				]
+			);
+			return;
 		}
-
-		try {
-			// Check media library permission status
-			const permissionResult =
-				await ImagePicker.getMediaLibraryPermissionsAsync();
-
-			// If permission is granted, set picker as available
-			if (permissionResult.granted) {
-				debugLog('Media library permission granted');
-				setIsPickerAvailable(true);
-				return true;
-			}
-
-			// If permission is not determined, ask for it
-			if (permissionResult.canAskAgain && !permissionResult.granted) {
-				debugLog('Requesting media library permission');
-				const requestResult =
-					await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-				setIsPickerAvailable(requestResult.granted);
-				return requestResult.granted;
-			}
-
-			// Permission permanently denied
-			if (!permissionResult.canAskAgain && !permissionResult.granted) {
-				debugLog('Media library permission permanently denied');
-				setIsPickerAvailable(false);
-				return false;
-			}
-		} catch (error) {
-			debugLog('Error checking media library permissions:', error);
-			setIsPickerAvailable(false);
-			return false;
-		}
-
-		// For now, default to true in case permission check fails
-		setIsPickerAvailable(true);
-		return true;
+		audio.stop();
+		setRecording(true);
 	};
 
-	// Function to check audio recording permissions - only if Audio is available
-	const checkAudioPermissions = async () => {
-		if (!AUDIO_ENABLED || !Audio) return false;
-
-		try {
-			const { status } = await Audio.requestPermissionsAsync();
-			setAudioPermission(status === 'granted');
-
-			if (status !== 'granted') {
-				debugLog('Audio recording permission not granted');
-				return false;
-			} else {
-				debugLog('Audio recording permission granted');
-				await Audio.setAudioModeAsync({
-					allowsRecordingIOS: true,
-					playsInSilentModeIOS: true,
-					staysActiveInBackground: false,
-					shouldDuckAndroid: true,
-					playThroughEarpieceAndroid: false,
-				});
-				return true;
-			}
-		} catch (error) {
-			debugLog('Error checking audio permissions:', error);
-			setAudioPermission(false);
-			return false;
-		}
+	const addVoiceMemo = (uri: string, seconds: number) => {
+		setRecording(false);
+		setAttachments((prev) => [
+			...prev,
+			{
+				type: 'audio',
+				url: uri,
+				name: `voice-memo-${Date.now()}.m4a`,
+				timestamp: new Date().toISOString(),
+				duration: seconds,
+			},
+		]);
 	};
-
-	// Other audio-related functions are now conditionally called only if AUDIO_ENABLED is true
-	// ... keep other audio functions but wrap critical parts with if (!AUDIO_ENABLED || !Audio) return;
 
 	const handleSubmit = async () => {
 		try {
@@ -221,6 +106,8 @@ const ReasonInputModal = ({
 
 			// Process attachments to upload images to S3
 			const processedAttachments: SimpleAttachment[] = [];
+			// Uploads that failed for a reason a retry can fix (server asleep, offline). Nothing is saved while any remain.
+			const failedUploads: SimpleAttachment[] = [];
 
 			// Upload any image attachments to S3
 			for (let i = 0; i < attachments.length; i++) {
@@ -231,6 +118,11 @@ const ReasonInputModal = ({
 					}, URL: ${attachment.url.substring(0, 50)}...`
 				);
 
+				// Already uploaded on an earlier try: keep it as is.
+				if (/^https?:\/\//.test(attachment.url)) {
+					processedAttachments.push(attachment);
+					continue;
+				}
 				// Photos, videos and voice memos all go to S3; a phone-local file:// path breaks on any other device.
 				if (['image', 'video', 'audio'].includes(attachment.type)) {
 					console.log(
@@ -274,6 +166,7 @@ const ReasonInputModal = ({
 								url: s3Url,
 								name: attachment.name || filename,
 								timestamp: new Date().toISOString(),
+								duration: attachment.duration,
 							});
 							console.log(
 								`SUBMIT: Successfully added S3 attachment to processedAttachments list`
@@ -283,19 +176,7 @@ const ReasonInputModal = ({
 								`SUBMIT: S3 Upload Failed: No URL returned for ${filename}`
 							);
 							// Show a toast notification about the upload failure
-							showToast(
-								'error',
-								'Upload failed',
-								`Could not upload the ${attachment.type} to cloud storage`
-							);
-
-							// Fall back to using the original URL if S3 upload fails
-							console.log(
-								`SUBMIT: Falling back to original URL due to S3 failure`
-							);
-							processedAttachments.push({
-								...attachment,
-							});
+							failedUploads.push(attachment);
 						}
 					} catch (error: any) {
 						console.error(
@@ -311,19 +192,7 @@ const ReasonInputModal = ({
 							);
 							continue;
 						}
-						showToast(
-							'error',
-							'Upload failed',
-							`Error: ${error?.message || 'Unknown error'}`
-						);
-
-						// Fall back to using the original URL with error info
-						console.log(
-							`SUBMIT: Falling back to original URL due to error: ${error?.message}`
-						);
-						processedAttachments.push({
-							...attachment,
-						});
+						failedUploads.push(attachment);
 					}
 				} else {
 					// For non-image attachments, just pass them through
@@ -337,6 +206,18 @@ const ReasonInputModal = ({
 			console.log(
 				`SUBMIT: All attachments processed. Final count: ${processedAttachments.length}`
 			);
+
+			// A local file path saved in history only works on this phone and can be cleared by iOS, so stop here:
+			// keep the popup open with what uploaded (now remote) plus what didn't, and let the user try again.
+			if (failedUploads.length > 0) {
+				audio.stop(); // uploaded memos change URL below, so a playing one would lose its tile
+				setAttachments([...processedAttachments, ...failedUploads]);
+				Alert.alert(
+					'Upload Failed',
+					`${failedUploads.length === 1 ? 'An attachment' : `${failedUploads.length} attachments`} couldn't upload. The server may be waking up or you may be offline. Try again in a moment, or remove ${failedUploads.length === 1 ? 'it' : 'them'} to save without.`
+				);
+				return;
+			}
 
 			// Call the onSubmit callback with the processed attachments
 			console.log(
@@ -360,402 +241,52 @@ const ReasonInputModal = ({
 		}
 	};
 
-	// Always use the mock picker since native modules aren't available
 	const pickMedia = async () => {
-		debugLog('Opening media picker...');
-		console.log('MEDIA PICKER: Attempting to open image picker');
-
-		if (IMAGE_PICKER_ENABLED && ImagePicker) {
-			try {
-				console.log(
-					'MEDIA PICKER: ImagePicker is enabled and available'
-				);
-				// Request permission first
-				const permissionResult =
-					await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-				console.log(
-					'MEDIA PICKER: Permission result:',
-					permissionResult
-				);
-
-				if (permissionResult.granted === false) {
-					console.log('MEDIA PICKER: Permission denied');
-					showToast(
-						'error',
-						'Permission to access media library was denied'
-					);
-					return;
-				}
-
-				console.log('MEDIA PICKER: Launching image library picker');
-				// Launch image picker
-				const result = await ImagePicker.launchImageLibraryAsync({
-					mediaTypes: ImagePicker.MediaTypeOptions.All,
-					allowsMultipleSelection: true,
-					aspect: [4, 3],
-					quality: 0.8,
-				});
-
-				console.log(
-					'MEDIA PICKER: Got result:',
-					JSON.stringify(result, null, 2)
-				);
-
-				if (
-					!result.canceled &&
-					result.assets &&
-					result.assets.length > 0
-				) {
-					console.log(
-						'MEDIA PICKER: User selected',
-						result.assets.length,
-						'assets'
-					);
-					const newAttachments = [...attachments];
-
-					for (const asset of result.assets) {
-						console.log(
-							'MEDIA PICKER: Processing asset:',
-							asset.uri
-						);
-						const type =
-							asset.uri.endsWith('.mp4') || asset.type === 'video'
-								? 'video'
-								: 'image';
-
-						// Add to attachments with the local URI first for display
-						newAttachments.push({
-							type: type,
-							url: asset.uri,
-							name: `media-${Date.now()}-${
-								newAttachments.length
-							}.${type === 'video' ? 'mp4' : 'jpg'}`,
-							timestamp: new Date().toISOString(),
-							needsProcessing: type === 'image' ? true : false,
-						});
-					}
-
-					console.log(
-						'MEDIA PICKER: Setting attachments with',
-						newAttachments.length,
-						'items'
-					);
-					setAttachments(newAttachments);
-					showToast(
-						'success',
-						`Added ${result.assets.length} ${
-							result.assets.length === 1 ? 'item' : 'items'
-						}`
-					);
-				} else {
-					console.log(
-						'MEDIA PICKER: User cancelled or no assets selected'
-					);
-				}
-			} catch (error) {
-				console.error('MEDIA PICKER: Error using ImagePicker:', error);
-				showToast('error', 'Could not open the media library');
+		try {
+			const permissionResult =
+				await ImagePicker.requestMediaLibraryPermissionsAsync();
+			if (!permissionResult.granted) {
+				showToast('error', 'Permission to access media library was denied');
+				return;
 			}
-		} else {
-			console.log('MEDIA PICKER: ImagePicker not available, using mock');
-			debugLog('Using mock media picker as fallback...');
+
+			const result = await ImagePicker.launchImageLibraryAsync({
+				mediaTypes: ['images', 'videos'],
+				allowsMultipleSelection: true,
+				aspect: [4, 3],
+				quality: 0.8,
+			});
+			if (result.canceled || !result.assets?.length) return;
+
+			setAttachments((prev) => [
+				...prev,
+				...result.assets.map((asset, i): SimpleAttachment => {
+					const type =
+						asset.uri.endsWith('.mp4') || asset.type === 'video'
+							? 'video'
+							: 'image';
+					return {
+						type,
+						url: asset.uri,
+						name: `media-${Date.now()}-${prev.length + i}.${
+							type === 'video' ? 'mp4' : 'jpg'
+						}`,
+						timestamp: new Date().toISOString(),
+						// The picker reports video length in milliseconds
+						duration: asset.duration ? Math.round(asset.duration / 1000) : undefined,
+						needsProcessing: type === 'image',
+					};
+				}),
+			]);
+			showToast(
+				'success',
+				`Added ${result.assets.length} ${
+					result.assets.length === 1 ? 'item' : 'items'
+				}`
+			);
+		} catch (error) {
+			console.error('MEDIA PICKER: Error using ImagePicker:', error);
 			showToast('error', 'Could not open the media library');
-		}
-	};
-
-	const showImageOptions = () => {
-		Alert.alert(
-			'Sample Images',
-			'How many sample images would you like to add?',
-			[
-				{ text: 'Cancel', style: 'cancel' },
-				{ text: '1 Image', onPress: () => addMockImages(1) },
-				{ text: '3 Images', onPress: () => addMockImages(3) },
-			]
-		);
-	};
-
-	const showVideoOptions = () => {
-		Alert.alert(
-			'Sample Videos',
-			'How many sample videos would you like to add?',
-			[
-				{ text: 'Cancel', style: 'cancel' },
-				{ text: '1 Video', onPress: () => addMockVideos(1) },
-				{ text: '2 Videos', onPress: () => addMockVideos(2) },
-			]
-		);
-	};
-
-	const showMixedOptions = () => {
-		addMockImages(1);
-		addMockVideos(1);
-		if (MOCK_AUDIO_ENABLED) {
-			addMockAudio();
-		}
-	};
-
-	// Add mock images in simulator mode
-	const addMockImages = (count: number) => {
-		try {
-			// Sample image URLs that work in simulators
-			const sampleImages = [
-				'https://reactnative.dev/img/tiny_logo.png',
-				'https://picsum.photos/200/300',
-				'https://picsum.photos/200',
-				'https://picsum.photos/200/300?grayscale',
-				'https://picsum.photos/id/237/200/300',
-			];
-
-			const newAttachments = [...attachments];
-			for (let i = 0; i < count; i++) {
-				const randomIndex = Math.floor(
-					Math.random() * sampleImages.length
-				);
-				newAttachments.push({
-					type: 'image',
-					url: sampleImages[randomIndex],
-					name: `sample-image-${Date.now()}-${i}.jpg`,
-					timestamp: new Date().toISOString(),
-				});
-			}
-
-			setAttachments(newAttachments);
-			showToast(
-				'success',
-				`Added ${count} sample ${count === 1 ? 'image' : 'images'}`
-			);
-		} catch (error) {
-			debugLog('Error adding mock images:', error);
-		}
-	};
-
-	// Add mock videos in simulator mode
-	const addMockVideos = (count: number) => {
-		try {
-			// Sample video URLs that work in simulators
-			const sampleVideos = [
-				'https://assets.mixkit.co/videos/preview/mixkit-waves-in-the-water-1164-large.mp4',
-				'https://assets.mixkit.co/videos/preview/mixkit-tree-with-yellow-flowers-1173-large.mp4',
-				'https://assets.mixkit.co/videos/preview/mixkit-countryside-meadow-4075-large.mp4',
-			];
-
-			const newAttachments = [...attachments];
-			for (let i = 0; i < count; i++) {
-				const randomIndex = Math.floor(
-					Math.random() * sampleVideos.length
-				);
-				newAttachments.push({
-					type: 'video',
-					url: sampleVideos[randomIndex],
-					name: `sample-video-${Date.now()}-${i}.mp4`,
-					timestamp: new Date().toISOString(),
-					duration: Math.floor(Math.random() * 60) + 10, // Random duration between 10-70 seconds
-				});
-			}
-
-			setAttachments(newAttachments);
-			showToast(
-				'success',
-				`Added ${count} sample ${count === 1 ? 'video' : 'videos'}`
-			);
-		} catch (error) {
-			debugLog('Error adding mock videos:', error);
-		}
-	};
-
-	// Add mock audio in simulator mode
-	const addMockAudio = () => {
-		try {
-			// Sample durations between 5-45 seconds
-			const duration = Math.floor(Math.random() * 40) + 5;
-
-			// Create mock audio attachment (no real URI in simulator)
-			const attachment: SimpleAttachment = {
-				type: 'audio',
-				// Use a remote audio file that actually works in simulator
-				url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
-				name: `sample-audio-${Date.now()}.mp3`,
-				duration: duration,
-				timestamp: new Date().toISOString(),
-			};
-
-			setAttachments((prev) => [...prev, attachment]);
-			showToast('success', 'Sample voice memo added');
-		} catch (error) {
-			debugLog('Error adding mock audio:', error);
-		}
-	};
-
-	// Function to cancel recording and discard it
-	const cancelRecording = async () => {
-		try {
-			if (recording) {
-				await recording.stopAndUnloadAsync();
-			}
-
-			if (recordingInterval.current) {
-				clearInterval(recordingInterval.current);
-				recordingInterval.current = null;
-			}
-
-			setRecording(null);
-			setRecordingStatus('idle');
-			setRecordingDuration(0);
-
-			showToast('info', 'Recording discarded');
-		} catch (error) {
-			debugLog('Error cancelling recording:', error);
-		}
-	};
-
-	// Start recording audio
-	const startRecording = async () => {
-		if (!AUDIO_ENABLED || !Audio) return;
-
-		try {
-			// Check permissions first
-			if (!audioPermission) {
-				const { status } = await Audio.requestPermissionsAsync();
-				if (status !== 'granted') {
-					Alert.alert(
-						'Permission Required',
-						'Audio recording requires microphone permission'
-					);
-					return;
-				}
-				setAudioPermission(true);
-			}
-
-			// Stop any playing sounds
-			await stopPlayback();
-
-			// Create new recording object
-			const { recording: newRecording } =
-				await Audio.Recording.createAsync(
-					Audio.RecordingOptionsPresets.HIGH_QUALITY
-				);
-
-			setRecording(newRecording);
-			setRecordingStatus('recording');
-			setRecordingDuration(0);
-
-			// Set up timer to track duration
-			recordingInterval.current = setInterval(() => {
-				setRecordingDuration((prev) => prev + 1);
-			}, 1000);
-
-			showToast('info', 'Recording started');
-		} catch (error) {
-			debugLog('Failed to start recording:', error);
-			Alert.alert('Error', 'Failed to start recording');
-		}
-	};
-
-	// Stop recording audio
-	const stopRecording = async () => {
-		if (!AUDIO_ENABLED || !Audio) return;
-
-		try {
-			if (!recording) return;
-
-			// Clear recording timer
-			if (recordingInterval.current) {
-				clearInterval(recordingInterval.current);
-				recordingInterval.current = null;
-			}
-
-			setRecordingStatus('saving');
-
-			await recording.stopAndUnloadAsync();
-			const uri = recording.getURI();
-			const finalDuration = recordingDuration;
-
-			debugLog('Recording stopped, URI:', uri);
-
-			// Create audio attachment
-			if (uri) {
-				const attachment = imageUtils.prepareAudioAttachment(
-					uri,
-					finalDuration,
-					null
-				) as SimpleAttachment | null;
-
-				if (attachment) {
-					setAttachments((prev) => [...prev, attachment]);
-					showToast('success', 'Voice memo saved');
-				}
-			}
-
-			setRecording(null);
-			setRecordingStatus('idle');
-			setRecordingDuration(0);
-		} catch (error) {
-			debugLog('Failed to stop recording:', error);
-			Alert.alert('Error', 'Failed to save recording');
-			setRecordingStatus('idle');
-			setRecording(null);
-		}
-	};
-
-	// Play audio attachment
-	const playAudio = async (attachmentId: string, uri: string) => {
-		if (!AUDIO_ENABLED || !Audio) return;
-
-		try {
-			// Stop current playback if any
-			await stopPlayback();
-
-			debugLog('Loading sound from URI:', uri);
-			const { sound: newSound } = await Audio.Sound.createAsync(
-				{ uri },
-				{ shouldPlay: true },
-				onPlaybackStatusUpdate
-			);
-
-			setSound(newSound);
-			setIsPlaying(true);
-			setPlayingAttachmentId(attachmentId);
-
-			// Play the sound
-			await newSound.playAsync();
-		} catch (error) {
-			debugLog('Failed to play audio:', error);
-			setIsPlaying(false);
-			setPlayingAttachmentId(null);
-			Alert.alert('Error', 'Failed to play audio');
-		}
-	};
-
-	// Stop audio playback
-	const stopPlayback = async () => {
-		if (!AUDIO_ENABLED || !Audio) return;
-
-		if (sound) {
-			try {
-				await sound.stopAsync();
-				await sound.unloadAsync();
-			} catch (error) {
-				debugLog('Error stopping sound:', error);
-			}
-		}
-
-		setSound(null);
-		setIsPlaying(false);
-		setPlaybackPosition(0);
-		setPlayingAttachmentId(null);
-	};
-
-	// Track playback status
-	const onPlaybackStatusUpdate = (status: any) => {
-		if (status.isLoaded) {
-			setPlaybackPosition(status.positionMillis / 1000);
-
-			if (status.didJustFinish) {
-				// Playback finished
-				stopPlayback();
-			}
 		}
 	};
 
@@ -876,266 +407,94 @@ const ReasonInputModal = ({
 						<View style={styles.attachmentSection}>
 							<View style={styles.attachmentHeaderRow}>
 								<Text style={styles.attachmentSectionTitle}>
-									{MOCK_AUDIO_ENABLED
-										? 'Photos, Videos & Voice'
-										: 'Photos & Videos'}
+									Photos, Videos & Voice
 								</Text>
-								<Text style={styles.optionalText}>
-									(Optional)
-								</Text>
+								<Text style={styles.optionalText}>(Optional)</Text>
 							</View>
+							<Text style={styles.attachmentHelperText}>
+								Add photos, videos or a voice memo for more context
+							</Text>
 
-							{isPickerAvailable ? (
-								<>
-									<Text style={styles.attachmentHelperText}>
-										Add photos or videos to provide more
-										context
-										{MOCK_AUDIO_ENABLED
-											? ', or voice memos'
-											: ''}
-										{!IMAGE_PICKER_ENABLED &&
-											' (Using Mock Data)'}
-									</Text>
-
-									{/* Conditional button layout based on Mock Audio availability */}
-									{MOCK_AUDIO_ENABLED ? (
-										<View style={styles.mediaButtonsRow}>
-											<TouchableOpacity
-												style={styles.mediaButton}
-												onPress={pickMedia}>
-												<Text
-													style={
-														styles.mediaButtonIcon
-													}>
-													📷
-												</Text>
-												<Text
-													style={
-														styles.mediaButtonText
-													}>
-													PHOTO/VIDEO
-												</Text>
-											</TouchableOpacity>
-
-											{/* Mock Recording button */}
-											<TouchableOpacity
-												style={[
-													styles.mediaButton,
-													styles.recordButton,
-												]}
-												onPress={addMockAudio}>
-												<Text
-													style={
-														styles.mediaButtonIcon
-													}>
-													🎙️
-												</Text>
-												<Text
-													style={
-														styles.mediaButtonText
-													}>
-													VOICE MEMO
-												</Text>
-											</TouchableOpacity>
-										</View>
-									) : (
-										/* Single button layout when Audio is not available */
-										<TouchableOpacity
-											style={styles.singleMediaButton}
-											onPress={pickMedia}>
-											<Text
-												style={styles.mediaButtonIcon}>
-												📷
-											</Text>
-											<Text
-												style={styles.mediaButtonText}>
-												ADD SAMPLE PHOTOS & VIDEOS
-											</Text>
-										</TouchableOpacity>
-									)}
-
-									{attachments.length > 0 ? (
-										<View
-											style={
-												styles.attachmentPreviewContainer
-											}>
-											{attachments.map(
-												(attachment, index) => (
-													<View
-														key={index}
-														style={
-															styles.attachmentPreview
-														}>
-														{attachment.type ===
-														'image' ? (
-															// Image preview
-															<Image
-																source={{
-																	uri: attachment.url,
-																}}
-																style={
-																	styles.attachmentImage
-																}
-															/>
-														) : attachment.type ===
-														  'video' ? (
-															// Video preview
-															<View
-																style={
-																	styles.videoPreviewContainer
-																}>
-																<Image
-																	source={{
-																		uri: 'https://picsum.photos/200/300?blur',
-																	}}
-																	style={
-																		styles.videoThumbnail
-																	}
-																/>
-																<View
-																	style={
-																		styles.videoOverlay
-																	}>
-																	<Text
-																		style={
-																			styles.videoIcon
-																		}>
-																		▶️
-																	</Text>
-																	<Text
-																		style={
-																			styles.videoLabel
-																		}>
-																		{attachment.duration
-																			? imageUtils.formatDuration(
-																					attachment.duration
-																			  )
-																			: 'Video'}
-																	</Text>
-																</View>
-															</View>
-														) : (
-															// Audio preview
-															<View
-																style={
-																	styles.audioPreviewContainer
-																}>
-																<View
-																	style={
-																		styles.audioWaveform
-																	}>
-																	<Text
-																		style={
-																			styles.audioIcon
-																		}>
-																		🔊
-																	</Text>
-																</View>
-																<View
-																	style={
-																		styles.audioControlsContainer
-																	}>
-																	<TouchableOpacity
-																		style={
-																			styles.audioPlayButton
-																		}
-																		onPress={() => {
-																			if (
-																				isPlaying &&
-																				playingAttachmentId ===
-																					index.toString()
-																			) {
-																				stopPlayback();
-																			} else {
-																				playAudio(
-																					index.toString(),
-																					attachment.url
-																				);
-																			}
-																		}}>
-																		<Text
-																			style={
-																				styles.audioPlayIcon
-																			}>
-																			{isPlaying &&
-																			playingAttachmentId ===
-																				index.toString()
-																				? '⏸️'
-																				: '▶️'}
-																		</Text>
-																	</TouchableOpacity>
-																	<Text
-																		style={
-																			styles.audioDuration
-																		}>
-																		{isPlaying &&
-																		playingAttachmentId ===
-																			index.toString()
-																			? imageUtils?.formatDuration(
-																					playbackPosition
-																			  )
-																			: imageUtils?.formatDuration(
-																					attachment.duration ||
-																						0
-																			  )}
-																	</Text>
-																</View>
-															</View>
-														)}
-														<TouchableOpacity
-															style={
-																styles.removeAttachmentButton
-															}
-															onPress={() =>
-																removeAttachment(
-																	index
-																)
-															}>
-															<Text
-																style={
-																	styles.removeAttachmentText
-																}>
-																✕
-															</Text>
-														</TouchableOpacity>
-													</View>
-												)
-											)}
-										</View>
-									) : (
-										<View
-											style={
-												styles.noAttachmentsContainer
-											}>
-											<Text
-												style={
-													styles.noAttachmentsText
-												}>
-												No media attached yet. Use the{' '}
-												{MOCK_AUDIO_ENABLED
-													? 'buttons'
-													: 'button'}{' '}
-												above to add
-												{!IMAGE_PICKER_ENABLED
-													? ' sample'
-													: ''}{' '}
-												photos, videos
-												{MOCK_AUDIO_ENABLED
-													? ', or voice memos'
-													: ''}
-												.
-												{__DEV__
-													? ' (Simulator Mode)'
-													: ''}
-											</Text>
-										</View>
-									)}
-								</>
+							{recording ? (
+								<VoiceMemoRecorder
+									onDone={addVoiceMemo}
+									onCancel={() => setRecording(false)}
+								/>
 							) : (
-								<View style={styles.pickerUnavailableContainer}>
-									<Text style={styles.pickerUnavailableText}>
-										Media attachments are unavailable.
-										Please check app permissions.
+								<View style={styles.mediaButtonsRow}>
+									<TouchableOpacity
+										style={styles.mediaButton}
+										accessibilityRole='button'
+										accessibilityLabel='Add photo or video'
+										onPress={pickMedia}>
+										<Feather name='image' size={20} color={colors.white} />
+										<Text style={styles.mediaButtonText}>PHOTO/VIDEO</Text>
+									</TouchableOpacity>
+									<TouchableOpacity
+										style={[styles.mediaButton, styles.recordButton]}
+										accessibilityRole='button'
+										accessibilityLabel='Record voice memo'
+										onPress={startVoiceMemo}>
+										<Feather name='mic' size={20} color={colors.white} />
+										<Text style={styles.mediaButtonText}>VOICE MEMO</Text>
+									</TouchableOpacity>
+								</View>
+							)}
+
+							{attachments.length > 0 ? (
+								<View style={styles.attachmentPreviewContainer}>
+									{attachments.map((attachment, index) => (
+										<View key={index} style={styles.attachmentPreview}>
+											{attachment.type === 'image' ? (
+												<Image
+													source={{ uri: attachment.url }}
+													style={styles.attachmentImage}
+												/>
+											) : attachment.type === 'video' ? (
+												<Pressable
+													accessibilityRole='button'
+													accessibilityLabel='Play video'
+													// Playback switches the audio session out of record mode, which ends a recording.
+													disabled={recording}
+													accessibilityState={{ disabled: recording }}
+													onPress={() => setVideoUrl(attachment.url)}
+													style={styles.videoTile}>
+													<Feather name='play-circle' size={36} color={colors.white} />
+													<Text style={styles.videoLabel}>
+														{attachment.duration
+															? imageUtils.formatDuration(attachment.duration)
+															: 'Video'}
+													</Text>
+												</Pressable>
+											) : (
+												<AudioAttachment
+													url={attachment.url}
+													duration={attachment.duration}
+													audio={audio}
+													style={styles.audioTile}
+													disabled={recording}
+												/>
+											)}
+											<TouchableOpacity
+												style={styles.removeAttachmentButton}
+												accessibilityRole='button'
+												accessibilityLabel={`Remove ${
+													attachment.type === 'audio' ? 'voice memo' : attachment.type
+												}`}
+												hitSlop={10}
+												onPress={() => {
+													if (audio.url === attachment.url) audio.stop();
+													removeAttachment(index);
+												}}>
+												<Text style={styles.removeAttachmentText}>✕</Text>
+											</TouchableOpacity>
+										</View>
+									))}
+								</View>
+							) : (
+								<View style={styles.noAttachmentsContainer}>
+									<Text style={styles.noAttachmentsText}>
+										No media attached yet.
 									</Text>
 								</View>
 							)}
@@ -1148,12 +507,9 @@ const ReasonInputModal = ({
 								title='Cancel'
 								variant='secondary'
 								onPress={() => {
-									// Stop any recording or playback in progress
-									if (AUDIO_ENABLED) {
-										cancelRecording();
-										stopPlayback();
-									}
-									// Clear state
+									// Discard a recording in progress and stop playback
+									setRecording(false);
+									audio.stop();
 									setReason('');
 									setAttachments([]);
 									onClose();
@@ -1161,10 +517,18 @@ const ReasonInputModal = ({
 							/>
 						</View>
 						<View style={styles.footerButton}>
-							<AppButton title='Submit' onPress={handleSubmit} loading={isSubmitting} />
+							<AppButton
+								title='Submit'
+								onPress={handleSubmit}
+								loading={isSubmitting}
+								disabled={recording}
+							/>
 						</View>
 					</View>
 				</View>
+				{videoUrl && (
+					<VideoPlayerModal url={videoUrl} onClose={() => setVideoUrl(null)} />
+				)}
 			</View>
 		</Modal>
 	);
@@ -1311,53 +675,13 @@ const styles = StyleSheet.create({
 		shadowRadius: 3,
 		elevation: 4,
 		margin: 4,
+		minHeight: 48,
+		gap: 6,
 	},
 	recordButton: {
 		backgroundColor: '#E74C3C',
 	},
-	mediaButtonIcon: {
-		fontSize: 20,
-		marginRight: 6,
-		color: 'white',
-	},
 	mediaButtonText: {
-		color: 'white',
-		fontWeight: 'bold',
-		fontSize: 12,
-	},
-	recordingContainer: {
-		flex: 1,
-		backgroundColor: '#FADBD8',
-		borderRadius: 8,
-		padding: 10,
-		alignItems: 'center',
-		margin: 4,
-		borderWidth: 1,
-		borderColor: '#E74C3C',
-	},
-	recordingTimer: {
-		fontSize: 20,
-		fontWeight: 'bold',
-		color: '#E74C3C',
-		marginBottom: 8,
-	},
-	recordingButtonsRow: {
-		flexDirection: 'row',
-		justifyContent: 'space-between',
-		width: '100%',
-	},
-	recordingControlButton: {
-		backgroundColor: '#2ECC71',
-		padding: 8,
-		borderRadius: 6,
-		flex: 1,
-		margin: 3,
-		alignItems: 'center',
-	},
-	cancelRecordingButton: {
-		backgroundColor: '#7F8C8D',
-	},
-	recordingControlButtonText: {
 		color: 'white',
 		fontWeight: 'bold',
 		fontSize: 12,
@@ -1418,50 +742,13 @@ const styles = StyleSheet.create({
 		textAlign: 'center',
 		fontSize: 14,
 	},
-	pickerUnavailableContainer: {
-		padding: 15,
-		alignItems: 'center',
-		justifyContent: 'center',
-		backgroundColor: '#fff3f3',
-		borderRadius: 5,
-		borderWidth: 1,
-		borderColor: '#ffcece',
-	},
-	pickerUnavailableText: {
-		color: '#e05151',
-		textAlign: 'center',
-		fontSize: 14,
-	},
-	// Video styles
-	videoPreviewContainer: {
-		width: '100%',
-		height: '100%',
-		position: 'relative',
-		borderRadius: 5,
-		overflow: 'hidden',
-	},
-	videoThumbnail: {
+	videoTile: {
 		width: '100%',
 		height: '100%',
 		borderRadius: 5,
-		borderWidth: 1,
-		borderColor: '#ddd',
 		backgroundColor: '#282828',
-		resizeMode: 'cover',
-	},
-	videoOverlay: {
-		position: 'absolute',
-		top: 0,
-		left: 0,
-		right: 0,
-		bottom: 0,
-		backgroundColor: 'rgba(0,0,0,0.3)',
-		justifyContent: 'center',
 		alignItems: 'center',
-	},
-	videoIcon: {
-		fontSize: 24,
-		color: 'white',
+		justifyContent: 'center',
 	},
 	videoLabel: {
 		color: 'white',
@@ -1469,64 +756,15 @@ const styles = StyleSheet.create({
 		fontWeight: 'bold',
 		marginTop: 4,
 	},
-	// Audio playback styles
-	audioPreviewContainer: {
+	audioTile: {
 		width: '100%',
 		height: '100%',
-		position: 'relative',
+		flexDirection: 'column',
+		justifyContent: 'center',
 		borderRadius: 5,
-		backgroundColor: '#F7F9FA',
 		borderWidth: 1,
 		borderColor: '#ddd',
-		padding: 8,
-		justifyContent: 'space-between',
-	},
-	audioWaveform: {
-		height: 40,
-		alignItems: 'center',
-		justifyContent: 'center',
-	},
-	audioIcon: {
-		fontSize: 28,
-		color: '#3498DB',
-	},
-	audioControlsContainer: {
-		flexDirection: 'row',
-		alignItems: 'center',
-		justifyContent: 'space-between',
-	},
-	audioPlayButton: {
-		width: 30,
-		height: 30,
-		alignItems: 'center',
-		justifyContent: 'center',
-		backgroundColor: '#3498DB',
-		borderRadius: 15,
-	},
-	audioPlayIcon: {
-		fontSize: 16,
-		color: 'white',
-	},
-	audioDuration: {
-		fontSize: 12,
-		fontWeight: 'bold',
-		color: '#666',
-	},
-	// Single media button style for when Audio is not available
-	singleMediaButton: {
-		backgroundColor: '#2F80ED',
-		padding: 14,
-		borderRadius: 8,
-		flexDirection: 'row',
-		alignItems: 'center',
-		justifyContent: 'center',
-		shadowColor: '#000',
-		shadowOffset: { width: 0, height: 3 },
-		shadowOpacity: 0.3,
-		shadowRadius: 4,
-		elevation: 6,
-		margin: 5,
-		minHeight: 50,
+		backgroundColor: '#F7F9FA',
 	},
 });
 
