@@ -3,6 +3,7 @@ import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View
 import { useFocusEffect } from 'expo-router';
 import AppButton from '../../../components/AppButton';
 import FlagDot from '../../../components/FlagDot';
+import { CHART, Legend, StackedColumns, StackedRows, Timeline } from '../../../components/Charts';
 import StoreContext from '../../../store';
 import { colors } from '../../../libs/board/constants';
 import { getMyHistory } from '../../../utils/api';
@@ -15,7 +16,11 @@ const describe = (h: HistoryRow) => {
 	if (isNote(h)) return 'note added';
 	return `${h.previousStatus || 'white'} → ${h.newStatus || 'white'}`;
 };
-const day = (iso: string) => new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+const day = (iso: string) =>
+	new Date(iso).toLocaleDateString(undefined, {
+		month: 'short',
+		day: 'numeric',
+	});
 
 const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
 	<View style={styles.section}>
@@ -55,7 +60,7 @@ const Stats = () => {
 		useCallback(() => {
 			setSelected(currentProfileId || 'main');
 			load();
-		}, [currentProfileId, load])
+		}, [currentProfileId, load]),
 	);
 	useEffect(() => {
 		if (selected !== 'main' && !board[selected]) setSelected('main');
@@ -69,7 +74,11 @@ const Stats = () => {
 
 	return (
 		<View style={styles.screen}>
-			<ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipBar} contentContainerStyle={styles.chips}>
+			<ScrollView
+				horizontal
+				showsHorizontalScrollIndicator={false}
+				style={styles.chipBar}
+				contentContainerStyle={styles.chips}>
 				{[{ id: 'main', name: 'Overall' }, ...people].map((p: any) => (
 					<TouchableOpacity
 						key={p.id}
@@ -120,25 +129,109 @@ const Overall = ({ board, history, names }: { board: Board; history: HistoryRow[
 				<Line label='Flags taken back down' value={s.changes ? `${s.stepDowns} (${share}%)` : '–'} />
 				<Line
 					label='Yellow to red, usually'
-					value={s.yellowToRedDays === null ? 'Not yet' : `${Math.round(s.yellowToRedDays)} days (${s.yellowToRedCount} cards)`}
+					value={
+						s.yellowToRedDays === null
+							? 'Not yet'
+							: `${Math.round(s.yellowToRedDays)} days (${s.yellowToRedCount} cards)`
+					}
 				/>
+			</Section>
+
+			<Section title='Activity by Month'>
+				<Text style={styles.hint}>Color and column changes, and notes, across all your people.</Text>
+				<MonthChart months={s.monthly} />
+			</Section>
+
+			<Section title='Relationship Timeline'>
+				<Text style={styles.hint}>Each person from their first day to the end, or today.</Text>
+				{s.timeline.people.length === 0 ? (
+					<Text style={styles.muted}>No people yet.</Text>
+				) : (
+					<>
+						<Legend
+							items={[
+								{ label: 'Dating', color: CHART.line },
+								{ label: 'Ended', color: CHART.ended },
+								{ label: 'Turned red', color: CHART.red },
+								{ label: 'Dealbreaker', color: CHART.dealbreaker },
+							]}
+						/>
+						<Timeline
+							from={s.timeline.from}
+							to={s.timeline.to}
+							people={s.timeline.people}
+							summary={s.timeline.people
+								.map(
+									(p) =>
+										`${p.name}${p.ended ? ', ended' : ''}: ${p.events.length} times a card turned red or became a dealbreaker`,
+								)
+								.join('. ')}
+						/>
+					</>
+				)}
+			</Section>
+
+			<Section title='Yellow to Red'>
+				<Text style={styles.hint}>How long a card took to go from yellow to red with the same person.</Text>
+				{s.yellowToRedCount === 0 ? (
+					<Text style={styles.muted}>No card has gone from yellow to red yet.</Text>
+				) : (
+					<StackedRows
+						labelWidth={130}
+						summary={s.yellowToRedBuckets.map((b) => `${b.label}: ${b.count}`).join(', ')}
+						rows={s.yellowToRedBuckets.map((b) => ({
+							key: b.label,
+							label: b.label,
+							segments: [{ value: b.count, color: CHART.red }],
+						}))}
+					/>
+				)}
+			</Section>
+
+			<Section title='Flags by Person'>
+				<Text style={styles.hint}>Where each board stands today.</Text>
+				{s.byPerson.length === 0 ? (
+					<Text style={styles.muted}>No people yet.</Text>
+				) : (
+					<>
+						<FlagLegend />
+						<StackedRows
+							labelWidth={90}
+							summary={s.byPerson
+								.map((p) => `${p.name}: ${p.yellow} yellow, ${p.red} red, ${p.dealbreaker} dealbreakers`)
+								.join('. ')}
+							rows={s.byPerson.map((p) => ({
+								key: p.id,
+								label: p.ended ? `${p.name} (ended)` : p.name,
+								muted: p.ended,
+								segments: flagSegments(p.yellow, p.red, p.dealbreaker),
+							}))}
+						/>
+					</>
+				)}
 			</Section>
 
 			<Section title='Cards That Come Up Most'>
 				<Text style={styles.hint}>How many people each card ever reached yellow, red or a dealbreaker with.</Text>
-				{s.perCard.length === 0 ? <Text style={styles.muted}>No flags raised yet.</Text> : null}
-				{s.perCard.slice(0, 15).map((c) => (
-					<View key={c.id} style={styles.cardRow}>
-						<Text style={styles.cardTitle} numberOfLines={2}>
-							{c.title}
-						</Text>
-						<View style={styles.counts}>
-							{c.yellow ? <Count color='yellow' n={c.yellow} /> : null}
-							{c.red ? <Count color='red' n={c.red} /> : null}
-							{c.dealbreaker ? <Count color='red' dealbreaker n={c.dealbreaker} /> : null}
-						</View>
-					</View>
-				))}
+				{s.perCard.length === 0 ? (
+					<Text style={styles.muted}>No flags raised yet.</Text>
+				) : (
+					<>
+						<FlagLegend />
+						<StackedRows
+							labelWidth={130}
+							summary={s.perCard
+								.slice(0, 10)
+								.map((c) => `${c.title}: ${c.yellow} yellow, ${c.red} red, ${c.dealbreaker} dealbreakers`)
+								.join('. ')}
+							rows={s.perCard.slice(0, 10).map((c) => ({
+								key: c.id,
+								label: c.title,
+								segments: flagSegments(c.yellow, c.red, c.dealbreaker),
+							}))}
+						/>
+					</>
+				)}
 			</Section>
 
 			<Section title='Maybe Your Pattern'>
@@ -146,7 +239,9 @@ const Overall = ({ board, history, names }: { board: Board; history: HistoryRow[
 					Cards you flagged on at least 3 in 4 people. Worth asking whether they're about them or about you.
 				</Text>
 				{s.yourPatterns.length === 0 ? (
-					<Text style={styles.muted}>{s.people < 3 ? 'Shows once you have 3 or more people.' : 'Nothing stands out.'}</Text>
+					<Text style={styles.muted}>
+						{s.people < 3 ? 'Shows once you have 3 or more people.' : 'Nothing stands out.'}
+					</Text>
 				) : (
 					s.yourPatterns.map((c) => <Line key={c.id} label={c.title} value={`${c.reached} of ${s.people}`} />)
 				)}
@@ -190,11 +285,8 @@ const Person = ({ board, history, id, name }: { board: Board; history: HistoryRo
 				<Line label='Flags taken back down' value={p.stepDowns} />
 			</Section>
 
-			<Section title='By Month'>
-				{p.months.length === 0 ? <Text style={styles.muted}>No history yet.</Text> : null}
-				{p.months.map((m) => (
-					<Line key={m.key} label={m.month} value={`${m.changes} changes · ${m.notes} notes`} />
-				))}
+			<Section title='Activity by Month'>
+				<MonthChart months={p.months} />
 			</Section>
 
 			<Section title='Latest Changes'>
@@ -212,11 +304,61 @@ const Person = ({ board, history, id, name }: { board: Board; history: HistoryRo
 	);
 };
 
+const flagSegments = (yellow: number, red: number, dealbreaker: number) => [
+	{ value: yellow, color: CHART.yellow },
+	{ value: red, color: CHART.red },
+	{ value: dealbreaker, color: CHART.dealbreaker },
+];
+
+const FlagLegend = () => (
+	<Legend
+		items={[
+			{ label: 'Yellow', color: CHART.yellow },
+			{ label: 'Red', color: CHART.red },
+			{ label: 'Dealbreaker', color: CHART.dealbreaker },
+		]}
+	/>
+);
+
+// The last 12 months; a phone is too narrow for more columns.
+const MonthChart = ({ months }: { months: { key: string; label: string; changes: number; notes: number }[] }) => {
+	const shown = months.slice(-12);
+	const empty = (list: typeof months) => list.every((m) => m.changes + m.notes === 0);
+	if (empty(months)) return <Text style={styles.muted}>No history yet.</Text>;
+	if (empty(shown)) return <Text style={styles.muted}>Nothing in the last 12 months.</Text>;
+	return (
+		<>
+			<Legend
+				items={[
+					{ label: 'Changes', color: CHART.changes },
+					{ label: 'Notes', color: CHART.notes },
+				]}
+			/>
+			<StackedColumns
+				summary={shown
+					.map((m) => {
+						const [y, mo] = m.key.split('-').map(Number);
+						const when = new Date(y, mo - 1, 1).toLocaleDateString(undefined, {
+							month: 'long',
+							year: 'numeric',
+						});
+						return `${when}: ${m.changes} changes, ${m.notes} notes`;
+					})
+					.join('. ')}
+				columns={shown.map((m) => ({
+					label: m.label,
+					segments: [
+						{ value: m.changes, color: CHART.changes },
+						{ value: m.notes, color: CHART.notes },
+					],
+				}))}
+			/>
+		</>
+	);
+};
+
 const Count = ({ color, n, dealbreaker = false }: { color: string; n: number; dealbreaker?: boolean }) => (
-	<View
-		style={styles.count}
-		accessible
-		accessibilityLabel={`${n} ${dealbreaker ? 'dealbreaker' : color}`}>
+	<View style={styles.count} accessible accessibilityLabel={`${n} ${dealbreaker ? 'dealbreaker' : color}`}>
 		<FlagDot color={color} isDealbreaker={dealbreaker} size={12} />
 		<Text style={styles.countText}>{n}</Text>
 	</View>
@@ -237,10 +379,21 @@ const styles = StyleSheet.create({
 	chipOn: { backgroundColor: colors.blurple },
 	chipText: { fontSize: 16, color: colors.blurple, fontWeight: 'bold' },
 	chipTextOn: { color: colors.white },
-	center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 15, padding: 20 },
+	center: {
+		flex: 1,
+		alignItems: 'center',
+		justifyContent: 'center',
+		gap: 15,
+		padding: 20,
+	},
 	body: { padding: 15, paddingBottom: 40 },
 	section: { marginBottom: 25 },
-	sectionTitle: { fontSize: 20, fontWeight: 'bold', color: colors.officer, marginBottom: 8 },
+	sectionTitle: {
+		fontSize: 20,
+		fontWeight: 'bold',
+		color: colors.officer,
+		marginBottom: 8,
+	},
 	hint: { fontSize: 14, color: colors.officer, marginBottom: 8 },
 	muted: { fontSize: 14, color: colors.officer, textAlign: 'center' },
 	line: {
@@ -254,19 +407,15 @@ const styles = StyleSheet.create({
 	},
 	lineLabel: { fontSize: 16, color: colors.black, flexShrink: 1 },
 	lineValue: { fontSize: 16, fontWeight: 'bold', color: colors.black },
-	cardRow: {
-		flexDirection: 'row',
-		alignItems: 'center',
-		gap: 10,
-		paddingVertical: 8,
-		borderBottomWidth: 1,
-		borderBottomColor: '#eee',
-	},
-	cardTitle: { flex: 1, fontSize: 16 },
 	counts: { flexDirection: 'row', gap: 10 },
 	count: { flexDirection: 'row', alignItems: 'center', gap: 4 },
 	countText: { fontSize: 16, fontWeight: 'bold' },
-	ending: { paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#eee', gap: 4 },
+	ending: {
+		paddingVertical: 8,
+		borderBottomWidth: 1,
+		borderBottomColor: '#eee',
+		gap: 4,
+	},
 	endingName: { fontSize: 16, fontWeight: 'bold' },
 	endingCard: { flexDirection: 'row', alignItems: 'center', gap: 8 },
 	latest: { flexDirection: 'row', gap: 10, paddingVertical: 6 },

@@ -116,7 +116,7 @@ Ordered by impact. Everything is from reading the code. I didn't run the app, so
 ### Still open after update 2
 
 - **Public photos (bug 3):** the S3 bucket is public-read. Making it private with expiring links needs an AWS setting change, which is your call.
-- **Video and audio playback:** needs a native package, a version bump and a new build. Remove the unused packages in that same build.
+- **Next native build** (needs a version bump and `eas build`, so ask first): video and audio playback, a real chart library (react-native-svg plus a chart package, for pie and line charts and touch tooltips), and removing the unused packages.
 - **Small gaps:** an expired login retries the board load every 15 s until logout; two history entries saved within milliseconds of a sync could collide; closing the app within about a minute of deleting a person can leave their history on the server; a deleted person's photos stay in S3; Main's people bar hides while Main has no cards.
 - **Onboarding:** on hold until this round is tested.
 
@@ -185,4 +185,30 @@ Your notes: counts to the top-right, fix the small gaps, build the navigation, t
   - Photos uploaded before update 4 aren't stored under an account folder, so deleting a person leaves those files in S3.
   - Moving a card between columns doesn't update the phone's saved copy until the server board reloads. The server copy is saved as before.
   - The keyboard fix uses an iOS-only setting.
+
+## 11. More demo data and charts (2026-11-08)
+
+**Demo data, round 2** (redone 2026-11-08: longer threads on the same five people, and the same cards across people):
+- **288 demo entries** (up from 80) on your five people. Threads run 3 to 9 entries on the same card for the same person, with notes between changes. Examples: Sam / Goes silent after fights (9 entries, ending with "Wrote down every silence since August. Eleven."), Avery / Slow to text back (8, ending in a step-down to white), Riley / Small lies (7), Jordan / Different stance on kids (8).
+- **The same cards recur across people,** so patterns show up:
+  - Four cards came up with all 5 people: Slow to text back, Vague about plans, Always running late and Glued to phone on dates. Can't apologize came up with 4.
+  - The top 10 cards each came up with 3 or more people.
+  - Riley, Sam and Jordan share 12 to 15 flagged cards with each other. Avery and Casey share 4 to 6 with everyone, mostly yellows Avery later took back down.
+- **7 new cards, each with a real thread:** "That never happened", Talks over me, Unpredictable moods, Secretive with their phone, Always working, Big plans with no follow-through (added after Jordan), and Hot and cold (added after Sam's cold week).
+- **For the charts:**
+  - Every month from January to November has 10 to 58 entries.
+  - 18 cards went from yellow to red, split 3, 3, 5 and 7 across the four time ranges.
+  - 14 flags were taken back down.
+  - Five cards show up as **Maybe Your Pattern**.
+- Your own test changes are kept: Main's "Small lies" is yellow, and Smokes is a dealbreaker on Main and in Sam's Dealbreakers column.
+- Cards That Come Up Most now sorts by how many people a card came up with, then by how serious it got.
+
+**Charts on the Stats tab** (plain views, no chart library, so they ship as an update):
+1. **Activity by Month:** changes and notes per month, overall and on each person.
+2. **Relationship Timeline:** a line per person from their first day to the end or today, with red dots where a card turned red and dark squares where one became a dealbreaker.
+3. **Yellow to Red:** how long cards took, grouped as under a week, 1–2 weeks, 2–4 weeks, and a month or more.
+4. **Flags by Person:** today's yellow, red and dealbreaker counts as stacked bars.
+5. **Cards That Come Up Most:** the top 10 as stacked bars.
+
+Pie and line charts, axes and tap-for-detail wait for the chart library in the next native build.
 

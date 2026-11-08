@@ -15,7 +15,12 @@ export type HistoryRow = {
 };
 
 type Card = { id: string; title?: string; flag?: string };
-type ProfileBoard = { name?: string; ended?: boolean; flag?: Card[]; dealbreaker?: Card[] };
+type ProfileBoard = {
+	name?: string;
+	ended?: boolean;
+	flag?: Card[];
+	dealbreaker?: Card[];
+};
 export type Board = Record<string, ProfileBoard>;
 
 const RANK: Record<string, number> = { white: 0, yellow: 1, red: 2 };
@@ -32,8 +37,7 @@ export const typeChanged = (h: HistoryRow) => !!h.cardTypeChange && h.cardTypeCh
 const toDealbreaker = (h: HistoryRow) => typeChanged(h) && h.newCardType === 'dealbreaker';
 const fromDealbreaker = (h: HistoryRow) => typeChanged(h) && h.previousCardType === 'dealbreaker';
 // A note: Add Context, nothing changed.
-export const isNote = (h: HistoryRow) =>
-	!typeChanged(h) && (h.previousStatus || 'white') === (h.newStatus || 'white');
+export const isNote = (h: HistoryRow) => !typeChanged(h) && (h.previousStatus || 'white') === (h.newStatus || 'white');
 // Taking a flag back down: a lower color, or out of the Dealbreakers column.
 export const isStepDown = (h: HistoryRow) =>
 	fromDealbreaker(h) ||
@@ -45,11 +49,59 @@ export const startedAt = (profileId: string) => {
 	return Number.isFinite(ms) && ms > 0 ? ms : null;
 };
 
-export const overallStats = (board: Board, history: HistoryRow[], names: Record<string, string> = {}) => {
+const monthKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+
+// Changes and notes per month, oldest first, every month from `from` to `to` (empty months included).
+export const monthlyActivity = (rows: HistoryRow[], from: number, to: number) => {
+	const months: {
+		key: string;
+		label: string;
+		changes: number;
+		notes: number;
+	}[] = [];
+	// At most 10 years, keeping the latest months.
+	const earliest = new Date(to);
+	earliest.setDate(1); // the 31st would roll a month forward
+	earliest.setMonth(earliest.getMonth() - 119);
+	const cursor = new Date(Math.max(from, +earliest));
+	cursor.setDate(1);
+	cursor.setHours(0, 0, 0, 0);
+	while (+cursor <= to) {
+		months.push({
+			key: monthKey(cursor),
+			label: cursor.toLocaleDateString(undefined, { month: 'short' }),
+			changes: 0,
+			notes: 0,
+		});
+		cursor.setMonth(cursor.getMonth() + 1);
+	}
+	rows.forEach((h) => {
+		const m = months.find((x) => x.key === monthKey(new Date(h.timestamp)));
+		if (!m) return;
+		if (isNote(h)) m.notes++;
+		else m.changes++;
+	});
+	return months;
+};
+
+export const YELLOW_TO_RED_BUCKETS = [
+	{ label: 'Under a week', max: 7 },
+	{ label: '1–2 weeks', max: 14 },
+	{ label: '2–4 weeks', max: 28 },
+	{ label: '4 weeks or more', max: Infinity },
+];
+
+export const overallStats = (
+	board: Board,
+	history: HistoryRow[],
+	names: Record<string, string> = {},
+	now = Date.now(),
+) => {
 	const people = Object.keys(board).filter((id) => id !== 'main');
 	const cards: Card[] = [...(board.main?.flag || []), ...(board.main?.dealbreaker || [])];
 	const sorted = [...history].sort((a, b) => +new Date(a.timestamp) - +new Date(b.timestamp));
-	const personHistory = sorted.filter((h) => h.profileId !== 'main');
+	// People still on the board; history left by deleted profiles would skew every number.
+	const personHistory = sorted.filter((h) => h.profileId !== 'main' && board[h.profileId]);
 
 	// The highest a card ever got with each person: today's board, or anything in its history.
 	const peak = new Map<string, number>(); // `${profileId}|${flagId}` -> 0 white, 1 yellow, 2 red, 3 dealbreaker
@@ -59,7 +111,7 @@ export const overallStats = (board: Board, history: HistoryRow[], names: Record<
 		board[pid]?.dealbreaker?.forEach((c) => raise(`${pid}|${c.id}`, 3));
 	});
 	personHistory.forEach((h) => {
-		raise(`${h.profileId}|${h.flagId}`, toDealbreaker(h) ? 3 : RANK[h.newStatus || 'white'] ?? 0);
+		raise(`${h.profileId}|${h.flagId}`, toDealbreaker(h) ? 3 : (RANK[h.newStatus || 'white'] ?? 0));
 	});
 
 	const perCard = cards
@@ -75,11 +127,11 @@ export const overallStats = (board: Board, history: HistoryRow[], names: Record<
 			};
 		})
 		.filter((c) => c.reached > 0)
-		.sort((a, b) => b.dealbreaker - a.dealbreaker || b.red - a.red || b.yellow - a.yellow);
+		// Most people first, then the most serious.
+		.sort((a, b) => b.reached - a.reached || b.dealbreaker - a.dealbreaker || b.red - a.red || b.yellow - a.yellow);
 
 	// Cards you flag on almost everyone may say more about you than about them.
-	const yourPatterns =
-		people.length >= 3 ? perCard.filter((c) => c.reached / people.length >= 0.75) : [];
+	const yourPatterns = people.length >= 3 ? perCard.filter((c) => c.reached / people.length >= 0.75) : [];
 
 	// Which cards were red or dealbreakers on each ended person.
 	const endings = people
@@ -88,7 +140,10 @@ export const overallStats = (board: Board, history: HistoryRow[], names: Record<
 			id: pid,
 			name: names[pid] || board[pid]?.name || 'Unnamed',
 			cards: [
-				...(board[pid]?.dealbreaker || []).map((c) => ({ title: c.title || '', dealbreaker: true })),
+				...(board[pid]?.dealbreaker || []).map((c) => ({
+					title: c.title || '',
+					dealbreaker: true,
+				})),
 				...(board[pid]?.flag || [])
 					.filter((c) => c.flag === 'red')
 					.map((c) => ({ title: c.title || '', dealbreaker: false })),
@@ -112,6 +167,45 @@ export const overallStats = (board: Board, history: HistoryRow[], names: Record<
 	const changes = personHistory.filter((h) => !isNote(h));
 	const stepDowns = changes.filter(isStepDown).length;
 
+	// One row per person for the timeline: from the profile's start to its last entry if ended, else today,
+	// with a dot each time a card turned red or became a dealbreaker.
+	const timeline = people
+		.map((pid) => {
+			const rows = personHistory.filter((h) => h.profileId === pid);
+			const start = startedAt(pid) ?? (rows[0] ? +new Date(rows[0].timestamp) : now);
+			const last = rows.length ? +new Date(rows[rows.length - 1].timestamp) : start;
+			return {
+				id: pid,
+				name: names[pid] || board[pid]?.name || 'Unnamed',
+				ended: !!board[pid]?.ended,
+				start,
+				end: board[pid]?.ended ? Math.max(last, start) : now,
+				events: rows
+					.filter((h) => toDealbreaker(h) || (!typeChanged(h) && h.newStatus === 'red' && h.previousStatus !== 'red'))
+					.map((h) => ({
+						t: +new Date(h.timestamp),
+						dealbreaker: toDealbreaker(h),
+					})),
+			};
+		})
+		.sort((a, b) => a.start - b.start);
+	const from = timeline.length ? Math.min(...timeline.map((p) => p.start)) : now;
+
+	// Today's flags per person, worst first.
+	const byPerson = people
+		.map((pid) => {
+			const flags = board[pid]?.flag || [];
+			return {
+				id: pid,
+				name: names[pid] || board[pid]?.name || 'Unnamed',
+				ended: !!board[pid]?.ended,
+				yellow: flags.filter((c) => c.flag === 'yellow').length,
+				red: flags.filter((c) => c.flag === 'red').length,
+				dealbreaker: (board[pid]?.dealbreaker || []).length,
+			};
+		})
+		.sort((a, b) => b.dealbreaker - a.dealbreaker || b.red - a.red || b.yellow - a.yellow);
+
 	return {
 		people: people.length,
 		ended: people.filter((pid) => board[pid]?.ended).length,
@@ -120,6 +214,13 @@ export const overallStats = (board: Board, history: HistoryRow[], names: Record<
 		endings,
 		yellowToRedDays: median(yellowToRed),
 		yellowToRedCount: yellowToRed.length,
+		yellowToRedBuckets: YELLOW_TO_RED_BUCKETS.map((b, i) => ({
+			label: b.label,
+			count: yellowToRed.filter((d) => d < b.max && (i === 0 || d >= YELLOW_TO_RED_BUCKETS[i - 1].max)).length,
+		})),
+		monthly: monthlyActivity(personHistory, from, now),
+		timeline: { from, to: now, people: timeline },
+		byPerson,
 		changes: changes.length,
 		stepDowns,
 		notes: personHistory.length - changes.length,
@@ -131,7 +232,7 @@ export const personStats = (
 	history: HistoryRow[],
 	profileId: string,
 	now = Date.now(),
-	name?: string
+	name?: string,
 ) => {
 	const profile = board[profileId] || {};
 	const rows = history
@@ -140,19 +241,11 @@ export const personStats = (
 	const start = startedAt(profileId);
 	const flags = profile.flag || [];
 
-	// Entries per month, newest month first, e.g. { month: 'Nov 2026', notes: 3, changes: 2 }
-	const months: { key: string; month: string; notes: number; changes: number }[] = [];
-	rows.forEach((h) => {
-		const d = new Date(h.timestamp);
-		const key = `${d.getFullYear()}-${d.getMonth()}`;
-		let m = months.find((x) => x.key === key);
-		if (!m) {
-			m = { key, month: d.toLocaleDateString(undefined, { month: 'short', year: 'numeric' }), notes: 0, changes: 0 };
-			months.push(m);
-		}
-		if (isNote(h)) m.notes++;
-		else m.changes++;
-	});
+	// Entries per month, oldest first, from the profile's start to its last entry (ended) or today.
+	const first = start ?? (rows.length ? +new Date(rows[rows.length - 1].timestamp) : now);
+	// Same end as the timeline: an ended person's last entry, or their start when they have none.
+	const last = profile.ended ? (rows.length ? +new Date(rows[0].timestamp) : first) : now;
+	const months = monthlyActivity(rows, first, Math.max(first, last));
 
 	return {
 		name: name || profile.name || 'Unnamed',
