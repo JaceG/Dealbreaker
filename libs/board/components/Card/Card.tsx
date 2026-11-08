@@ -57,7 +57,7 @@ const PeopleCounts = ({ counts }: PeopleCountsProps) => {
 		<View
 			accessible
 			accessibilityLabel={label}
-			style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 6 }}>
+			style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
 			{parts.map((p) => (
 				<View key={p.key} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
 					<View
@@ -177,6 +177,12 @@ const Card: React.FC<CardProps> = ({
 							elevation: isCardWithShadow ? 5 : 0,
 							shadowOpacity: isCardWithShadow ? 0.1 : 0,
 						}}>
+						{/* Main only: how many active people have this card yellow, red or as a dealbreaker, in the top-right corner */}
+						{!hidden && item?.row().peopleCounts ? (
+							<View style={{ position: 'absolute', top: 8, right: 10, zIndex: 1 }}>
+								<PeopleCounts counts={item.row().peopleCounts} />
+							</View>
+						) : null}
 						<RowWrapper
 							style={{
 								justifyContent: 'center',
@@ -214,11 +220,6 @@ const Card: React.FC<CardProps> = ({
 									}}>
 									{item.row().description}
 								</Paragraph>
-							) : null}
-
-							{/* Main only: how many active people have this card yellow, red or as a dealbreaker */}
-							{!hidden && item?.row().peopleCounts ? (
-								<PeopleCounts counts={item.row().peopleCounts} />
 							) : null}
 
 							{/* Second line - Icons and flag */}

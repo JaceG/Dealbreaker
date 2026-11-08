@@ -271,19 +271,19 @@ export const getHistoryCounts = async (
 	}
 };
 
-// Removes a deleted profile's history from the server. Tries 3 times, 15 s apart, to outlast a cold Render start.
-// shortcut: an app closed before the last try leaves the history behind; queue it with pendingChanges if that matters.
+const deleteProfileHistoryNow = (profileId: string) =>
+	api.delete(`/flagHistory/profile/${encodeURIComponent(profileId)}`);
+
+// Removes a deleted profile's history from the server. One try now; if it fails it is queued, so the next sync retries it even after a restart.
 export const deleteProfileHistory = async (profileId: string): Promise<boolean> => {
-	for (let attempt = 1; attempt <= 3; attempt++) {
-		try {
-			await api.delete(`/flagHistory/profile/${encodeURIComponent(profileId)}`);
-			return true;
-		} catch (error) {
-			console.error(`Error deleting profile history (try ${attempt}):`, error);
-			if (attempt < 3) await new Promise((r) => setTimeout(r, 15000));
-		}
+	try {
+		await deleteProfileHistoryNow(profileId);
+		return true;
+	} catch (error) {
+		console.error('Error deleting profile history, queued for the next sync:', error);
+		await storePendingChange('deleteProfileHistory', { profileId });
+		return false;
 	}
-	return false;
 };
 
 export const saveMyAccount = async (
@@ -387,29 +387,71 @@ export const getFlagHistoryLocal = async (
 	}
 };
 
+// Race: storePendingChange and syncPendingChanges both read, change and write pendingChanges; interleaved, the later write drops the other's entry.
+let pendingLock: Promise<unknown> = Promise.resolve();
+function withPendingLock<T>(fn: () => Promise<T>): Promise<T> {
+	const run = pendingLock.then(fn, fn);
+	pendingLock = run.catch(() => {});
+	return run;
+}
+const readPending = async (): Promise<any[]> =>
+	JSON.parse((await AsyncStorage.getItem('pendingChanges')) || '[]');
+const newPendingId = () =>
+	`${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+// Each queued change belongs to the account that made it, so it is only ever sent with that account's login.
+const currentUserId = async (): Promise<string | null> => {
+	try {
+		return JSON.parse((await getSecureItem('userData')) || 'null')?.id || null;
+	} catch {
+		return null;
+	}
+};
+
+// Account deletion: this account's queued changes must not be sent afterwards. Waits out a sync already
+// running (it may have read them) before dropping.
+export const dropPendingChangesFor = async (userId: string) => {
+	await syncInFlight?.catch(() => {});
+	return withPendingLock(async () => {
+		const list = await readPending();
+		await AsyncStorage.setItem(
+			'pendingChanges',
+			JSON.stringify(list.filter((c) => c.owner && c.owner !== userId))
+		);
+	});
+};
+
 // Store pending change
 export const storePendingChange = async (
 	action: string,
 	data: any
 ): Promise<void> => {
 	try {
-		const pendingChanges = await AsyncStorage.getItem('pendingChanges');
-		const changes = pendingChanges ? JSON.parse(pendingChanges) : [];
-
-		changes.push({
-			action,
-			data,
-			timestamp: new Date(),
+		const owner = await currentUserId();
+		// Signed out (e.g. mid-logout): no account to send it under later, so it isn't queued.
+		if (!owner) return;
+		await withPendingLock(async () => {
+			const changes = await readPending();
+			changes.push({ id: newPendingId(), owner, action, data, timestamp: new Date() });
+			await AsyncStorage.setItem('pendingChanges', JSON.stringify(changes));
 		});
-
-		await AsyncStorage.setItem('pendingChanges', JSON.stringify(changes));
 	} catch (error) {
 		console.error('Error storing pending change:', error);
 	}
 };
 
-// Sync pending changes
-export const syncPendingChanges = async () => {
+// One sync at a time: a second caller (logout during a reconnect sync) waits for the running one instead of
+// reading the same entries and posting them again.
+let syncInFlight: Promise<{ success: boolean; offline?: boolean; message: string }> | null = null;
+export const syncPendingChanges = () => {
+	if (!syncInFlight) {
+		syncInFlight = runPendingSync().finally(() => {
+			syncInFlight = null;
+		});
+	}
+	return syncInFlight;
+};
+
+const runPendingSync = async (): Promise<{ success: boolean; offline?: boolean; message: string }> => {
 	try {
 		// Check for offline mode
 		const isOfflineMode = await AsyncStorage.getItem('offlineMode');
@@ -423,59 +465,99 @@ export const syncPendingChanges = async () => {
 			};
 		}
 
-		// Get pending changes from storage
-		const pendingChanges = await AsyncStorage.getItem('pendingChanges');
-
-		if (!pendingChanges) {
+		// Get pending changes; entries queued before ids existed get one, so only what was sent is removed below.
+		// Only entries from before ids and owners existed (no id) are taken as the signed-in account's;
+		// any other entry without an owner is dropped. Another account's entries stay queued.
+		const me = await currentUserId();
+		if (!me) return { success: true, offline: true, message: 'Not signed in, sync skipped.' };
+		const changes = await withPendingLock(async () => {
+			const list = await readPending();
+			if (list.some((c) => !c.id || !c.owner)) {
+				const kept = list
+					.filter((c) => c.owner || !c.id)
+					.map((c) => (c.owner ? c : { ...c, id: newPendingId(), owner: me }));
+				await AsyncStorage.setItem('pendingChanges', JSON.stringify(kept));
+				return kept.filter((c) => c.owner === me);
+			}
+			return list.filter((c) => c.owner === me);
+		});
+		if (changes.length === 0) {
 			// No changes to sync - this is a success case
 			return { success: true, message: 'No changes to sync' };
 		}
 
-		const changes = JSON.parse(pendingChanges);
-		if (changes.length === 0) {
-			// Empty array of changes - this is a success case
-			return { success: true, message: 'No changes to sync' };
-		}
+		const sent = new Set<string>();
+		const history = changes.filter((c) => c.action !== 'deleteProfileHistory');
+		const deletes = changes.filter((c) => c.action === 'deleteProfileHistory');
+		let result: { success: boolean; offline?: boolean; message: string } = {
+			success: true,
+			message: 'Changes synced successfully',
+		};
 
-		try {
-			// Try to send to API with timeout
-			const response = await api.post('/flagHistory/sync', { changes });
-
-			if (response.data.success) {
-				// Drop only what was sent; entries queued during the request stay for next time.
-				const latest = JSON.parse(
-					(await AsyncStorage.getItem('pendingChanges')) || '[]'
-				);
-				await AsyncStorage.setItem(
-					'pendingChanges',
-					JSON.stringify(latest.slice(changes.length))
-				);
-				return {
+		if (history.length > 0) {
+			try {
+				// Try to send to API with timeout
+				const response = await api.post('/flagHistory/sync', { changes: history });
+				if (response.data.success) {
+					history.forEach((c) => sent.add(c.id));
+				} else {
+					// API returned an error
+					result = {
+						success: false,
+						message: response.data.message || 'Server returned an error',
+					};
+				}
+			} catch (apiError) {
+				// API request failed - store as offline for now
+				const error = apiError as ApiError;
+				console.error('API sync error:', error.message);
+				// Don't treat this as a critical error in the UI - just store for later sync
+				result = {
 					success: true,
-					message: 'Changes synced successfully',
-				};
-			} else {
-				// API returned an error
-				return {
-					success: false,
-					message:
-						response.data.message || 'Server returned an error',
+					offline: true,
+					message: 'Changes stored for later sync',
 				};
 			}
-		} catch (apiError) {
-			// API request failed - store as offline for now
-			const error = apiError as ApiError;
-			console.error('API sync error:', error.message);
-
-			// Don't treat this as a critical error in the UI - just store for later sync
-			return {
-				success: true,
-				offline: true,
-				message: 'Changes stored for later sync',
-			};
 		}
+
+		// Deletes go after the history they may cover, so a queued note can't bring a deleted profile's history back.
+		if (sent.size === history.length) {
+			for (const change of deletes) {
+				try {
+					await deleteProfileHistoryNow(change.data.profileId);
+					sent.add(change.id);
+				} catch (error) {
+					console.error('Error deleting profile history on sync:', error);
+					result = { ...result, offline: true };
+				}
+			}
+		}
+
+		// Drop exactly what was sent; entries queued during the requests stay for next time.
+		if (sent.size > 0) {
+			await withPendingLock(async () => {
+				const latest = await readPending();
+				await AsyncStorage.setItem(
+					'pendingChanges',
+					JSON.stringify(latest.filter((c) => !sent.has(c.id)))
+				);
+			});
+		}
+		return result;
 	} catch (error) {
 		console.error('Error in sync process:', error);
 		return { success: false, message: 'Error processing pending changes' };
 	}
+};
+
+// One card's history across every person (Main left out), newest first. Throws when the server can't be reached.
+export const getCardHistoryAcrossProfiles = async (
+	flagId: string | number
+): Promise<HistoryEntry[]> =>
+	(await api.get(`/flagHistory/card/${encodeURIComponent(String(flagId))}`)).data || [];
+
+// All of your history entries, every profile, oldest first, without attachments (for the Stats screen). Throws on failure.
+export const getMyHistory = async (): Promise<import('../stats').HistoryRow[]> => {
+	const response = await api.get('/flagHistory/mine');
+	return response.data || [];
 };

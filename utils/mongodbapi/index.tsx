@@ -31,6 +31,7 @@ export const addDealbreakers = async (
 	}
 };
 
+// The board, null for an account with none yet, 'unauthorized' when the login token was refused, undefined when the request failed.
 export const getDealbreakers = async (userId: string) => {
 	try {
 		const response = await dealbreakerClient.post('/get-dealbreakers', {
@@ -39,5 +40,7 @@ export const getDealbreakers = async (userId: string) => {
 		return response.data;
 	} catch (error: unknown) {
 		console.error('Error loading the board:', error);
+		const status = axios.isAxiosError(error) ? error.response?.status : undefined;
+		if (status === 401 || status === 403) return 'unauthorized';
 	}
 };

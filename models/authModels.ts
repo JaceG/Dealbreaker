@@ -93,6 +93,7 @@ export interface LoginHookReturn {
 // Auth Actions Hook Return Type
 export interface AuthActionsReturn {
 	logout: () => Promise<void>;
+	confirmLogout: () => void;
 	clearSecureStore: () => Promise<void>;
 }
 

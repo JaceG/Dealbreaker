@@ -1,4 +1,5 @@
 import { Dropdown } from 'react-native-element-dropdown';
+import { router } from 'expo-router';
 import {
 	StyleSheet,
 	Modal,
@@ -70,8 +71,10 @@ const SwitchProfileModal = memo<SwitchProfileModalProps>(
 
 		// Handle profile change with proper error handling
 		const handleProfileChange = useCallback(() => {
+			// The switcher opens from the bottom bar on any screen, so picking someone also shows their board.
 			if (!selectedId || selectedId === currentProfileId) {
 				onClose();
+				router.navigate('/');
 				return;
 			}
 
@@ -83,6 +86,7 @@ const SwitchProfileModal = memo<SwitchProfileModalProps>(
 
 			// Change the profile
 			setCurrentProfileId(selectedId);
+			router.navigate('/');
 		}, [
 			selectedId,
 			currentProfileId,
@@ -178,7 +182,7 @@ const SwitchProfileModal = memo<SwitchProfileModalProps>(
 								? styles.modalInnerContainer
 								: styles.modalInnerContainerHorizontal
 						}>
-						<Text style={styles.modalTitle}>Switch Profile</Text>
+						<Text style={styles.modalTitle}>People</Text>
 						<Dropdown
 							data={data}
 							style={[
@@ -209,6 +213,14 @@ const SwitchProfileModal = memo<SwitchProfileModalProps>(
 							<AppButton
 								title='Select Profile'
 								onPress={handleProfileChange}
+							/>
+							<AppButton
+								title='New Person'
+								onPress={() => {
+									onClose();
+									router.navigate('/create-profile');
+								}}
+								variant='secondary'
 							/>
 							<AppButton
 								title='Close'

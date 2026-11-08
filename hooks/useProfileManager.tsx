@@ -40,12 +40,11 @@ export const useProfileManager = (
 		type: 'flag' | 'dealbreaker'
 	) => {
 		ensureProfileExists(profileId);
-		const updatedDealbreaker = { ...dealbreaker };
-		updatedDealbreaker[profileId][type] = [
-			...updatedDealbreaker[profileId][type],
-			item,
-		];
-		updateDealbreaker(updatedDealbreaker);
+		const profile = dealbreaker[profileId] || { flag: [], dealbreaker: [] };
+		updateDealbreaker({
+			...dealbreaker,
+			[profileId]: { ...profile, [type]: [...(profile[type] || []), item] },
+		});
 	};
 
 	const isValidNoCardItems = (allowedCard: number) => {
@@ -106,11 +105,15 @@ export const useProfileManager = (
 		type: 'flag' | 'dealbreaker'
 	) => {
 		if (dealbreaker[profileId]) {
-			const updatedDealbreaker = { ...dealbreaker };
-			updatedDealbreaker[profileId][type] = updatedDealbreaker[profileId][
-				type
-			].filter((item: FlagItem) => item.id !== itemId);
-			updateDealbreaker(updatedDealbreaker);
+			updateDealbreaker({
+				...dealbreaker,
+				[profileId]: {
+					...dealbreaker[profileId],
+					[type]: dealbreaker[profileId][type].filter(
+						(item: FlagItem) => item.id !== itemId
+					),
+				},
+			});
 		}
 	};
 

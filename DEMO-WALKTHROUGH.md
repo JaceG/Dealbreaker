@@ -31,6 +31,17 @@ Since update 2 (below) the app doesn't save the board until it has loaded the se
 7. **Compare:** on Sam open the count bar → **Compare with Others**: Sam is the first column.
 8. **Main cards:** dots with counts of people who have the card yellow, red or as a dealbreaker (square).
 
+### Phone test for update 4 (built 2026-11-08, not published yet)
+
+1. **Bottom bar:** every screen shows **Main · People · Stats · Create Flag · Settings**. The header has no Switch Profile or Logout.
+2. **People:** opens the switcher. Pick Sam and you land on Sam's board. **New Person** opens the create screen.
+3. **Create Flag from Sam's board:** asks "Flags Are Made on Main" with **Switch to Main**. On Main it opens straight away.
+4. **Settings:** **Log Out** at the bottom, with a confirmation.
+5. **Main cards:** the people-count dots sit in the top-right corner.
+6. **History across people:** on Sam, open a card's 📋 → **Everyone** shows that card's notes from all your people, labeled with names.
+7. **Stats:** **Overall** shows the at-a-glance numbers, the cards that come up most, "maybe your pattern" and "when it ended". Tap a person chip for their numbers. From Sam's board the Stats tab opens on Sam.
+8. **Main with no cards** (only on a fresh test account): the people list still shows.
+
 ## 2. How I think the app is meant to be used
 
 - **Main Profile is your rulebook.** It holds your list of things to watch for. The **Flags** column has warning signs. The **Dealbreakers** column has your non-negotiables.
@@ -150,4 +161,28 @@ Original questions:
 2. **A card's history across people.** In a card's history popup, add an **Everyone** tab listing that card's notes from all your people, newest first, each labeled with the person. It needs one more backend route (all your entries for one card). Small to medium.
 3. **Stats.** On Main: for each card, how many people it reached yellow, red or dealbreaker with; which cards were in play when a profile ended; how long yellow usually takes to turn red; how often you take a flag back down; and cards you flag on almost everyone, which can point at your own pattern rather than theirs. Per person: a flag timeline, days since the profile started, notes per month and the latest changes. This is the biggest item. I'd start with a plain list screen of Main's numbers before any charts.
 4. **Dragging cards** (cards lift on a tap, and are hard to drop): saved for later, as you said. It lives in the board library (`libs/board`). The likely fix is a long-press to lift, plus larger drop zones.
+
+## 10. Update 4 (2026-11-08)
+
+Your notes: counts to the top-right, fix the small gaps, build the navigation, the history across people, and stats.
+
+- **Navigation:** a bottom bar on every screen: Main · People · Stats · Create Flag · Settings. Tapping People opens the switcher, which gains a **New Person** button. Create Flag on a person's board asks to switch to Main first, because flags are made only on Main. My Account is now **Settings**, with Log Out (confirmed) at the bottom.
+- **History across people:** a card's history popup on a person has **This person** and **Everyone** tabs. Main has no tabs. New backend route: `GET /flagHistory/card/:flagId`.
+- **Stats:**
+  - **Overall:** people, changes, notes, how often you take a flag back down, and how many days yellow usually takes to turn red. Also the top cards by how many people each reached yellow, red or dealbreaker, cards you flagged on 3 in 4 people or more, and red flags and dealbreakers on each ended person.
+  - **Per person:** profile age, current counts, entries and notes, monthly activity and the latest 10 changes.
+  - Backend route: `GET /flagHistory/mine`. Plain lists for now, charts later if you want them.
+- **Small gaps fixed:**
+  - An expired login now signs you out with "Please sign in again" instead of retrying forever.
+  - The offline queue no longer loses or double-sends notes.
+  - Each queued note belongs to the account that made it and is only ever sent under that account.
+  - Deleting an account drops its queued notes first.
+  - Deleting a person now also deletes their photos from S3, and only files under your own account's folder.
+  - The notes counter catches up right after a save.
+  - Main's people list shows even with no cards.
+  - The card edit save, adding a card and removing a card now update state cleanly.
+- **Still open:**
+  - Photos uploaded before update 4 aren't stored under an account folder, so deleting a person leaves those files in S3.
+  - Moving a card between columns doesn't update the phone's saved copy until the server board reloads. The server copy is saved as before.
+  - The keyboard fix uses an iOS-only setting.
 

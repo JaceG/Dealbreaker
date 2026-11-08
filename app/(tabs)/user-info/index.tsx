@@ -29,7 +29,8 @@ import {
 	changeSignInMethod,
 } from '../../../utils/api';
 import { useAuthActions } from '../../../hooks/useAuthActions';
-import { forgetFaceIdLogin } from '../../../utils/storage';
+import { forgetFaceIdLogin, getSecureItem } from '../../../utils/storage';
+import { dropPendingChangesFor } from '../../../utils/api';
 import { SignInMethods, SignInType } from '../../../models/apiModels';
 
 const PROVIDER_NAME: Record<SignInType, string> = {
@@ -66,7 +67,7 @@ export const UserInfo = () => {
 	const [confirmPassword, setConfirmPassword] = useState('');
 	const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 	const [deleteConfirmationText, setDeleteConfirmationText] = useState('');
-	const { logout } = useAuthActions();
+	const { logout, confirmLogout } = useAuthActions();
 	// undefined while loading, null if loading failed
 	const [methods, setMethods] = useState<SignInMethods | null>();
 	const [isAppleAvailable, setIsAppleAvailable] = useState(false);
@@ -253,6 +254,10 @@ export const UserInfo = () => {
 			return;
 		}
 
+		// Queued offline notes must not be posted after the account is gone. Dropped first, so a sync that
+		// starts during the delete can't send them; if the delete fails they are lost, which is acceptable here.
+		const deletingId = JSON.parse((await getSecureItem('userData')) || 'null')?.id;
+		if (deletingId) await dropPendingChangesFor(deletingId);
 		const response = await saveMyAccount(3, '', '', '', authToken || '');
 		console.log(response);
 		setShowDeleteConfirmation(false);
@@ -397,6 +402,10 @@ export const UserInfo = () => {
 					/>
 				</View>
 
+				<View style={styles.logoutSection}>
+					<AppButton title='Log Out' onPress={confirmLogout} variant='secondary' />
+				</View>
+
 				<Text style={styles.dangerHeader}>Danger Zone</Text>
 				<View style={styles.seperator}></View>
 				<View style={styles.deleteSection}>
@@ -463,6 +472,9 @@ export const UserInfo = () => {
 };
 
 const styles = StyleSheet.create({
+	logoutSection: {
+		marginTop: 30,
+	},
 	scroll: {
 		flex: 1,
 		backgroundColor: 'white',

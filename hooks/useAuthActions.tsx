@@ -1,6 +1,8 @@
 import { router } from 'expo-router';
+import { Alert } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import { clearKeys } from '../utils/storage';
+import { syncPendingChanges } from '../utils/api';
 import { useContext } from 'react';
 import StoreContext from '../store';
 import { useAuth } from '../context/Auth';
@@ -14,6 +16,9 @@ export const useAuthActions = (): AuthActionsReturn => {
 	const clearSecureStore = async () => {
 		// Stop saving first, so the emptied board below never reaches the server.
 		boardLoadedRef.current = false;
+		// Send queued offline notes while this account's token still works. Whatever can't be sent stays queued,
+		// marked as this account's, and is only sent the next time this same account signs in.
+		await syncPendingChanges().catch(() => {});
 		for (const key of ['authToken', 'userData']) {
 			await SecureStore.deleteItemAsync(key);
 		}
@@ -40,8 +45,15 @@ export const useAuthActions = (): AuthActionsReturn => {
 		}, 200);
 	};
 
+	const confirmLogout = () =>
+		Alert.alert('Log Out', 'Are you sure you want to log out?', [
+			{ text: 'Cancel', style: 'cancel' },
+			{ text: 'Log Out', style: 'destructive', onPress: logout },
+		]);
+
 	return {
 		logout,
+		confirmLogout,
 		clearSecureStore,
 	};
 };

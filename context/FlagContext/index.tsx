@@ -52,6 +52,8 @@ interface FlagContextType {
 	selectedFlag: SelectedFlag | null;
 	historyModalVisible: boolean;
 	additionalReasonModalVisible: boolean;
+	// Goes up each time a history entry has been saved, so note counters can refetch.
+	historyVersion: number;
 
 	// Setters
 	setPendingFlagChange: (change: PendingFlagChange | null) => void;
@@ -121,6 +123,7 @@ export const FlagProvider = ({
 	const [historyModalVisible, setHistoryModalVisible] = useState(false);
 	const [additionalReasonModalVisible, setAdditionalReasonModalVisible] =
 		useState(false);
+	const [historyVersion, setHistoryVersion] = useState(0);
 
 	// Function to handle flag click and show reason modal
 	const handleFlagClick = (
@@ -227,8 +230,7 @@ export const FlagProvider = ({
 				'flag', // newCardType - regular flag changes are always flag to flag,
 				attachments
 			);
-
-
+			setHistoryVersion((v) => v + 1);
 
 			console.log('Successfully recorded flag change with reason');
 		} catch (error) {
@@ -330,7 +332,7 @@ export const FlagProvider = ({
 				'flag', // New card type,
 				attachments
 			);
-
+			setHistoryVersion((v) => v + 1);
 
 			console.log('Additional reason added successfully');
 		} catch (error) {
@@ -346,6 +348,7 @@ export const FlagProvider = ({
 		selectedFlag,
 		historyModalVisible,
 		additionalReasonModalVisible,
+		historyVersion,
 
 		// Setters
 		setPendingFlagChange,

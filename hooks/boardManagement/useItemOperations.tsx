@@ -1,4 +1,6 @@
+import { useRef } from 'react';
 import { showToast } from '../../utils/functions';
+import { setList as saveToStorage } from '../../utils/storage';
 
 export const useItemOperations = (
 	dealbreaker: any,
@@ -17,6 +19,10 @@ export const useItemOperations = (
 	setDeleteModalVisible: (visible: boolean) => void,
 	setEditModalVisible: (visible: boolean) => void
 ) => {
+	// The delete's delayed refresh must draw the board after the delete, not the closure from before it.
+	const updateBoardRef = useRef(updateBoard);
+	updateBoardRef.current = updateBoard;
+
 	const handleDeleteItem = (item: any) => {
 		setItemToDelete(item);
 		setDeleteModalVisible(true);
@@ -55,14 +61,7 @@ export const useItemOperations = (
 
 		// Give state update time to complete, then refresh the board
 		setTimeout(() => {
-			// Only try to update the board if we still have a valid state
-			if (
-				dealbreaker &&
-				currentProfileId &&
-				dealbreaker[currentProfileId]
-			) {
-				updateBoard();
-			}
+			updateBoardRef.current();
 
 			setIsRemount(false);
 			setRefreshKey(Date.now());
@@ -111,8 +110,9 @@ export const useItemOperations = (
 			}
 		});
 
-		// Update the state
+		// Update the state and the phone's saved copy, as updateDealbreaker does for other board changes
 		setDealbreaker(updatedDealbreaker);
+		saveToStorage('dealbreaker', updatedDealbreaker);
 
 		// Close the modal
 		setEditModalVisible(false);

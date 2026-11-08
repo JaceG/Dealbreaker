@@ -106,6 +106,11 @@ export default function Lists() {
 
 	return (
 		<View style={styles.container}>
+			<CompareProfilesModal
+				visible={compareVisible}
+				onClose={() => setCompareVisible(false)}
+				focusId={currentProfileId !== 'main' ? currentProfileId : undefined}
+			/>
 			<BoardManagementModals
 				visible={visible}
 				setVisible={setVisible}
@@ -200,11 +205,6 @@ export default function Lists() {
 							onCompare={() => setCompareVisible(true)}
 						/>
 					)}
-					<CompareProfilesModal
-						visible={compareVisible}
-						onClose={() => setCompareVisible(false)}
-						focusId={currentProfileId !== 'main' ? currentProfileId : undefined}
-					/>
 					{!isRemount ? (
 						<Board
 							cardBorderRadius='10px'
@@ -292,6 +292,16 @@ export default function Lists() {
 					) : null}
 				</>
 			) : (
+				<>
+				{/* Main keeps its people list even before it has any cards. */}
+				{currentProfileId === 'main' && !isRemount ? (
+					<PeopleOverview
+						dealbreaker={dealbreaker}
+						profiles={profiles}
+						onOpenProfile={openProfile}
+						onCompare={() => setCompareVisible(true)}
+					/>
+				) : null}
 				<View style={styles.noDealbreakerContainer}>
 					<View style={styles.noDealbreakerInContainer}>
 						<Text style={styles.noDealbreakerText}>
@@ -307,6 +317,7 @@ export default function Lists() {
 						)}
 					</View>
 				</View>
+				</>
 			)}
 		</View>
 	);

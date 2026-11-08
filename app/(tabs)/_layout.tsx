@@ -5,7 +5,6 @@ import { Alert, Button, useWindowDimensions } from 'react-native';
 import { useAuth } from '../../context/Auth';
 import SwitchProfileModal from '../../components/SwitchProfileModal';
 import { colors } from '../../libs/board/constants';
-import { useAuthActions } from '../../hooks/useAuthActions';
 import { useDealbreakerSync } from '../../hooks/useDealbreakerSync';
 import { useLayoutModals } from '../../hooks/useLayoutModals';
 import StoreContext from '../../store';
@@ -16,7 +15,6 @@ const Layout = () => {
 	console.log('user: ', user);
 	const { width, height } = useWindowDimensions();
 	const isPortrait = height >= width;
-	const { logout } = useAuthActions();
 	const {
 		switchProfileModalVisible,
 		openSwitchProfileModal,
@@ -27,121 +25,101 @@ const Layout = () => {
 		useContext<any>(StoreContext);
 	const isProfileMain = () => currentProfileId === 'main';
 	const personName = profiles.find((p: any) => p.id === currentProfileId)?.name;
-	const confirmLogout = () =>
-		Alert.alert('Log Out', 'Are you sure you want to log out?', [
-			{ text: 'Cancel', style: 'cancel' },
-			{ text: 'Log Out', style: 'destructive', onPress: logout },
-		]);
+	// Flags are made on Main only: from a person's board the Create Flag tab offers to switch first.
+	const createFlagFromProfile = () =>
+		Alert.alert(
+			'Flags Are Made on Main',
+			'New flags go on your Main profile and then appear on everyone. Switch to Main to create one?',
+			[
+				{ text: 'Cancel', style: 'cancel' },
+				{
+					text: 'Switch to Main',
+					onPress: () => {
+						setCurrentProfileId('main');
+						router.navigate('/create-flag');
+					},
+				},
+			]
+		);
+	const iconSize = isPortrait ? 28 : 18;
 	return (
 		<>
 			<SwitchProfileModal
 				visible={switchProfileModalVisible}
 				onClose={closeSwitchProfileModal}
 			/>
-			<Tabs>
-				<Tabs.Screen
-					name={'create-flag/index'}
-					options={{
-						href: isProfileMain() ? '/create-flag' : null,
-						headerTitle: 'Create Flag',
-						title: 'Create Flag',
-						tabBarStyle: {
-							display: isProfileMain() ? 'flex' : 'none',
-						},
-						tabBarIcon: ({ color }) => (
-							<Feather
-								name='flag'
-								size={isPortrait ? 28 : 18}
-								color={color as string}
-							/>
-						),
-						tabBarActiveTintColor: colors.exodusFruit,
-						headerRight: () => (
-							<Button title='Logout' onPress={confirmLogout} />
-						),
-					}}
-				/>
+			<Tabs screenOptions={{ tabBarActiveTintColor: colors.blurple }}>
 				<Tabs.Screen
 					name='index'
 					listeners={{
-						// On a person's board the Home tab takes you back to Main.
+						// On a person's board the Main tab takes you back to Main.
 						tabPress: () => {
 							if (!isProfileMain()) setCurrentProfileId('main');
 						},
 					}}
 					options={{
-						headerTitle: isProfileMain() ? 'Home' : personName || 'Profile',
-						title: isProfileMain() ? 'Home' : 'Main',
+						headerTitle: isProfileMain() ? 'Main' : personName || 'Profile',
+						title: 'Main',
 						tabBarIcon: ({ color }) => (
-							<FontAwesome
-								name='home'
-								color={color as string}
-								size={isPortrait ? 28 : 18}
-							/>
+							<FontAwesome name='home' color={color as string} size={iconSize} />
 						),
-						tabBarActiveTintColor: colors.exodusFruit,
-						headerRight: () => {
-							if (user?.role == 'guest') {
-								return (
-									<Button
-										title='Register'
-										onPress={() => {
-											router.push('/register');
-										}}
-									/>
-								);
-							}
-							return <Button title='Logout' onPress={confirmLogout} />;
-						},
-						headerLeft: () => (
-							<Button
-								title='Switch Profile'
-								onPress={openSwitchProfileModal}
-							/>
-						),
+						headerRight: () =>
+							user?.role == 'guest' ? (
+								<Button title='Register' onPress={() => router.push('/register')} />
+							) : null,
 					}}
 				/>
 				<Tabs.Screen
 					name={'create-profile/index'}
-					options={{
-						href: isProfileMain() ? '/create-profile' : null,
-						headerTitle: 'Create Profile',
-						title: 'Create Profile',
-						tabBarStyle: {
-							display: isProfileMain() ? 'flex' : 'none',
+					listeners={{
+						// People opens the switcher; its New Person button leads to this screen.
+						tabPress: (e) => {
+							e.preventDefault();
+							openSwitchProfileModal();
 						},
+					}}
+					options={{
+						headerTitle: 'New Person',
+						title: 'People',
 						tabBarIcon: ({ color }) => (
-							<Feather
-								name='user'
-								size={isPortrait ? 28 : 18}
-								color={color as string}
-							/>
+							<Feather name='users' size={iconSize} color={color as string} />
 						),
-						tabBarActiveTintColor: colors.exodusFruit,
-						headerRight: () => (
-							<Button title='Logout' onPress={confirmLogout} />
+					}}
+				/>
+				<Tabs.Screen
+					name={'stats/index'}
+					options={{
+						headerTitle: 'Stats',
+						title: 'Stats',
+						tabBarIcon: ({ color }) => (
+							<Feather name='bar-chart-2' size={iconSize} color={color as string} />
+						),
+					}}
+				/>
+				<Tabs.Screen
+					name={'create-flag/index'}
+					listeners={{
+						tabPress: (e) => {
+							if (isProfileMain()) return;
+							e.preventDefault();
+							createFlagFromProfile();
+						},
+					}}
+					options={{
+						headerTitle: 'Create Flag',
+						title: 'Create Flag',
+						tabBarIcon: ({ color }) => (
+							<Feather name='flag' size={iconSize} color={color as string} />
 						),
 					}}
 				/>
 				<Tabs.Screen
 					name={'user-info/index'}
 					options={{
-						href: isProfileMain() ? '/user-info' : null,
-						headerTitle: 'My Account',
-						title: 'My Account',
-						tabBarStyle: {
-							display: isProfileMain() ? 'flex' : 'none',
-						},
+						headerTitle: 'Settings',
+						title: 'Settings',
 						tabBarIcon: ({ color }) => (
-							<Feather
-								name='user'
-								size={isPortrait ? 28 : 18}
-								color={color as string}
-							/>
-						),
-						tabBarActiveTintColor: colors.exodusFruit,
-						headerRight: () => (
-							<Button title='Logout' onPress={confirmLogout} />
+							<Feather name='settings' size={iconSize} color={color as string} />
 						),
 					}}
 				/>

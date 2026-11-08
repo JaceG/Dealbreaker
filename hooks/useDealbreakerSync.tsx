@@ -3,10 +3,13 @@ import * as SecureStore from 'expo-secure-store';
 import StoreContext from '../store';
 import { getDealbreakers } from '../utils/mongodbapi';
 import { getAtomicValue } from '../utils/storage';
+import { showToast } from '../utils/functions';
+import { useAuthActions } from './useAuthActions';
 
 export const useDealbreakerSync = (user: any) => {
 	const { setDealbreaker, currentProfileId, setCurrentProfileId, boardLoadedRef } =
 		useContext<any>(StoreContext);
+	const { logout } = useAuthActions();
 	// Read when the board arrives: a profile picked while it loaded wins over the saved one.
 	const currentProfileIdRef = useRef(currentProfileId);
 	currentProfileIdRef.current = currentProfileId;
@@ -33,6 +36,12 @@ export const useDealbreakerSync = (user: any) => {
 				const userDataObject = JSON.parse(userData);
 				const userId = userDataObject.id;
 				const response = await getDealbreakers(userId);
+				// An expired login never starts working again: sign out instead of retrying forever.
+				if (response === 'unauthorized') {
+					showToast('error', 'Please sign in again', 'Your login has expired.');
+					logout();
+					return;
+				}
 				// undefined = the request failed (Render may be asleep): keep saving off and try again.
 				if (response === undefined) {
 					retryRef.current = setTimeout(fetchDealbreakers, 15000);

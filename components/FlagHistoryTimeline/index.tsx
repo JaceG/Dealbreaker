@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import {
 	View,
 	Text,
@@ -8,9 +8,12 @@ import {
 	TouchableOpacity,
 	Image,
 	Alert,
+	Pressable,
 	useWindowDimensions,
 } from 'react-native';
 import { getFlagHistory } from '../../utils/mongodb';
+import { getCardHistoryAcrossProfiles } from '../../utils/api';
+import StoreContext from '../../store';
 import { showToast } from '../../utils';
 import { colors } from '../../libs/board/constants/colors';
 import { FlagHistoryTimelineProps } from '../../models/modalModels';
@@ -53,6 +56,8 @@ let AudioModule: any = null;
 interface HistoryItem {
 	_id?: string;
 	id?: string;
+	profileId?: string;
+	profileName?: string;
 	timestamp: string;
 	type?: string;
 	cardTypeChange?: string;
@@ -90,6 +95,16 @@ const FlagHistoryTimeline = ({
 	const [previewVisible, setPreviewVisible] = useState(false);
 	const [isTestingS3, setIsTestingS3] = useState(false);
 
+	// Everyone tab: this card's entries on every person, loaded the first time the tab opens
+	const { dealbreaker, profiles } = useContext(StoreContext) as unknown as {
+		dealbreaker: Record<string, { ended?: unknown } | undefined>;
+		profiles: { id: string; name: string }[];
+	};
+	const showTabs = profileId !== 'main';
+	const [tab, setTab] = useState<'person' | 'everyone'>('person');
+	const [everyone, setEveryone] = useState<HistoryItem[] | null>(null);
+	const [everyoneError, setEveryoneError] = useState(false);
+
 	// Audio playback states - only used if Audio is available
 	const [sound, setSound] = useState<any>(null);
 	const [isPlaying, setIsPlaying] = useState(false);
@@ -105,7 +120,35 @@ const FlagHistoryTimeline = ({
 
 	useEffect(() => {
 		loadHistory();
+		setTab('person');
+		setEveryone(null);
 	}, [profileId, flagId]);
+
+	const loadEveryone = async () => {
+		setEveryoneError(false);
+		try {
+			setEveryone(
+				(await getCardHistoryAcrossProfiles(flagId)) as unknown as HistoryItem[]
+			);
+		} catch (error) {
+			setEveryoneError(true);
+		}
+	};
+
+	useEffect(() => {
+		if (tab === 'everyone' && everyone === null && !everyoneError) loadEveryone();
+	}, [tab, everyone, everyoneError]);
+
+	// The person's current name when they still exist, else the name saved with the entry
+	const personLabel = (item: HistoryItem) => {
+		const id = item.profileId || '';
+		const name = profiles.find((p) => p.id === id)?.name || item.profileName || 'Unknown person';
+		const notes = [
+			id === profileId && 'this person',
+			dealbreaker[id]?.ended && 'ended',
+		].filter(Boolean);
+		return notes.length ? `${name} (${notes.join(', ')})` : name;
+	};
 
 	// Clean up sound resources when component unmounts - only if Audio is available
 	useEffect(() => {
@@ -366,7 +409,7 @@ const FlagHistoryTimeline = ({
 		}));
 	};
 
-	const renderHistoryItem = ({
+	const renderHistoryItem = (list: HistoryItem[], withPerson = false) => ({
 		item,
 		index,
 	}: {
@@ -382,11 +425,14 @@ const FlagHistoryTimeline = ({
 							styles.redTimelineBullet,
 					]}
 				/>
-				{index < history.length - 1 && (
+				{index < list.length - 1 && (
 					<View style={styles.timelineLine} />
 				)}
 			</View>
 			<View style={styles.timelineContent}>
+				{withPerson && (
+					<Text style={styles.personName}>{personLabel(item)}</Text>
+				)}
 				<View style={styles.timelineHeader}>
 					<Text style={styles.timelineDate}>
 						{new Date(item.timestamp).toLocaleString()}
@@ -671,7 +717,72 @@ const FlagHistoryTimeline = ({
 				</View>
 			</View>
 
-			{loading ? (
+			{showTabs && (
+				<View style={styles.tabs} accessibilityRole='tablist'>
+					{(
+						[
+							['person', 'This person'],
+							['everyone', 'Everyone'],
+						] as const
+					).map(([key, label]) => {
+						const selected = tab === key;
+						return (
+							<Pressable
+								key={key}
+								accessibilityRole='tab'
+								accessibilityLabel={label}
+								accessibilityState={{ selected }}
+								onPress={() => setTab(key)}
+								style={[styles.tab, selected && styles.tabSelected]}>
+								<Text
+									style={[
+										styles.tabText,
+										selected && styles.tabTextSelected,
+									]}>
+									{label}
+								</Text>
+							</Pressable>
+						);
+					})}
+				</View>
+			)}
+
+			{tab === 'everyone' ? (
+				everyoneError ? (
+					<View style={styles.emptyContainer}>
+						<Text style={styles.emptyText}>
+							Couldn't load everyone's history. Check your connection.
+						</Text>
+						<View style={styles.retryButton}>
+							<AppButton
+								title='Try Again'
+								variant='secondary'
+								onPress={() => setEveryoneError(false)}
+							/>
+						</View>
+					</View>
+				) : everyone === null ? (
+					<View style={styles.loadingContainer}>
+						<ActivityIndicator size='large' color='#4A90E2' />
+						<Text style={styles.loadingText}>Loading history...</Text>
+					</View>
+				) : everyone.length === 0 ? (
+					<View style={styles.emptyContainer}>
+						<Text style={styles.emptyText}>
+							No one else has history on this card yet.
+						</Text>
+					</View>
+				) : (
+					<FlatList
+						data={everyone}
+						renderItem={renderHistoryItem(everyone, true)}
+						keyExtractor={(item, index) =>
+							`everyone-${item._id || index}`
+						}
+						contentContainerStyle={styles.listContent}
+					/>
+				)
+			) : loading ? (
 				<View style={styles.loadingContainer}>
 					<ActivityIndicator size='large' color='#4A90E2' />
 					<Text style={styles.loadingText}>Loading history...</Text>
@@ -685,7 +796,7 @@ const FlagHistoryTimeline = ({
 			) : (
 				<FlatList
 					data={history}
-					renderItem={renderHistoryItem}
+					renderItem={renderHistoryItem(history)}
 					keyExtractor={(item, index) =>
 						`history-${item._id || index}`
 					}
@@ -788,6 +899,41 @@ const styles = StyleSheet.create({
 	},
 	listContent: {
 		padding: 16,
+	},
+	tabs: {
+		flexDirection: 'row',
+		margin: 12,
+		borderWidth: 2,
+		borderColor: colors.blurple,
+		borderRadius: 8,
+		overflow: 'hidden',
+	},
+	tab: {
+		flex: 1,
+		minHeight: 44,
+		alignItems: 'center',
+		justifyContent: 'center',
+		backgroundColor: colors.white,
+	},
+	tabSelected: {
+		backgroundColor: colors.blurple,
+	},
+	tabText: {
+		fontSize: 16,
+		fontWeight: '600',
+		color: colors.blurple,
+	},
+	tabTextSelected: {
+		color: colors.white,
+	},
+	retryButton: {
+		marginTop: 12,
+	},
+	personName: {
+		fontSize: 15,
+		fontWeight: 'bold',
+		color: '#fff',
+		marginBottom: 4,
 	},
 	timelineItem: {
 		flexDirection: 'row',

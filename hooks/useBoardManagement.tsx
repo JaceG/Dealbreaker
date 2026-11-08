@@ -45,6 +45,7 @@ const useBoardManagement = () => {
 		setReasonModalVisible,
 		setHistoryModalVisible,
 		setAdditionalReasonModalVisible,
+		historyVersion,
 	} = useFlagContext() as any;
 	const { user } = useAuth() as any;
 
@@ -60,7 +61,7 @@ const useBoardManagement = () => {
 	useEffect(() => {
 		if (anyHistoryModalOpen) return;
 		let current = true;
-		// Waits a moment so a note saved as a popup closes is counted.
+		// Waits a moment so a note saved as a popup closes is counted; historyVersion refetches once a slow save lands.
 		const timer = setTimeout(async () => {
 			const counts = await getHistoryCounts(currentProfileId);
 			// A failed request keeps the badges as they were instead of clearing them.
@@ -74,7 +75,7 @@ const useBoardManagement = () => {
 			current = false;
 			clearTimeout(timer);
 		};
-	}, [currentProfileId, dealbreaker, anyHistoryModalOpen]);
+	}, [currentProfileId, dealbreaker, anyHistoryModalOpen, historyVersion]);
 
 	// Modal states hook
 	const {
