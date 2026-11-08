@@ -1,8 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { BoardRepository } from '../../libs/board/components';
 import { data } from '../../models/boardManagementModel';
-import { showToast } from '../../utils/functions';
-import { useFlagContext } from '../../context/FlagContext';
 
 export const useBoardOperations = (
 	dealbreaker: any,
@@ -159,59 +157,10 @@ export const useBoardOperations = (
 		setList(new BoardRepository(newData));
 	};
 
-	// Function to clean up any duplicate items that exist in both flags and dealbreakers lists
-	const cleanupDuplicates = () => {
-		// Safety check
-		if (!dealbreaker || !currentProfileId || !dealbreaker[currentProfileId])
-			return;
-
-		// Create a deep copy of the current state
-		const updatedDealbreaker = JSON.parse(JSON.stringify(dealbreaker));
-
-		// Get references to the current profile's lists
-		const flagsList = updatedDealbreaker[currentProfileId].flag || [];
-		const dealbreakersList =
-			updatedDealbreaker[currentProfileId].dealbreaker || [];
-
-		// Create a set of IDs from the dealbreakers list
-		const dealbreakerIds = new Set(
-			dealbreakersList.map((item: any) => item.id)
-		);
-
-		// Filter out any items from flags list that exist in dealbreakers list
-		const cleanFlagsList = flagsList.filter(
-			(item: any) => !dealbreakerIds.has(item.id)
-		);
-
-		// If we found and removed any duplicates
-		if (cleanFlagsList.length < flagsList.length) {
-			console.log(
-				`Removed ${
-					flagsList.length - cleanFlagsList.length
-				} duplicate items from flags list`
-			);
-
-			// Return the updated data for the consumer to handle state updates
-			updatedDealbreaker[currentProfileId].flag = cleanFlagsList;
-			return updatedDealbreaker;
-		}
-
-		return null; // No duplicates found
-	};
-
 	// Effects for board management
 	useEffect(() => {
 		// Log flag colors whenever currentProfileId changes
 		logProfileFlags(`Profile changed to ${currentProfileId}`);
-
-		// Run duplicate cleanup when profile changes
-		if (dealbreaker && currentProfileId && dealbreaker[currentProfileId]) {
-			const cleanedData = cleanupDuplicates();
-			if (cleanedData) {
-				// Consumer should handle this update
-				console.log('Duplicates found and cleaned');
-			}
-		}
 	}, [currentProfileId]);
 
 	// Modify this effect to log flags after dealbreaker state updates
@@ -311,19 +260,7 @@ export const useBoardOperations = (
 		// Board functions
 		updateBoard,
 		reloadBoard,
-		cleanupDuplicates,
 		logProfileFlags,
 		ensureCurrentProfileExists,
 	};
-};
-
-export const useFlagHistory = (currentProfileId: string) => {
-	const { handleViewFlagHistory: contextHandleViewFlagHistory } =
-		useFlagContext() as any;
-
-	const handleViewFlagHistory = (item: any) => {
-		contextHandleViewFlagHistory(item, currentProfileId);
-	};
-
-	return { handleViewFlagHistory };
 };

@@ -2,7 +2,6 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 import * as SecureStore from 'expo-secure-store';
 import * as WebBrowser from 'expo-web-browser';
 import { router } from 'expo-router';
-import Constants from 'expo-constants';
 
 interface AuthContextType {
 	user: User;

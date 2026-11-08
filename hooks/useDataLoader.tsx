@@ -4,15 +4,8 @@ import {
 	getList,
 	setAtomicValue,
 	getAtomicValue,
-	syncPendingChanges,
-	showToast,
-	getSecureItem,
 } from '../utils';
-import {
-	DealbreakerState,
-	FlagItem,
-	Profile,
-} from '../models/boardManagementModel';
+import { DealbreakerState, Profile } from '../models/boardManagementModel';
 
 export const useDataLoader = (
 	dealbreaker: DealbreakerState,
@@ -33,88 +26,6 @@ export const useDataLoader = (
 		setDealbreaker(newState);
 		setList('dealbreaker', newState);
 		debugLog('Saved dealbreaker state to storage:', newState);
-	};
-
-	// Function to synchronize flags across all profiles
-	const synchronizeProfileFlags = () => {
-		debugLog('Synchronizing flags across all profiles...');
-
-		// First collect all unique flags from all profiles
-		const allUniqueFlags = new Map();
-		const allUniqueDealbreakers = new Map();
-
-		// Iterate through all profiles to find unique items by ID
-		Object.keys(dealbreaker).forEach((profileId) => {
-			const profile = dealbreaker[profileId];
-
-			// Process flags
-			if (profile.flag && Array.isArray(profile.flag)) {
-				profile.flag.forEach((flag: FlagItem) => {
-					if (flag && flag.id && !allUniqueFlags.has(flag.id)) {
-						allUniqueFlags.set(flag.id, flag);
-					}
-				});
-			}
-
-			// Process dealbreakers
-			if (profile.dealbreaker && Array.isArray(profile.dealbreaker)) {
-				profile.dealbreaker.forEach((db: FlagItem) => {
-					if (db && db.id && !allUniqueDealbreakers.has(db.id)) {
-						allUniqueDealbreakers.set(db.id, db);
-					}
-				});
-			}
-		});
-
-		// Now ensure each profile has all the unique items
-		const updatedDealbreaker = { ...dealbreaker };
-		let hasChanges = false;
-
-		Object.keys(updatedDealbreaker).forEach((profileId) => {
-			const profile = updatedDealbreaker[profileId];
-
-			// Ensure the profile has the correct structure
-			if (!profile.flag) profile.flag = [];
-			if (!profile.dealbreaker) profile.dealbreaker = [];
-
-			// Add any missing flags
-			allUniqueFlags.forEach((flag, flagId) => {
-				const exists = profile.flag.some(
-					(f: FlagItem) => f.id === flagId
-				);
-				if (!exists) {
-					debugLog(
-						`Adding missing flag ${flagId} to profile ${profileId}`
-					);
-					profile.flag.push(JSON.parse(JSON.stringify(flag)));
-					hasChanges = true;
-				}
-			});
-
-			// Add any missing dealbreakers
-			allUniqueDealbreakers.forEach((db, dbId) => {
-				const exists = profile.dealbreaker.some(
-					(d: FlagItem) => d.id === dbId
-				);
-				if (!exists) {
-					debugLog(
-						`Adding missing dealbreaker ${dbId} to profile ${profileId}`
-					);
-					profile.dealbreaker.push(JSON.parse(JSON.stringify(db)));
-					hasChanges = true;
-				}
-			});
-		});
-
-		// Update if changes were made
-		if (hasChanges) {
-			debugLog('Updating dealbreaker state with synchronized flags');
-			updateDealbreaker(updatedDealbreaker);
-			return true;
-		}
-
-		debugLog('No changes needed for flag synchronization');
-		return false;
 	};
 
 	// Load all data at app initialization
@@ -147,11 +58,6 @@ export const useDataLoader = (
 					);
 
 					setDealbreaker(savedDealbreaker);
-
-					// After loading data, synchronize flags across all profiles
-					setTimeout(() => {
-						synchronizeProfileFlags();
-					}, 1000);
 				}
 
 				// Load profiles
@@ -230,6 +136,5 @@ export const useDataLoader = (
 	return {
 		isLoaded,
 		updateDealbreaker,
-		synchronizeProfileFlags,
 	};
 };

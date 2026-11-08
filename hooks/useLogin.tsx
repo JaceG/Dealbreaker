@@ -4,12 +4,7 @@ import { API_BASE_URL } from '../constants/api';
 import { useAuth } from '../context/Auth';
 import { router } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
-import {
-	LoginHookReturn,
-	UserData,
-	LoginApiResponse,
-	UserApiResponse,
-} from '../models/authModels';
+import { LoginHookReturn, UserData } from '../models/authModels';
 import {
 	FACE_ID_LOGIN,
 	FACE_ID_READY,

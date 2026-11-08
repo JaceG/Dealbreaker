@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
 	Animated,
 	TouchableOpacity,
@@ -9,7 +9,7 @@ import {
 	TextStyle,
 	GestureResponderEvent,
 } from 'react-native';
-import { bool, func, number, object, shape, string } from 'prop-types';
+import { bool, func, number, object, string } from 'prop-types';
 import { colors } from '../../constants';
 import { Flag } from '../Icons';
 import {

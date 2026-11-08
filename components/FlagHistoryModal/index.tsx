@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Modal, View, StyleSheet, TouchableOpacity, Text } from 'react-native';
+import React, { useEffect } from 'react';
+import { Modal, View, StyleSheet } from 'react-native';
 import FlagHistoryTimeline from '../FlagHistoryTimeline';
 import { FlagHistoryModalProps } from '../../models/modalModels';
 

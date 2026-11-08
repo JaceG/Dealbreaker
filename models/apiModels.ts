@@ -298,28 +298,6 @@ export type ApiError =
 // API ENDPOINT TYPES
 // =============================================================================
 
-// API endpoints enum/constants
-export const API_ENDPOINTS = {
-	// Authentication
-	LOGIN: '/auth/login',
-	REGISTER: '/auth/register',
-	USER: '/auth/user',
-
-	// Flag History
-	FLAG_HISTORY: '/flagHistory',
-	FLAG_HISTORY_BY_ID: (profileId: string, flagId: string) =>
-		`/flagHistory/${profileId}/${flagId}`,
-	FLAG_HISTORY_SYNC: '/flagHistory/sync',
-	FLAG_HISTORY_ATTACHMENT: (historyId: string) =>
-		`/flagHistory/${historyId}/attachment`,
-
-	// User Data
-	USER_DATA: (userId: string) => `/user/data/${userId}`,
-
-	// Dealbreakers
-	DEALBREAKERS: '/dealbreaker',
-} as const;
-
 // HTTP methods
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
 

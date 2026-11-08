@@ -3,7 +3,6 @@ import {
 	Text,
 	View,
 	TouchableOpacity,
-	ScrollView,
 } from 'react-native';
 import { Board } from '../../libs/board/components';
 import AppButton from '../../components/AppButton';
@@ -43,7 +42,6 @@ export default function Lists() {
 		setAdditionalReasonModalVisible,
 		setHistoryModalVisible,
 		setDealbreakerAlertVisible,
-		setTransitionReasonModalVisible,
 
 		// Item & Transition State
 		itemToDelete,
@@ -57,8 +55,6 @@ export default function Lists() {
 		pendingTransition,
 
 		// Board Management
-		setIsRemount,
-		setList,
 
 		// Refs & Internal State
 		flagListIndexRef,
@@ -83,8 +79,6 @@ export default function Lists() {
 		// Action Functions
 		confirmDeleteItem,
 		updateListOrder,
-		updateBoard,
-		cleanupDuplicates,
 
 		// Utility Functions
 		getCurrentProfileName,

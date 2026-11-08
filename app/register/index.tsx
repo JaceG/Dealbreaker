@@ -15,11 +15,7 @@ import { AntDesign } from '@expo/vector-icons';
 import * as AppleAuthentication from 'expo-apple-authentication';
 // Uncomment these imports
 import * as WebBrowser from 'expo-web-browser';
-import { useAuth } from '../../context/Auth';
 import { router } from 'expo-router';
-import { API_BASE_URL } from '../../constants/api';
-import * as SecureStore from 'expo-secure-store';
-import { AuthContextType } from '../../models/authModels';
 import { colors } from '../../libs/board/constants';
 import useRegister from '../../hooks/useRegister';
 import {

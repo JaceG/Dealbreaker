@@ -63,26 +63,6 @@ export const useConsoleManager = () => {
 
 		// TEMPORARILY RESTORE CONSOLE OUTPUT FOR TESTING
 		(global as any).enableConsole();
-
-		// Disable noisy logs in production
-		// if (typeof __DEV__ !== 'undefined' && !__DEV__) {
-		// 	// Override default console methods to reduce output in production
-		// 	const originalConsoleLog = console.log;
-		// 	const originalConsoleInfo = console.info;
-
-		// 	// Preserve error and warn for debugging
-		// 	console.log = (...args: any[]) => {
-		// 		if (DEBUG_LOGGING) {
-		// 			originalConsoleLog(...args);
-		// 		}
-		// 	};
-
-		// 	console.info = (...args: any[]) => {
-		// 		if (DEBUG_LOGGING) {
-		// 			originalConsoleInfo(...args);
-		// 		}
-		// 	};
-		// }
 	}, []);
 
 	// Helper to prevent excessive logging

@@ -15,7 +15,7 @@ import {
 import { showToast, uploadToS3 } from '../../utils';
 import { imageUtils } from '../../utils/functions';
 import { colors } from '../../libs/board/constants';
-import { SimpleAttachment, SimpleAttachmentType } from '../../models';
+import { SimpleAttachment } from '../../models';
 
 // Feature flags to disable native modules
 const AUDIO_ENABLED = false;
@@ -121,13 +121,6 @@ const ReasonInputModal = ({
 			setAttachments([]);
 		}
 
-		// Log simulator information in dev mode
-		// if (__DEV__) {
-		// 	debugLog('Running in development/simulator mode');
-		// 	debugLog('Platform:', Platform.OS);
-		// 	debugLog('IsPickerAvailable state:', isPickerAvailable);
-		// 	debugLog('Audio enabled:', AUDIO_ENABLED);
-		// }
 
 		// Cleanup audio recording and playback on unmount
 		return () => {

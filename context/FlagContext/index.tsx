@@ -1,9 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 // Import directly from implementation files to bypass index.js
-import {
-	addFlagHistory,
-	addAttachmentToHistory,
-} from '../../utils/mongodb/index';
+import { addFlagHistory } from '../../utils/mongodb/index';
 
 // Type definitions
 interface Profile {
@@ -216,10 +213,8 @@ export const FlagProvider = ({
 				return;
 			}
 
-			// Change Here
 			// Record the flag status change in history with profile name
-			console.log('sengin attachments', { attachments });
-			const historyEntry = await addFlagHistory(
+			await addFlagHistory(
 				currentProfileId,
 				currentProfile.name, // profileName
 				rowId, // flagId
@@ -233,45 +228,7 @@ export const FlagProvider = ({
 				attachments
 			);
 
-			// Add attachments if any were provided
-			// if (
-			// 	attachments &&
-			// 	attachments.length > 0 &&
-			// 	historyEntry &&
-			// 	historyEntry._id
-			// ) {
-			// 	console.log(
-			// 		'Adding attachments to history entry:',
-			// 		JSON.stringify(attachments)
-			// 	);
-			// 	console.log('History entry ID:', historyEntry._id);
-			// 	console.log(
-			// 		'Using addAttachmentToHistory from:',
-			// 		typeof addAttachmentToHistory
-			// 	);
 
-			// 	// Process each attachment
-			// 	for (const attachment of attachments) {
-			// 		try {
-			// 			console.log(
-			// 				'Processing attachment:',
-			// 				JSON.stringify(attachment)
-			// 			);
-			// 			console.log('Attachment type:', attachment.type);
-			// 			console.log(
-			// 				'Attachment URL:',
-			// 				attachment.url?.substring(0, 50) + '...'
-			// 			);
-			// 			const result = await addAttachmentToHistory(
-			// 				historyEntry._id,
-			// 				attachment
-			// 			);
-			// 			console.log('Attachment add result:', result);
-			// 		} catch (attachError) {
-			// 			console.error('Error adding attachment:', attachError);
-			// 		}
-			// 	}
-			// }
 
 			console.log('Successfully recorded flag change with reason');
 		} catch (error) {
@@ -360,7 +317,7 @@ export const FlagProvider = ({
 			console.log('Step 2 [attachments: data]', { attachments });
 
 			// Add the reason to history
-			const historyEntry = await addFlagHistory(
+			await addFlagHistory(
 				selectedFlag.currentProfileId,
 				currentProfile.name,
 				selectedFlag.id,
@@ -374,41 +331,6 @@ export const FlagProvider = ({
 				attachments
 			);
 
-			// Add attachments if provided
-			// console.log('>>>>>', historyEntry, historyEntry?._id);
-			// if (
-			// 	attachments &&
-			// 	attachments.length > 0 &&
-			// 	historyEntry &&
-			// 	historyEntry._id
-			// ) {
-			// 	console.log(
-			// 		'Adding attachments to additional reason:',
-			// 		JSON.stringify(attachments)
-			// 	);
-			// 	console.log(
-			// 		'Additional reason history entry ID:',
-			// 		historyEntry._id
-			// 	);
-			// 	for (const attachment of attachments) {
-			// 		try {
-			// 			console.log(
-			// 				'Processing additional reason attachment:',
-			// 				JSON.stringify(attachment)
-			// 			);
-			// 			const result = await addAttachmentToHistory(
-			// 				historyEntry._id,
-			// 				attachment
-			// 			);
-			// 			console.log(
-			// 				'Additional reason attachment add result:',
-			// 				result
-			// 			);
-			// 		} catch (error) {
-			// 			console.error('Error adding attachment:', error);
-			// 		}
-			// 	}
-			// }
 
 			console.log('Additional reason added successfully');
 		} catch (error) {
@@ -444,38 +366,6 @@ export const FlagProvider = ({
 	return (
 		<FlagContext.Provider value={contextValue}>
 			{children}
-			{/* <FlagHistoryModal
-        visible={historyModalVisible}
-        onClose={() => setHistoryModalVisible(false)}
-        profileId={selectedFlag?.currentProfileId}
-        flagId={selectedFlag?.id}
-        flagTitle={selectedFlag?.name || selectedFlag?.title || 'Unknown Flag'}
-        onAddReason={handleOpenAddReasonModal}
-      /> */}
-			{/* <ReasonInputModal
-        visible={additionalReasonModalVisible}
-        onClose={() => setAdditionalReasonModalVisible(false)}
-        onSubmit={(reason, attachments) =>
-          handleAddAdditionalReason(reason, attachments, profiles || [])
-        }
-        flagTitle={selectedFlag?.name || selectedFlag?.title || 'Unknown Flag'}
-        prevStatus={selectedFlag?.flag || 'white'}
-        newStatus={selectedFlag?.flag || 'white'}
-        modalTitle='Add Additional Context'
-      /> */}
-			{/* <ReasonInputModal
-        visible={reasonModalVisible}
-        onClose={handleCancelFlagChange}
-        onSubmit={(reason, attachments) =>
-          handleFlagChangeWithReason(reason, attachments, profiles || [])
-        }
-        flagTitle={
-          pendingFlagChange?.item?.attributes?.row?.name || 'Unknown Flag'
-        }
-        prevStatus={pendingFlagChange?.previousStatus || 'white'}
-        newStatus={pendingFlagChange?.newFlag || 'white'}
-        modalTitle='Why Are You Changing This Flag?'
-      /> */}
 		</FlagContext.Provider>
 	);
 };

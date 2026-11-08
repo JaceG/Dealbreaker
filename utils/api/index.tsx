@@ -1,30 +1,14 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Platform } from 'react-native';
 import {
 	Attachment,
 	HistoryEntry,
-	UserData,
 	ApiError,
 	CustomApiError,
 	SignInMethods,
 	SignInType,
 } from '../../models/apiModels';
 import { getSecureItem } from '../storage';
-
-// API base URL - updated with Render URL
-// For local testing on iOS simulator, use http://localhost:4000
-// For local testing on Android emulator, use http://10.0.2.2:4000
-// For production, use your Render URL
-// const API_URL = Platform.select({
-// 	// ios: __DEV__
-// 	// 	? 'http://localhost:4000/api'
-// 	// 	: 'https://dealbreaker-api.onrender.com/api',
-// 	// android: __DEV__
-// 	// 	? 'http://10.0.2.2:4000/api'
-// 	// 	: 'https://dealbreaker-api.onrender.com/api',
-// 	default: 'https://dealbreaker-api.onrender.com/api',
-// });
 
 const API_URL = 'https://dealbreaker-api.onrender.com/api';
 
@@ -424,12 +408,6 @@ export const syncPendingChanges = async () => {
 			return { success: true, message: 'No changes to sync' };
 		}
 
-		// In offline-only dev mode, just pretend the sync worked
-		// if (__DEV__ && process.env.OFFLINE_ONLY === 'true') {
-		// 	console.log('DEV MODE: Simulating successful sync');
-		// 	return { success: true, message: 'Simulated sync in dev mode' };
-		// }
-
 		try {
 			// Try to send to API with timeout
 			const response = await api.post('/flagHistory/sync', { changes });
@@ -467,105 +445,5 @@ export const syncPendingChanges = async () => {
 	} catch (error) {
 		console.error('Error in sync process:', error);
 		return { success: false, message: 'Error processing pending changes' };
-	}
-};
-
-// Add attachment to history entry
-export const addAttachmentToHistory = async (
-	historyId: string | number,
-	attachment: Attachment
-): Promise<any> => {
-	try {
-		console.log(
-			`Adding attachment to history entry ${historyId}`,
-			attachment
-		);
-
-		if (!historyId) {
-			console.error('Cannot add attachment: Missing history ID');
-			return { success: false, error: 'Missing history ID' };
-		}
-
-		// If the attachment already has an S3 URL (isS3: true), just use it directly
-		if (attachment.isS3) {
-			console.log(
-				'Attachment already has S3 URL, adding directly',
-				attachment
-			);
-
-			// Prepare attachment data
-			const requestData = {
-				attachment,
-			};
-
-			// Send to API
-			try {
-				const response = await api.post(
-					`/flagHistory/${historyId}/attachment`,
-					requestData
-				);
-				console.log('Attachment added successfully:', response.data);
-				return response.data;
-			} catch (apiError) {
-				// Handle 404 error - history ID might not exist
-				const error = apiError as CustomApiError;
-				if (error.response && error.response.status === 404) {
-					console.log(
-						'History entry not found, storing attachment locally'
-					);
-					// Store attachment locally for future sync
-					await storePendingChange('addAttachment', {
-						historyId,
-						attachment,
-					});
-					return { success: true, localOnly: true };
-				}
-				throw apiError;
-			}
-		} else {
-			console.log('Attachment needs S3 upload first');
-			// In a real implementation, this would upload to S3 first
-			// For now, just return failure
-			return {
-				success: false,
-				error: 'Attachment must be uploaded to S3 first',
-			};
-		}
-	} catch (error) {
-		console.error('Error adding attachment to MongoDB:', error);
-		const apiError = error as CustomApiError;
-		if (apiError.response) {
-			console.error('Server response:', apiError.response.data);
-			console.error('Status code:', apiError.response.status);
-		} else if (apiError.request) {
-			console.error('No response received from server');
-		}
-		return { success: false, error: apiError.message || 'Unknown error' };
-	}
-};
-
-// Fetch all user data including profiles and flags
-export const fetchAllUserData = async (
-	userId: string | number
-): Promise<UserData> => {
-	try {
-		console.log(`Fetching all data for user ${userId}`);
-		const response = await api.get(`/user/data/${userId}`);
-		console.log(
-			'User data fetched successfully:',
-			`${response.data.profiles?.length || 0} profiles, ` +
-				`${Object.keys(response.data.flags || {}).length} flag records`
-		);
-		return response.data;
-	} catch (error) {
-		console.error('Error fetching user data:', error);
-		const apiError = error as CustomApiError;
-		if (apiError.response) {
-			console.error('Server response:', apiError.response.data);
-			console.error('Status code:', apiError.response.status);
-		} else if (apiError.request) {
-			console.error('No response received from server');
-		}
-		throw error;
 	}
 };

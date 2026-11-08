@@ -23,8 +23,6 @@ import {
 	statusCodes,
 } from '@react-native-google-signin/google-signin';
 import * as AppleAuthentication from 'expo-apple-authentication';
-import { API_BASE_URL } from '../../constants/api';
-import * as Linking from 'expo-linking';
 import {
 	EXPO_PUBLIC_OAUTH_IOS_CLIENT_ID,
 	EXPO_PUBLIC_OAUTH_EXPO_CLIENT_ID,

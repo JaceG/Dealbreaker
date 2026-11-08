@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, memo, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import {
 	View,
 	Text,
@@ -8,8 +8,6 @@ import {
 	TouchableOpacity,
 	Image,
 	Alert,
-	Modal,
-	ScrollView,
 	useWindowDimensions,
 } from 'react-native';
 import { getFlagHistory } from '../../utils/mongodb';

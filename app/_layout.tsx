@@ -10,7 +10,6 @@ import { useProfileManager } from '../hooks/useProfileManager';
 // Import centralized types
 import {
 	FlagItem,
-	ProfileData,
 	DealbreakerState,
 	Profile,
 } from '../models/boardManagementModel';
@@ -24,27 +23,7 @@ import StoreContext from '../store';
 import Toast from 'react-native-toast-message';
 import { FlagProvider } from '../context/FlagContext';
 import { AuthProvider } from '../context/Auth';
-import { setAtomicValue, getAtomicValue, clearStorage } from '../utils';
-import { addDealbreakers, getDealbreakers } from '../utils/mongodbapi';
-import { AuthContextType } from '../models/authModels';
-
-// Update component props types
-interface ComponentProps {
-	[key: string]: any;
-}
-
-const Lists = (props: { navigation?: any; route?: any }) => null;
-const CreateFlags = (props: { navigation?: any; route?: any }) => null;
-const CreateProfiles = (props: { navigation?: any; route?: any }) => null;
-
-// Fix component props type
-interface ProfileComponentProps {
-	navigation?: any;
-	route?: any;
-	onLogout?: () => void;
-}
-
-const ProfileScreen = (props: ProfileComponentProps) => null;
+import { addDealbreakers } from '../utils/mongodbapi';
 
 const Layout = () => {
 	const { debugLog } = useConsoleManager();
@@ -60,8 +39,6 @@ const Layout = () => {
 		{ id: 'main', name: 'Main Profile' },
 	]);
 	const [currentProfileId, setCurrentProfileId] = useState('main');
-	const [isAuthenticated, setIsAuthenticated] = useState(false);
-	const isDealbreakerMountRef = useRef(false);
 	const isMountRef = useRef(false);
 	const isDealbreakerTimeoutRef = useRef<
 		boolean | ReturnType<typeof setTimeout>
@@ -74,7 +51,7 @@ const Layout = () => {
 	);
 
 	// Data loader hook
-	const { isLoaded, updateDealbreaker, synchronizeProfileFlags } =
+	const { updateDealbreaker } =
 		useDataLoader(
 			dealbreaker,
 			setDealbreaker,
@@ -107,15 +84,6 @@ const Layout = () => {
 		currentProfileId,
 		setCurrentProfileId
 	);
-	const checkIsLoggedIn = async () => {
-		const token = await getAtomicValue('authToken');
-		console.warn('token: ', token);
-		if (token) {
-			setIsAuthenticated(true);
-		} else {
-			setIsAuthenticated(false);
-		}
-	};
 	const updateDealbreakers = async () => {
 		const userData = await SecureStore.getItem('userData');
 		if (userData) {
@@ -141,17 +109,6 @@ const Layout = () => {
 		}
 		isMountRef.current = true;
 	}, [dealbreaker]);
-
-	useEffect(() => {
-		checkIsLoggedIn();
-	}, []);
-
-	// Main content with drawer navigation
-	useEffect(() => {
-		if (isAuthenticated) {
-			isDealbreakerMountRef.current = false;
-		}
-	}, [isAuthenticated]);
 
 	useEffect(() => {
 		SplashScreen.hideAsync();

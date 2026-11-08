@@ -1,4 +1,4 @@
-import { filter, omit, sortBy, values } from 'lodash';
+import { filter, omit, values } from 'lodash';
 import Item from './Item';
 
 // Type definitions for ColumnItem

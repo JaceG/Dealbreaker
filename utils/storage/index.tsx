@@ -1,26 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
-import { Platform } from 'react-native';
 
 // Secure storage functions
-export const setSecureItem = async (
-	key: string,
-	value: string
-): Promise<void> => {
-	try {
-		// Our mock automatically handles fallback
-		await SecureStore.setItemAsync(key, value);
-	} catch (error) {
-		console.log('Error storing secure value:', error);
-		// Fallback to AsyncStorage on error
-		try {
-			await AsyncStorage.setItem(`secure_${key}`, value);
-		} catch (innerError) {
-			console.log('AsyncStorage fallback also failed:', innerError);
-		}
-	}
-};
-
 export const getSecureItem = async (key: string): Promise<string | null> => {
 	try {
 		// Our mock automatically handles fallback
@@ -33,21 +14,6 @@ export const getSecureItem = async (key: string): Promise<string | null> => {
 		} catch (innerError) {
 			console.log('AsyncStorage fallback also failed:', innerError);
 			return null;
-		}
-	}
-};
-
-export const deleteSecureItem = async (key: string): Promise<void> => {
-	try {
-		// Our mock automatically handles fallback
-		await SecureStore.deleteItemAsync(key);
-	} catch (error) {
-		console.log('Error deleting secure value:', error);
-		// Fallback to AsyncStorage on error
-		try {
-			await AsyncStorage.removeItem(`secure_${key}`);
-		} catch (innerError) {
-			console.log('AsyncStorage fallback also failed:', innerError);
 		}
 	}
 };
@@ -88,14 +54,6 @@ export const getAtomicValue = async (key: string): Promise<string | null> => {
 	} catch (error) {
 		console.log(error);
 		return null;
-	}
-};
-
-export const clearStorage = async (): Promise<void> => {
-	try {
-		await AsyncStorage.clear();
-	} catch (error) {
-		console.log(error);
 	}
 };
 

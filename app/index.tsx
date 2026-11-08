@@ -1,5 +1,4 @@
-import { View, Text } from 'react-native';
-import { Link } from 'expo-router';
+import { View } from 'react-native';
 
 const Home = () => {
 	return <View></View>;

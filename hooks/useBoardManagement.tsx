@@ -1,13 +1,11 @@
-import { useContext, useEffect, useRef, useState } from 'react';
+import { useContext, useEffect } from 'react';
 import { Dimensions } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import StoreContext from '../store';
 import { useFlagContext } from '../context/FlagContext';
 import { useAuth } from '../context/Auth';
-import { BoardRepository } from '../libs/board/components';
 import { showToast } from '../utils/functions';
-import { addFlagHistory } from '../utils/mongodb';
-import { data, PendingTransition } from '../models/boardManagementModel';
+import { data } from '../models/boardManagementModel';
 import { useModalStates } from './boardManagement/useModalStates';
 import { useBoardOperations } from './boardManagement/useBoardOperations';
 import { useItemOperations } from './boardManagement/useItemOperations';
@@ -87,7 +85,6 @@ const useBoardManagement = () => {
 		isMountRef,
 		updateBoard,
 		reloadBoard,
-		cleanupDuplicates,
 		logProfileFlags,
 		ensureCurrentProfileExists,
 	} = useBoardOperations(
@@ -156,11 +153,6 @@ const useBoardManagement = () => {
 	useEffect(() => {
 		// Log flag colors whenever currentProfileId changes
 		logProfileFlags(`Profile changed to ${currentProfileId}`);
-
-		// Run duplicate cleanup when profile changes
-		if (dealbreaker && currentProfileId && dealbreaker[currentProfileId]) {
-			cleanupDuplicates();
-		}
 	}, [currentProfileId]);
 
 	// Modify this effect to log flags after dealbreaker state updates
@@ -332,18 +324,6 @@ const useBoardManagement = () => {
 		'- additionalReasonModalVisible:',
 		additionalReasonModalVisible
 	);
-	// Add this function to check modal state visibility
-	const debugModalState = () => {
-		console.log('--- Debug Modal State ---');
-		console.log('- reasonModalVisible:', reasonModalVisible);
-		console.log(
-			'- additionalReasonModalVisible:',
-			additionalReasonModalVisible
-		);
-		console.log('- historyModalVisible:', historyModalVisible);
-		console.log('- pendingFlagChange:', pendingFlagChange);
-		console.log('- selectedFlag:', selectedFlag);
-	};
 	return {
 		// Core Data & Context
 		ScreenHeight,
@@ -420,11 +400,9 @@ const useBoardManagement = () => {
 		confirmDeleteItem,
 		updateListOrder,
 		updateBoard,
-		cleanupDuplicates,
 
 		// Utility Functions
 		getCurrentProfileName,
-		debugModalState,
 	};
 };
 
