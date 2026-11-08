@@ -31,7 +31,7 @@ Since update 2 (below) the app doesn't save the board until it has loaded the se
 7. **Compare:** on Sam open the count bar → **Compare with Others**: Sam is the first column.
 8. **Main cards:** dots with counts of people who have the card yellow, red or as a dealbreaker (square).
 
-### Phone test for update 4 (built 2026-11-08, not published yet)
+### Phone test for update 4 (published 2026-11-08, update group 572dc1aa)
 
 1. **Bottom bar:** every screen shows **Main · People · Stats · Create Flag · Settings**. The header has no Switch Profile or Logout.
 2. **People:** opens the switcher. Pick Sam and you land on Sam's board. **New Person** opens the create screen.
@@ -162,7 +162,7 @@ Original questions:
 3. **Stats.** On Main: for each card, how many people it reached yellow, red or dealbreaker with; which cards were in play when a profile ended; how long yellow usually takes to turn red; how often you take a flag back down; and cards you flag on almost everyone, which can point at your own pattern rather than theirs. Per person: a flag timeline, days since the profile started, notes per month and the latest changes. This is the biggest item. I'd start with a plain list screen of Main's numbers before any charts.
 4. **Dragging cards** (cards lift on a tap, and are hard to drop): saved for later, as you said. It lives in the board library (`libs/board`). The likely fix is a long-press to lift, plus larger drop zones.
 
-## 10. Update 4 (2026-11-08)
+## 10. Update 4 (published 2026-11-08: app b226a59, backend 9da5610)
 
 Your notes: counts to the top-right, fix the small gaps, build the navigation, the history across people, and stats.
 
