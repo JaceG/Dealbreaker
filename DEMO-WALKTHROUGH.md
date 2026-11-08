@@ -1,6 +1,6 @@
 # Dealbreaker demo: walkthrough, findings and questions
 
-*Updated 2026-11-08 after Jace's answers: bugs 1, 2, 5 and 6 are fixed; Riley and Jordan use the new ended status.*
+*Updated 2026-11-08: bugs 1, 2, 4–9 and 11 are fixed, 10 partly; 3 (public photos) waits on an AWS change. New: card descriptions, overview bars, ranked people list, Compare People. Riley and Jordan use the ended status.*
 
 Written 2026-11-08. The demo data lives in your account (jace.galloway@gmail.com) on the production database.
 
@@ -18,7 +18,7 @@ Why these steps: at launch the app uploads the phone's saved board to the server
 - **Every other profile is one person.** It carries a copy of every card on your list. On a person's profile, a card's color is how that person scores on that point: white = not seen or fine, yellow = noticed, red = serious. Moving a card into their Dealbreakers column means they hit one of your dealbreakers.
 - **Every change asks you why.** Picking a flag color (tap the flag, choose one) or dragging a card between columns opens a "why" box with text and photos. Each card has its own timeline per person (the 📋 button), and **Add Context** adds a note without changing anything.
 - **Your rules flag things for you.** If a card is a dealbreaker on Main and you turn it red on a person, the app shows "Dealbreaker Alert!"
-- **New cards go everywhere.** A card you create on any profile is added to every profile, so things you learn from one person go onto your master list.
+- **New cards go everywhere.** Cards are created on Main (the Create Flag tab only shows there) and appear on every person's board.
 
 On Main I used colors to mean "how much this matters to me in general", and its history records lessons learned. This is my biggest open question (see section 7).
 
@@ -30,7 +30,7 @@ There are 36 cards on Main (28 flags and 8 dealbreakers), 6 profiles and 80 hist
 |---|---|---|
 | **Main Profile** | Rulebook set up on Jan 4 and updated after each relationship. | **Small lies** (now red): the Apr 21 entry after Riley has a "What Riley taught me" note. **Different stance on kids**: a flag moved to Dealbreakers on Aug 30 after Jordan. **Different politics**: white → yellow → red → white, de-escalated after Avery. **Disrespects boundaries**: a context note with a "My boundaries" screenshot. |
 | **Avery** (dating since Sep 13) | Going well. No red, three yellows, lots of notes. | **Slow to text back**: the yellow, then the apology screenshot. **Never asks about me**: concert ticket image plus a video. **Different stance on kids**: a good-news note on a Main dealbreaker. |
-| **Sam** (dating since Aug 10) | Three reds, and on the brink. | **Disrespects boundaries** is yellow, it's a dealbreaker on Main, and it has screenshots of the missed calls and the office visit. Pick **Red** on it to see the Dealbreaker Alert move it to Sam's Dealbreakers column, then try **Undo**. **Goes silent after fights** has a voice memo. **Asks who I'm texting** is a card created from Sam's profile, so it appears everywhere. |
+| **Sam** (dating since Aug 10) | Three reds, and on the brink. | **Disrespects boundaries** is yellow, it's a dealbreaker on Main, and it has screenshots of the missed calls and the office visit. Pick **Red** on it to see the Dealbreaker Alert move it to Sam's Dealbreakers column, then try **Undo**. **Goes silent after fights** has a voice memo. **Asks who I'm texting** was added to Main during Sam (the app only creates cards on Main), so it appears on everyone. |
 | **Casey** (new, Nov 1) | Two yellows and one good note. | A fresh profile. |
 | **Riley** (ended) | Ended over a dealbreaker: back on the dating apps while exclusive. | **Small lies** escalates over two screenshots. **Still on dating apps** goes yellow → red (a friend's screenshot) → moved to Dealbreakers. |
 | **Jordan** (ended) | Ended by mutual decision: Jordan doesn't want kids. | **Different stance on kids** shows every transition type: yellow → moved to Dealbreakers → moved back to Flags ("they said they're open to it") → yellow → red → Dealbreakers. **Cancels last minute** has a "raincheck" screenshot. |
@@ -59,24 +59,24 @@ Ordered by impact. Everything is from reading the code. I didn't run the app, so
 1. **Fixed 2026-11-08 (update a885e32b):** **The Dealbreaker Alert didn't do what it says.** It says the card "has been automatically moved to your dealbreaker list", but nothing moves it. The card name is blank, and **Undo** does nothing, because `transitionedItem` is never set anywhere. See `useTransitions.tsx` (`checkForDealbreakerTransition`) and `BoardManagementModals`.
 2. **Fixed 2026-11-08 (backend 6f9855b):** **Security: board and upload routes had no login check.** `POST /api/dealbreaker/get-dealbreakers` and `/add-dealbreaker` read or replace anyone's whole board if you know their user ID. `/api/upload/*` takes uploads from anyone, and `/upload/custom` writes to **any S3 bucket name** the caller passes, using what the old notes say is a root AWS key.
 3. **Privacy: all attachments are public.** Anyone with a URL can open a photo in the S3 bucket. In an app full of screenshots of private texts, that's a real risk.
-4. **Likely data loss at app launch.** The app uploads the phone's saved board about 1 second after launch, possibly before it downloads the server's copy. Whichever request reaches the server first wins. A phone that was offline, or a second phone, can wipe newer data. This is why section 1 says to log out first.
+4. **Fixed 2026-11-08 (app c0f808a):** the board isn't saved until the server's copy has loaded. **Likely data loss at app launch.** The app uploads the phone's saved board about 1 second after launch, possibly before it downloads the server's copy. Whichever request reaches the server first wins. A phone that was offline, or a second phone, can wipe newer data. This is why section 1 says to log out first.
 5. **Fixed 2026-11-08 (update a885e32b):** tapping now offers the two other colors. **You couldn't go from yellow back to white without passing red.** The tap order is white → yellow → red → white. Calming a yellow down writes a fake "red" entry into the history, and on a Main dealbreaker it also triggers the alert.
 6. **Fixed 2026-11-08 (update a885e32b):** **"Add Context" notes showed as "Flag changed: 🟨 → 🟨".** The timeline checks `item.type === 'add-reason'`, which nothing ever sets.
-7. **Offline history never syncs.** Every launch sets `offlineMode = 'true'`, and the sync skips whenever offline mode is on, so queued entries stay on the phone forever. Offline entries also drop their attachments.
-8. **Logout leaves the old profile list in memory.** After logging out and back in without closing the app, old profiles can reappear. Opening one recreates it on the server.
-9. **Editing or deleting a card misses some profiles.** Both only touch the column the card is in on the current profile. Where a person has the card in the other column, the old title stays, and after a delete the card is orphaned.
-10. **Only photos are uploaded.** Videos and audio keep a local `file://` path, so they break on any other device. Videos show "VIDEO / preview not available", and audio playback is switched off (expo-av was removed in SDK 55+).
-11. **Deleting a profile leaves its history on the server.**
-12. **Latent:** `synchronizeProfileFlags` never runs on current data (it uses a stale copy of state). If someone fixes that, it will duplicate every dealbreaker into both columns. `cleanupDuplicates` computes a fix and throws it away.
+7. **Fixed 2026-11-08 (app c0f808a):** **Offline history never synced.** Every launch sets `offlineMode = 'true'`, and the sync skips whenever offline mode is on, so queued entries stay on the phone forever. Offline entries also drop their attachments.
+8. **Fixed 2026-11-08 (app c0f808a):** **Logout left the old profile list in memory.** After logging out and back in without closing the app, old profiles can reappear. Opening one recreates it on the server.
+9. **Fixed 2026-11-08 (app c0f808a):** **Editing or deleting a card missed some profiles.** Both only touch the column the card is in on the current profile. Where a person has the card in the other column, the old title stays, and after a delete the card is orphaned.
+10. **Partly fixed (app c0f808a): videos and audio now upload.** Playback still needs a native video/audio package and a new build. **Only photos were uploaded.** Videos and audio keep a local `file://` path, so they break on any other device. Videos show "VIDEO / preview not available", and audio playback is switched off (expo-av was removed in SDK 55+).
+11. **Fixed 2026-11-08 (backend cb8fd7e, app c0f808a):** **Deleting a profile left its history on the server.**
+12. **Removed 2026-11-08 (app bd6261a):** **Latent:** `synchronizeProfileFlags` never runs on current data (it uses a stale copy of state). If someone fixes that, it will duplicate every dealbreaker into both columns. `cleanupDuplicates` computes a fix and throws it away.
 
 ## 6. Missing or unfinished
 
 - ~~No "ended" status~~ Added 2026-11-08: Edit Profile → **Mark as Ended**. Ended people sort last in Switch Profile and show "(ended)".
 - **The card description is never shown,** not on the card and not in the timeline. You only see it in Edit.
 - No green flags (backend allows `green`). Jace: not needed for now.
-- **No overview:** there's no count of reds per person and no side-by-side comparison of people. This is the app's most obvious missing payoff.
+- ~~No overview~~ Added 2026-11-08: a count bar on each person (tap a count to filter the board, "!" marks Main dealbreakers), a ranked people list on Main, and Compare People.
 - **No onboarding or starter cards.** A new user faces an empty board.
-- **Dead code:** the `Profile` and `Flag` collections, `/api/user/data`, and the Atlas Data API client in `utils/mongodbapi` aren't used. The app stores the whole board as one blob in `dealbreakers`.
+- ~~Dead code~~ Removed 2026-11-08 (app bd6261a, backend 7dde0ed). Still to do with the next native build: unused packages (`@react-native-picker/picker`, `react-native-url-polyfill`, `expo-auth-session`, `@react-navigation/native`).
 - ~~New profile copies Main's colors~~ Fixed 2026-11-08: new people start all white.
 
 ## 7. Questions (answered 2026-11-08)
