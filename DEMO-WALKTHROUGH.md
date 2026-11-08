@@ -31,6 +31,13 @@ Since update 2 (below) the app doesn't save the board until it has loaded the se
 7. **Compare:** on Sam open the count bar → **Compare with Others**: Sam is the first column.
 8. **Main cards:** dots with counts of people who have the card yellow, red or as a dealbreaker (square).
 
+### Phone test for update 5 (published 2026-11-08, update group f2d94e94)
+
+1. Force-close and reopen twice. The board is the new demo: 43 cards, five people.
+2. **Stats → Overall:** Activity by Month has bars for January to November, with October the tallest. Relationship Timeline shows five lines, with Riley and Jordan gray and ended. Yellow to Red shows four bars. Flags by Person shows Sam on top. Cards That Come Up Most starts with four cards at 5 people.
+3. **Stats → Sam:** the month chart runs from August to November.
+4. **Sam's board → "Goes silent after fights" → 📋:** a 9-entry thread. Tap **Everyone** to see the card across people.
+
 ### Phone test for update 4 (published 2026-11-08, update group 572dc1aa)
 
 1. **Bottom bar:** every screen shows **Main · People · Stats · Create Flag · Settings**. The header has no Switch Profile or Logout.
@@ -186,7 +193,7 @@ Your notes: counts to the top-right, fix the small gaps, build the navigation, t
   - Moving a card between columns doesn't update the phone's saved copy until the server board reloads. The server copy is saved as before.
   - The keyboard fix uses an iOS-only setting.
 
-## 11. More demo data and charts (2026-11-08)
+## 11. More demo data and charts (update 5, published 2026-11-08: app b977088, update group f2d94e94)
 
 **Demo data, round 2** (redone 2026-11-08: longer threads on the same five people, and the same cards across people):
 - **288 demo entries** (up from 80) on your five people. Threads run 3 to 9 entries on the same card for the same person, with notes between changes. Examples: Sam / Goes silent after fights (9 entries, ending with "Wrote down every silence since August. Eleven."), Avery / Slow to text back (8, ending in a step-down to white), Riley / Small lies (7), Jordan / Different stance on kids (8).
