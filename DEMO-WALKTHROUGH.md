@@ -31,6 +31,15 @@ Since update 2 (below) the app doesn't save the board until it has loaded the se
 7. **Compare:** on Sam open the count bar → **Compare with Others**: Sam is the first column.
 8. **Main cards:** dots with counts of people who have the card yellow, red or as a dealbreaker (square).
 
+### Phone test for update 6 (published 2026-11-08, update group 1fcf3382)
+
+1. Force-close and reopen twice.
+2. **Stats → Overall → Relationship Timeline:** tap **Aligned**. Every line starts at the left. Riley, Jordan and Sam turn red around the same point.
+3. Tap **+** twice (4×). The chart scrolls sideways, and the labels change to weeks or months.
+4. Tap a red dot on Sam: the panel shows the card, the date, the day of the relationship and your note. Tap a dot with a number to see every flag in it.
+5. Switch back to **Calendar**, then zoom out to 1×. The selection clears and the dots can't be tapped.
+6. With VoiceOver on, tap a dot at 2× and check that the panel text is read.
+
 ### Phone test for update 5 (published 2026-11-08, update group f2d94e94)
 
 1. Force-close and reopen twice. The board is the new demo: 43 cards, five people.
@@ -219,7 +228,7 @@ Your notes: counts to the top-right, fix the small gaps, build the navigation, t
 
 Pie and line charts, axes and tap-for-detail wait for the chart library in the next native build.
 
-## 12. Relationship Timeline: aligned view, zoom and tappable dots (2026-11-08, not published yet)
+## 12. Relationship Timeline: aligned view, zoom and tappable dots (update 6, published 2026-11-08: app ecf8f90, update group 1fcf3382)
 
 - **Calendar / Aligned toggle.** Calendar shows real dates. Aligned starts everyone at day 0, and the line length is how long the relationship lasted (the longest one sets the scale). So you can compare when flags start showing up. On the demo, the first yellow came around day 8–13 for Riley, Jordan and Sam, and the first red around day 49–64.
 - **Yellow dots too:** a dot for each card that went white to yellow, besides red and dealbreaker, because the first yellows are where things start.
