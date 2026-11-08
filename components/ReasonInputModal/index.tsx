@@ -232,16 +232,21 @@ const ReasonInputModal = ({
 					}, URL: ${attachment.url.substring(0, 50)}...`
 				);
 
-				if (attachment.type === 'image') {
+				// Photos, videos and voice memos all go to S3; a phone-local file:// path breaks on any other device.
+				if (['image', 'video', 'audio'].includes(attachment.type)) {
 					console.log(
-						`SUBMIT: Uploading image attachment ${i} to S3...`
+						`SUBMIT: Uploading ${attachment.type} attachment ${i} to S3...`
 					);
 					try {
-						// Generate a unique filename
+						// Generate a unique filename that keeps the file's own extension
 						const timestamp = Date.now();
-						const filename = `attachment_${timestamp}_${i}${
-							attachment.url.endsWith('.png') ? '.png' : '.jpg'
-						}`;
+						const extension =
+							(attachment.name || attachment.url)
+								.split('?')[0]
+								.split('.')
+								.pop()
+								?.toLowerCase() || 'jpg';
+						const filename = `attachment_${timestamp}_${i}.${extension}`;
 
 						// Log details about the upload attempt
 						console.log(
@@ -281,7 +286,7 @@ const ReasonInputModal = ({
 							showToast(
 								'error',
 								'Upload failed',
-								'Could not upload image to cloud storage'
+								`Could not upload the ${attachment.type} to cloud storage`
 							);
 
 							// Fall back to using the original URL if S3 upload fails

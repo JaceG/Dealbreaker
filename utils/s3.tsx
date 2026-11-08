@@ -25,6 +25,16 @@ const getMimeType = (filename: string) => {
 			return 'image/png';
 		case 'gif':
 			return 'image/gif';
+		case 'heic':
+			return 'image/heic';
+		case 'mp4':
+			return 'video/mp4';
+		case 'mov':
+			return 'video/quicktime';
+		case 'm4a':
+			return 'audio/mp4';
+		case 'mp3':
+			return 'audio/mpeg';
 		case 'pdf':
 			return 'application/pdf';
 		default:

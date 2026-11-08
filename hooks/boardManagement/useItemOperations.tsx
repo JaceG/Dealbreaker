@@ -3,7 +3,7 @@ import { showToast } from '../../utils/functions';
 export const useItemOperations = (
 	dealbreaker: any,
 	currentProfileId: string,
-	removeItemFromAllProfiles: (id: string, type: string) => void,
+	removeItemFromAllProfiles: (id: string) => void,
 	setDealbreaker: (value: any) => void,
 	updateBoard: () => void,
 	setList: (value: any) => void,
@@ -39,15 +39,12 @@ export const useItemOperations = (
 			return;
 		}
 
-		const isDealbreaker = itemToDelete.attributes.columnId === 2;
-		const type = isDealbreaker ? 'dealbreaker' : 'flag';
-
 		// Close the modal first for better UX
 		setDeleteModalVisible(false);
 		setItemToDelete(null);
 
 		// Delete the item using our central function
-		removeItemFromAllProfiles(rowId, type);
+		removeItemFromAllProfiles(rowId);
 
 		// Show success message
 		showToast('success', `Item deleted from all profiles`);
@@ -100,32 +97,16 @@ export const useItemOperations = (
 	const handleSaveEdit = (updatedItem: any) => {
 		if (!updatedItem || !updatedItem.id) return;
 
-		// Determine the type (flag or dealbreaker)
-		const isFlagItem = dealbreaker[currentProfileId].flag.some(
-			(item: any) => item.id === updatedItem.id
-		);
-		const type = isFlagItem ? 'flag' : 'dealbreaker';
-
-		// Create a copy of the dealbreaker state
 		const updatedDealbreaker = JSON.parse(JSON.stringify(dealbreaker));
 
-		// Update the item in all profiles
-		Object.keys(updatedDealbreaker).forEach((profileName: string) => {
-			if (
-				updatedDealbreaker[profileName] &&
-				updatedDealbreaker[profileName][type]
-			) {
-				updatedDealbreaker[profileName][type] = updatedDealbreaker[
-					profileName
-				][type].map((item: any) => {
+		// Rename the card in every profile, in whichever column it sits there
+		Object.values(updatedDealbreaker).forEach((profile: any) => {
+			for (const type of ['flag', 'dealbreaker']) {
+				profile?.[type]?.forEach((item: any) => {
 					if (item.id === updatedItem.id) {
-						return {
-							...item,
-							title: updatedItem.title,
-							description: updatedItem.description,
-						};
+						item.title = updatedItem.title;
+						item.description = updatedItem.description;
 					}
-					return item;
 				});
 			}
 		});

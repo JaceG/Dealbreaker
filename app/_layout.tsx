@@ -40,6 +40,8 @@ const Layout = () => {
 	]);
 	const [currentProfileId, setCurrentProfileId] = useState('main');
 	const isMountRef = useRef(false);
+	// Saving waits until the server's board has loaded once, so a phone's stale copy can't overwrite it.
+	const boardLoadedRef = useRef(false);
 	const isDealbreakerTimeoutRef = useRef<
 		boolean | ReturnType<typeof setTimeout>
 	>(false);
@@ -85,6 +87,7 @@ const Layout = () => {
 		setCurrentProfileId
 	);
 	const updateDealbreakers = async () => {
+		if (!boardLoadedRef.current) return;
 		const userData = await SecureStore.getItem('userData');
 		if (userData) {
 			if (isDealbreakerTimeoutRef.current) {
@@ -133,6 +136,7 @@ const Layout = () => {
 					renameProfile,
 					setProfileEnded,
 					ensureProfileExists,
+					boardLoadedRef,
 					isOnline,
 					syncData: syncOfflineData,
 					isValidNoCardItems,
@@ -205,10 +209,7 @@ declare module '../store' {
 			itemId: string,
 			type: 'flag' | 'dealbreaker'
 		) => void;
-		removeItemFromAllProfiles: (
-			itemId: string,
-			type: 'flag' | 'dealbreaker'
-		) => void;
+		removeItemFromAllProfiles: (itemId: string) => void;
 		createProfile: (name: string) => string;
 		deleteProfile: (profileId: string) => boolean;
 		renameProfile: (profileId: string, newName: string) => boolean;

@@ -230,7 +230,7 @@ export const addFlagHistory = async (
 				cardTypeChange,
 				previousCardType,
 				newCardType,
-				attachments: [],
+				attachments,
 			};
 
 			// Store locally
@@ -256,6 +256,17 @@ export const addFlagHistory = async (
 			);
 			return null;
 		}
+	}
+};
+
+// Removes a deleted profile's history from the server; local caches for it are left to expire.
+export const deleteProfileHistory = async (profileId: string): Promise<boolean> => {
+	try {
+		await api.delete(`/flagHistory/profile/${encodeURIComponent(profileId)}`);
+		return true;
+	} catch (error) {
+		console.error('Error deleting profile history:', error);
+		return false;
 	}
 };
 
@@ -388,8 +399,10 @@ export const syncPendingChanges = async () => {
 		const isOfflineMode = await AsyncStorage.getItem('offlineMode');
 		if (isOfflineMode === 'true') {
 			// Don't attempt to sync in offline mode
+			// offline: true keeps the queue; without it the caller clears the unsent entries.
 			return {
 				success: true,
+				offline: true,
 				message: 'App is in offline mode, sync skipped.',
 			};
 		}

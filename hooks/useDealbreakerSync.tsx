@@ -4,7 +4,7 @@ import StoreContext from '../store';
 import { getDealbreakers } from '../utils/mongodbapi';
 
 export const useDealbreakerSync = (user: any) => {
-	const { setDealbreaker } = useContext<any>(StoreContext);
+	const { setDealbreaker, boardLoadedRef } = useContext<any>(StoreContext);
 	const isDealbreakerTimeoutRef = useRef<
 		boolean | ReturnType<typeof setTimeout>
 	>(false);
@@ -24,6 +24,8 @@ export const useDealbreakerSync = (user: any) => {
 				const userDataObject = JSON.parse(userData);
 				const userId = userDataObject.id;
 				const response = await getDealbreakers(userId);
+				// From here on the board may be saved (an empty response is a new account).
+				boardLoadedRef.current = true;
 				if (response) {
 					setDealbreaker(response);
 				}

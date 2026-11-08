@@ -34,9 +34,6 @@ export const useDataLoader = (
 			setIsLoaded(false);
 
 			try {
-				// Enable offline mode by default
-				await setAtomicValue('offlineMode', 'true');
-
 				// Force sync with MongoDB first to ensure latest data
 				debugLog('Forcing initial sync with MongoDB...');
 				try {

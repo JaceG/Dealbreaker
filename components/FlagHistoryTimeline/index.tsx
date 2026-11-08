@@ -650,10 +650,12 @@ const FlagHistoryTimeline = ({
 	return (
 		<View style={styles.container}>
 			<View style={isPortrait ? styles.header : styles.headerHorizontal}>
-				<Text style={styles.headerTitle}>{flagTitle}</Text>
-				{flagDescription ? (
-					<Text style={styles.headerDescription}>{flagDescription}</Text>
-				) : null}
+				<View style={styles.headerText}>
+					<Text style={styles.headerTitle}>{flagTitle}</Text>
+					{flagDescription ? (
+						<Text style={styles.headerDescription}>{flagDescription}</Text>
+					) : null}
+				</View>
 				<View
 					style={
 						isPortrait
@@ -737,6 +739,11 @@ const styles = StyleSheet.create({
 	headerTitle: {
 		fontSize: 18,
 		fontWeight: 'bold',
+	},
+	// Title and description stack, so in landscape they don't squeeze the buttons
+	headerText: {
+		flexShrink: 1,
+		alignItems: 'center',
 	},
 	headerDescription: {
 		fontSize: 14,

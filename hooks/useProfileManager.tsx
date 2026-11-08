@@ -1,3 +1,4 @@
+import { deleteProfileHistory } from '../utils/api';
 import {
 	DealbreakerState,
 	FlagItem,
@@ -113,19 +114,18 @@ export const useProfileManager = (
 		}
 	};
 
-	// Remove item from all profiles
-	const removeItemFromAllProfiles = (
-		itemId: string,
-		type: 'flag' | 'dealbreaker'
-	) => {
+	// Remove a card from every profile on the board, from both columns
+	const removeItemFromAllProfiles = (itemId: string) => {
 		const updatedDealbreaker = { ...dealbreaker };
-		profiles.forEach((profile) => {
-			const profileId = profile.id;
-			if (updatedDealbreaker[profileId]) {
-				updatedDealbreaker[profileId][type] = updatedDealbreaker[
-					profileId
-				][type].filter((item: FlagItem) => item.id !== itemId);
-			}
+		Object.keys(updatedDealbreaker).forEach((profileId) => {
+			const profile = updatedDealbreaker[profileId];
+			updatedDealbreaker[profileId] = {
+				...profile,
+				flag: (profile.flag || []).filter((item: FlagItem) => item.id !== itemId),
+				dealbreaker: (profile.dealbreaker || []).filter(
+					(item: FlagItem) => item.id !== itemId
+				),
+			};
 		});
 		updateDealbreaker(updatedDealbreaker);
 	};
@@ -151,6 +151,7 @@ export const useProfileManager = (
 		if (profileId === 'main') {
 			return false; // Cannot delete main profile
 		}
+		deleteProfileHistory(profileId);
 
 		const updatedProfiles = profiles.filter(
 			(profile) => profile.id !== profileId

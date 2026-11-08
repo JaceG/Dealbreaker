@@ -7,22 +7,22 @@ import { useAuth } from '../context/Auth';
 import { AuthActionsReturn } from '../models/authModels';
 
 export const useAuthActions = (): AuthActionsReturn => {
-	const { setDealbreaker } = useContext<any>(StoreContext);
+	const { setDealbreaker, setProfiles, setCurrentProfileId, boardLoadedRef } =
+		useContext<any>(StoreContext);
 	const { clearAuth } = useAuth() as any;
 
 	const clearSecureStore = async () => {
-		const keys = ['authToken', 'userData'];
-		for (const key of keys) {
+		// Stop saving first, so the emptied board below never reaches the server.
+		boardLoadedRef.current = false;
+		for (const key of ['authToken', 'userData']) {
 			await SecureStore.deleteItemAsync(key);
-			await clearKeys(['dealbreaker', 'profiles']);
-			clearAuth();
-			setDealbreaker({
-				main: {
-					flag: [],
-					dealbreaker: [],
-				},
-			});
 		}
+		await clearKeys(['dealbreaker', 'profiles']);
+		clearAuth();
+		setDealbreaker({ main: { flag: [], dealbreaker: [] } });
+		// The in-memory profile list would otherwise bring old profiles back on the next sign-in.
+		setProfiles([{ id: 'main', name: 'Main Profile' }]);
+		setCurrentProfileId('main');
 	};
 
 	const logout = async () => {
