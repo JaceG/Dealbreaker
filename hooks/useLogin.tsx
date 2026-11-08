@@ -10,6 +10,11 @@ import {
 	LoginApiResponse,
 	UserApiResponse,
 } from '../models/authModels';
+import {
+	FACE_ID_LOGIN,
+	FACE_ID_READY,
+	forgetFaceIdLogin,
+} from '../utils/storage';
 
 const useLogin = (): LoginHookReturn => {
 	const [isLogin, setIsLogin] = useState(true);
@@ -20,10 +25,22 @@ const useLogin = (): LoginHookReturn => {
 	const [showDevOptions, setShowDevOptions] = useState(false);
 	// 'user', 'guest', 'google' or 'apple' while that sign-in waits on the server.
 	const [signingInWith, setSigningInWith] = useState<string | null>(null);
+	// True when a login is saved behind Face ID on this device.
+	const [faceIdReady, setFaceIdReady] = useState(false);
 
 	// Get auth functions from context
 	const { isLoading, error, checkAuthStatus, loginAuth } =
 		useAuth();
+
+	useEffect(() => {
+		SecureStore.getItemAsync(FACE_ID_READY)
+			.then((ready) =>
+				setFaceIdReady(
+					!!ready && SecureStore.canUseBiometricAuthentication()
+				)
+			)
+			.catch(() => setFaceIdReady(false));
+	}, []);
 
 	// Clear error when switching between login/register
 	useEffect(() => {
@@ -140,7 +157,8 @@ const useLogin = (): LoginHookReturn => {
 		social_name?: string,
 		idToken?: string
 	) => {
-		setSigningInWith(type || role);
+		// A Face ID sign-in keeps its own spinner.
+		setSigningInWith((current) => current ?? (type || role));
 		try {
 			console.log(
 				`Attempting to login with API: ${API_BASE_URL}/api/auth/login`
@@ -206,51 +224,13 @@ const useLogin = (): LoginHookReturn => {
 				);
 			}
 
-			// The backend only returns a token, so we need to fetch user info
-			const token = data.token;
-			console.log('Token:', token);
-			// Save token first
-			await SecureStore.setItemAsync('authToken', token);
-
-			// Now fetch user info
-			console.log('Fetching user info with token');
-			const userResponse = await fetch(`${API_BASE_URL}/api/auth/user`, {
-				headers: {
-					'Content-Type': 'application/json',
-					'x-auth-token': token,
-				},
-			}).catch((error) => {
-				console.error('Error fetching user data:', error);
-				throw new Error('Failed to fetch user information after login');
-			});
-			console.log('User info response status:', userResponse.status);
-
-			if (!userResponse.ok) {
-				const errorData = await userResponse.json().catch(() => ({}));
-				console.error('User info error:', errorData);
-				throw new Error('Failed to fetch user information');
+			await finishLogin(data.token);
+			if (role !== 'guest') {
+				// Email logins save the password: their server tokens expire after 24 hours. Google and Apple tokens last a year.
+				await rememberForFaceId(
+					type ? { token: data.token } : { email, password }
+				);
 			}
-
-			const userData = await userResponse.json();
-			console.log('User info response:', userData);
-			console.log('User data received:', {
-				...userData,
-				_id: userData._id ? '••••••••' : undefined,
-			});
-
-			// Transform MongoDB _id to id for consistency in the app
-			const normalizedUserData: UserData = {
-				...userData,
-				id: userData._id, // Add id field based on MongoDB's _id
-			};
-
-			// Save user data
-			await SecureStore.setItemAsync(
-				'userData',
-				JSON.stringify(normalizedUserData)
-			);
-			console.log('Login successful');
-			loginAuth(normalizedUserData, token);
 			return true;
 		} catch (error) {
 			console.error('Login error:', error);
@@ -263,6 +243,112 @@ const useLogin = (): LoginHookReturn => {
 			return false;
 		} finally {
 			setSigningInWith(null);
+		}
+	};
+
+	// The backend only returns a token, so fetch the user, save both and sign in.
+	const finishLogin = async (token: string) => {
+		// Save token first
+		await SecureStore.setItemAsync('authToken', token);
+
+		// Now fetch user info
+		console.log('Fetching user info with token');
+		const userResponse = await fetch(`${API_BASE_URL}/api/auth/user`, {
+			headers: {
+				'Content-Type': 'application/json',
+				'x-auth-token': token,
+			},
+		}).catch((error) => {
+			console.error('Error fetching user data:', error);
+			throw new Error('Failed to fetch user information after login');
+		});
+		console.log('User info response status:', userResponse.status);
+
+		if (!userResponse.ok) {
+			const errorData = await userResponse.json().catch(() => ({}));
+			console.error('User info error:', errorData);
+			throw new Error('Failed to fetch user information');
+		}
+
+		const userData = await userResponse.json();
+		console.log('User info response:', userData);
+		console.log('User data received:', {
+			...userData,
+			_id: userData._id ? '••••••••' : undefined,
+		});
+
+		// Transform MongoDB _id to id for consistency in the app
+		const normalizedUserData: UserData = {
+			...userData,
+			id: userData._id, // Add id field based on MongoDB's _id
+		};
+
+		// Save user data
+		await SecureStore.setItemAsync(
+			'userData',
+			JSON.stringify(normalizedUserData)
+		);
+		console.log('Login successful');
+		loginAuth(normalizedUserData, token);
+	};
+
+	// Locks this login behind Face ID so the login screen can offer it after logout. Never blocks sign-in.
+	const rememberForFaceId = async (saved: object) => {
+		try {
+			if (!SecureStore.canUseBiometricAuthentication()) return;
+			// Delete first: updating a Face ID-locked item would ask for Face ID.
+			await SecureStore.deleteItemAsync(FACE_ID_LOGIN);
+			await SecureStore.setItemAsync(FACE_ID_LOGIN, JSON.stringify(saved), {
+				requireAuthentication: true,
+			});
+			await SecureStore.setItemAsync(FACE_ID_READY, 'true');
+		} catch (error) {
+			console.log('Could not save the Face ID login:', error);
+		}
+	};
+
+	const faceIdLogin = async () => {
+		let saved;
+		try {
+			const value = await SecureStore.getItemAsync(FACE_ID_LOGIN, {
+				requireAuthentication: true,
+				authenticationPrompt: 'Sign in to Dealbreaker',
+			});
+			saved = value && JSON.parse(value);
+		} catch (error) {
+			console.log('Face ID cancelled or failed:', error);
+			return;
+		}
+		if (!saved) {
+			// Changing Face ID enrollment wipes the saved login; the next normal sign-in saves it again.
+			await forgetFaceIdLogin();
+			setFaceIdReady(false);
+			Alert.alert(
+				'Face ID',
+				'Sign in once with your password, Google or Apple to turn Face ID back on.'
+			);
+			return;
+		}
+		setSigningInWith('faceid');
+		let success = false;
+		try {
+			if (saved.password) {
+				success = await login(saved.email, saved.password, 'user');
+			} else {
+				await finishLogin(saved.token);
+				success = true;
+			}
+		} catch (error) {
+			Alert.alert(
+				'Login Error',
+				error instanceof Error ? error.message : 'Face ID sign-in failed.'
+			);
+		} finally {
+			setSigningInWith(null);
+		}
+		if (success) {
+			await checkAuthStatus();
+			router.replace('/(tabs)');
 		}
 	};
 	return {
@@ -284,6 +370,8 @@ const useLogin = (): LoginHookReturn => {
 		setShowDevOptions,
 		socialLogin,
 		signingInWith,
+		faceIdReady,
+		faceIdLogin,
 	};
 };
 

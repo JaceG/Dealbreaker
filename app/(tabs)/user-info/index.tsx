@@ -29,6 +29,7 @@ import {
 	changeSignInMethod,
 } from '../../../utils/api';
 import { useAuthActions } from '../../../hooks/useAuthActions';
+import { forgetFaceIdLogin } from '../../../utils/storage';
 import { SignInMethods, SignInType } from '../../../models/apiModels';
 
 const PROVIDER_NAME: Record<SignInType, string> = {
@@ -257,6 +258,7 @@ export const UserInfo = () => {
 		setShowDeleteConfirmation(false);
 		if (response) {
 			alert('Account deleted successfully');
+			await forgetFaceIdLogin();
 			logout();
 		} else {
 			alert('Failed to delete account');

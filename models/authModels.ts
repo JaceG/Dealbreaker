@@ -82,6 +82,9 @@ export interface LoginHookReturn {
 	) => Promise<boolean | undefined>;
 	// 'user', 'guest', 'google' or 'apple' while that sign-in waits on the server.
 	signingInWith: string | null;
+	// A login is saved behind Face ID, and the action that uses it.
+	faceIdReady: boolean;
+	faceIdLogin: () => Promise<void>;
 
 	// Loading state
 	isLoading: boolean;

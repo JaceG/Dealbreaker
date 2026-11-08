@@ -11,7 +11,7 @@ import {
 	ScrollView,
 	Alert,
 } from 'react-native';
-import { AntDesign } from '@expo/vector-icons';
+import { AntDesign, MaterialCommunityIcons } from '@expo/vector-icons';
 // Uncomment these imports
 import * as WebBrowser from 'expo-web-browser';
 import { router } from 'expo-router';
@@ -74,6 +74,8 @@ const Auth: React.FC<AuthProps> = () => {
 		localError,
 		socialLogin,
 		signingInWith,
+		faceIdReady,
+		faceIdLogin,
 	} = useLogin();
 	// A sign-in in progress disables the form; the button that started it shows the spinner.
 	const busy = isLoading || !!signingInWith;
@@ -243,6 +245,32 @@ const Auth: React.FC<AuthProps> = () => {
 							</Text>
 						)}
 					</TouchableOpacity>
+
+					{faceIdReady && (
+						<TouchableOpacity
+							style={[
+								styles.googleButton,
+								busy ? styles.buttonDisabled : null,
+							]}
+							onPress={faceIdLogin}
+							disabled={busy}
+							accessibilityLabel='Sign in with Face ID'>
+							{signingInWith === 'faceid' ? (
+								<ActivityIndicator color='#333' />
+							) : (
+								<View style={styles.googleButtonContent}>
+									<MaterialCommunityIcons
+										name='face-recognition'
+										size={20}
+										color='#333'
+									/>
+									<Text style={styles.googleButtonText}>
+										Sign in with Face ID
+									</Text>
+								</View>
+							)}
+						</TouchableOpacity>
+					)}
 
 					<TouchableOpacity
 						style={[

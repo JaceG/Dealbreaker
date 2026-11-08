@@ -106,3 +106,12 @@ export const clearKeys = async (keys: string[]) => {
 		console.log(error);
 	}
 };
+
+// Face ID sign-in: the saved login is locked behind Face ID; the plain marker lets the login screen offer the button without prompting.
+export const FACE_ID_LOGIN = 'faceIdLogin';
+export const FACE_ID_READY = 'faceIdReady';
+
+export const forgetFaceIdLogin = async (): Promise<void> => {
+	await SecureStore.deleteItemAsync(FACE_ID_LOGIN);
+	await SecureStore.deleteItemAsync(FACE_ID_READY);
+};
