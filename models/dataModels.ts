@@ -44,6 +44,8 @@ export interface ProfileSettings {
 export interface ProfileData {
 	flag: FlagItem[];
 	dealbreaker: FlagItem[];
+	// Saved with the board so the name survives logout; the phone's profile list is wiped then.
+	name?: string;
 }
 
 // Complete dealbreaker state

@@ -158,61 +158,8 @@ export const useDataLoader = (
 				const savedProfiles = await getList('profiles');
 				if (savedProfiles && savedProfiles.length > 0) {
 					debugLog('Loaded profiles from storage:', savedProfiles);
-
-					// Check if profiles are missing from the profiles list
-					if (savedDealbreaker) {
-						const dealbreakerProfileIds =
-							Object.keys(savedDealbreaker);
-
-						// Filter out profile IDs that aren't in the profiles list
-						const missingProfileIds = dealbreakerProfileIds.filter(
-							(id) =>
-								!savedProfiles.some(
-									(profile: Profile) => profile.id === id
-								)
-						);
-
-						if (missingProfileIds.length > 0) {
-							debugLog(
-								'Found missing profiles:',
-								missingProfileIds
-							);
-
-							// Create new profiles array with the missing profiles
-							const updatedProfiles = [...savedProfiles];
-
-							// Add the missing profiles
-							missingProfileIds.forEach((id) => {
-								// For missing IDs, create a profile with a friendly name
-								const friendlyName =
-									id === 'Jenny'
-										? 'Jenny'
-										: id.startsWith('profile_')
-										? `Profile ${
-												updatedProfiles.length + 1
-										  }`
-										: id;
-
-								updatedProfiles.push({
-									id,
-									name: friendlyName,
-								});
-							});
-
-							debugLog(
-								'Regenerated profiles list:',
-								updatedProfiles
-							);
-							setProfiles(updatedProfiles);
-
-							// Also save the updated profiles list back to storage
-							await setList('profiles', updatedProfiles);
-						} else {
-							setProfiles(savedProfiles);
-						}
-					} else {
-						setProfiles(savedProfiles);
-					}
+					// Profiles the board has but this list lacks are added by the effect below.
+					setProfiles(savedProfiles);
 				}
 
 				// Load current profile ID
@@ -240,6 +187,25 @@ export const useDataLoader = (
 
 		loadAllData();
 	}, []);
+
+	// Logout wipes the phone's profile list, but the board (saved to the server) keeps every profile, so list any it has.
+	useEffect(() => {
+		const missing = Object.keys(dealbreaker).filter(
+			(id) => !profiles.some((profile) => profile.id === id)
+		);
+		if (missing.length > 0) {
+			setProfiles([
+				...profiles,
+				...missing.map((id, i) => ({
+					id,
+					// Profiles saved before names went into the board come back numbered.
+					name:
+						dealbreaker[id]?.name ||
+						`Profile ${profiles.length + i + 1}`,
+				})),
+			]);
+		}
+	}, [dealbreaker, profiles]);
 
 	// Save profiles when they change
 	useEffect(() => {

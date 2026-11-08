@@ -62,7 +62,7 @@ export const useProfileManager = (
 		console.log('isValidNoProfileItems', { allowedProfile });
 		return profiles.length < allowedProfile;
 	};
-	const initializeProfile = (profileId: string) => {
+	const initializeProfile = (profileId: string, name?: string) => {
 		const updatedDealbreaker = { ...dealbreaker };
 		updatedDealbreaker[profileId] = {
 			flag: [],
@@ -77,6 +77,8 @@ export const useProfileManager = (
 			...newProfileDataDealbreakers,
 		];
 		newProfileData.dealbreaker = [];
+		// The copy carries main's name; replace it.
+		newProfileData.name = name;
 		updatedDealbreaker[profileId] = newProfileData;
 		updateDealbreaker(updatedDealbreaker);
 	};
@@ -146,15 +148,16 @@ export const useProfileManager = (
 	// Create a new profile
 	const createProfile = (name: string) => {
 		const newProfileId = `profile_${Date.now()}`;
+		const profileName = name || `Profile ${profiles.length + 1}`;
 		const updatedProfiles = [
 			...profiles,
 			{
 				id: newProfileId,
-				name: name || `Profile ${profiles.length + 1}`,
+				name: profileName,
 			},
 		];
 		setProfiles(updatedProfiles);
-		initializeProfile(newProfileId);
+		initializeProfile(newProfileId, profileName);
 		return newProfileId;
 	};
 
@@ -188,6 +191,12 @@ export const useProfileManager = (
 			profile.id === profileId ? { ...profile, name: newName } : profile
 		);
 		setProfiles(updatedProfiles);
+		if (dealbreaker[profileId]) {
+			updateDealbreaker({
+				...dealbreaker,
+				[profileId]: { ...dealbreaker[profileId], name: newName },
+			});
+		}
 	};
 
 	return {
