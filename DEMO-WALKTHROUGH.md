@@ -123,7 +123,7 @@ Ordered by impact. Everything is from reading the code. I didn't run the app, so
 ### Still open after update 2
 
 - **Public photos (bug 3):** the S3 bucket is public-read. Making it private with expiring links needs an AWS setting change, which is your call.
-- **Next native build** (needs a version bump and `eas build`, so ask first): video and audio playback, a real chart library (react-native-svg plus a chart package, for pie and line charts and touch tooltips), and removing the unused packages.
+- **Next native build** (needs a version bump and `eas build`, so ask first): video and audio playback, a real chart library (react-native-svg plus a chart package, for pie and line charts and touch tooltips), pinch-to-zoom on the timeline (react-native-reanimated), and removing the unused packages.
 - **Small gaps:** an expired login retries the board load every 15 s until logout; two history entries saved within milliseconds of a sync could collide; closing the app within about a minute of deleting a person can leave their history on the server; a deleted person's photos stay in S3; Main's people bar hides while Main has no cards.
 - **Onboarding:** on hold until this round is tested.
 
@@ -218,4 +218,11 @@ Your notes: counts to the top-right, fix the small gaps, build the navigation, t
 5. **Cards That Come Up Most:** the top 10 as stacked bars.
 
 Pie and line charts, axes and tap-for-detail wait for the chart library in the next native build.
+
+## 12. Relationship Timeline: aligned view, zoom and tappable dots (2026-11-08, not published yet)
+
+- **Calendar / Aligned toggle.** Calendar shows real dates. Aligned starts everyone at day 0, and the line length is how long the relationship lasted (the longest one sets the scale). So you can compare when flags start showing up. On the demo, the first yellow came around day 8–13 for Riley, Jordan and Sam, and the first red around day 49–64.
+- **Yellow dots too:** a dot for each card that went white to yellow, besides red and dealbreaker, because the first yellows are where things start.
+- **Zoom:** − / + buttons for 1×, 2×, 4× and 8×. The chart scrolls sideways and keeps the middle in view. Pinch-to-zoom needs react-native-reanimated, so it waits for the next native build.
+- **Tap a dot** (from 2×): a panel shows the card, the person, what happened, the date, day N of the relationship and the note you wrote then. Tap the dot again or the X to close it. Dots too close to tap on their own merge into one with a number, and tapping it lists every flag in it. Zoom in to split them apart. VoiceOver reads the panel aloud.
 

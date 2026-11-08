@@ -10,8 +10,17 @@ export type HistoryRow = {
 	cardTypeChange?: string; // 'none' | 'flag-to-dealbreaker' | 'dealbreaker-to-flag'
 	previousCardType?: string;
 	newCardType?: string;
+	reason?: string;
 	attachmentCount?: number;
 	timestamp: string;
+};
+
+export type TimelineEvent = {
+	t: number;
+	kind: 'yellow' | 'red' | 'dealbreaker';
+	flagId: string;
+	title: string;
+	reason: string;
 };
 
 type Card = { id: string; title?: string; flag?: string };
@@ -82,6 +91,21 @@ export const monthlyActivity = (rows: HistoryRow[], from: number, to: number) =>
 		else m.changes++;
 	});
 	return months;
+};
+
+// A flag showing up: white to yellow, anything to red, or a move into the Dealbreakers column. Other entries are not dots.
+export const timelineEvent = (h: HistoryRow): TimelineEvent | null => {
+	const kind = toDealbreaker(h)
+		? 'dealbreaker'
+		: typeChanged(h)
+			? null
+			: h.newStatus === 'red' && h.previousStatus !== 'red'
+				? 'red'
+				: h.newStatus === 'yellow' && (h.previousStatus || 'white') === 'white'
+					? 'yellow'
+					: null;
+	if (!kind) return null;
+	return { t: +new Date(h.timestamp), kind, flagId: h.flagId, title: h.flagTitle || '', reason: h.reason || '' };
 };
 
 export const YELLOW_TO_RED_BUCKETS = [
@@ -168,7 +192,7 @@ export const overallStats = (
 	const stepDowns = changes.filter(isStepDown).length;
 
 	// One row per person for the timeline: from the profile's start to its last entry if ended, else today,
-	// with a dot each time a card turned red or became a dealbreaker.
+	// with a dot each time a card turned yellow from white, turned red, or became a dealbreaker.
 	const timeline = people
 		.map((pid) => {
 			const rows = personHistory.filter((h) => h.profileId === pid);
@@ -180,12 +204,7 @@ export const overallStats = (
 				ended: !!board[pid]?.ended,
 				start,
 				end: board[pid]?.ended ? Math.max(last, start) : now,
-				events: rows
-					.filter((h) => toDealbreaker(h) || (!typeChanged(h) && h.newStatus === 'red' && h.previousStatus !== 'red'))
-					.map((h) => ({
-						t: +new Date(h.timestamp),
-						dealbreaker: toDealbreaker(h),
-					})),
+				events: rows.map(timelineEvent).filter((e): e is TimelineEvent => e !== null),
 			};
 		})
 		.sort((a, b) => a.start - b.start);

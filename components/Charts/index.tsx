@@ -3,6 +3,8 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { colors } from '../../libs/board/constants';
 
+export { Timeline } from './Timeline';
+
 export type Segment = { value: number; color: string };
 
 // Chart colors. Yellow is light, so every bar gets a dark outline to stay visible on white.
@@ -109,92 +111,6 @@ export const StackedRows = ({
 	);
 };
 
-const monthStart = (t: number) => {
-	const d = new Date(t);
-	return new Date(d.getFullYear(), d.getMonth(), 1).getTime();
-};
-
-// One line per person across the same date range; dots where a card turned red, squares where one became a dealbreaker.
-export const Timeline = ({
-	from,
-	to,
-	people,
-	summary,
-}: {
-	from: number;
-	to: number;
-	people: {
-		id: string;
-		name: string;
-		ended: boolean;
-		start: number;
-		end: number;
-		events: { t: number; dealbreaker: boolean }[];
-	}[];
-	summary: string;
-}) => {
-	const span = Math.max(1, to - from);
-	const pos = (t: number) => `${Math.min(100, Math.max(0, ((t - from) / span) * 100))}%` as const;
-	// Month marks along the bottom: first, middle and last.
-	const label = (t: number) =>
-		new Date(t).toLocaleDateString(undefined, {
-			month: 'short',
-			year: '2-digit',
-		});
-	// First, middle and last month, without repeats when the range is short.
-	const ticks = [from, from + span / 2, to]
-		.map((t) => label(monthStart(t)))
-		.map((l, i, all) => (all.indexOf(l) === i ? l : ''));
-	return (
-		<View accessible accessibilityLabel={summary}>
-			{people.map((p) => (
-				<View key={p.id} style={styles.tlRow}>
-					<Text style={[styles.tlName, p.ended && styles.muted]} numberOfLines={1}>
-						{p.name}
-					</Text>
-					<View style={styles.tlTrack}>
-						<View
-							style={[
-								styles.tlLine,
-								{
-									left: pos(p.start),
-									right: `${100 - parseFloat(pos(p.end))}%`,
-									backgroundColor: p.ended ? CHART.ended : CHART.line,
-								},
-							]}
-						/>
-						{p.ended ? <View style={[styles.tlEnd, { left: pos(p.end) }]} /> : null}
-						{p.events.map((e, i) => (
-							<View
-								key={i}
-								style={[
-									styles.tlDot,
-									{ left: pos(e.t) },
-									e.dealbreaker
-										? { backgroundColor: CHART.dealbreaker, borderRadius: 2 }
-										: { backgroundColor: CHART.red, borderRadius: 6 },
-								]}
-							/>
-						))}
-					</View>
-				</View>
-			))}
-			<View style={styles.tlTicks}>
-				<View style={styles.tlNameSpacer} />
-				<View style={styles.tlTickRow}>
-					{ticks.map((t, i) => (
-						<Text
-							key={i}
-							style={[styles.tlTick, i === 1 && { textAlign: 'center' }, i === 2 && { textAlign: 'right' }]}>
-							{t}
-						</Text>
-					))}
-				</View>
-			</View>
-		</View>
-	);
-};
-
 const styles = StyleSheet.create({
 	legend: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 10 },
 	legendItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
@@ -241,27 +157,4 @@ const styles = StyleSheet.create({
 		textAlign: 'right',
 	},
 	muted: { color: colors.officer, fontStyle: 'italic' },
-	tlRow: { flexDirection: 'row', alignItems: 'center', height: 30 },
-	tlName: { width: 70, fontSize: 14 },
-	tlTrack: { flex: 1, height: 30, justifyContent: 'center' },
-	tlLine: { position: 'absolute', height: 4, borderRadius: 2 },
-	tlEnd: {
-		position: 'absolute',
-		width: 2,
-		height: 16,
-		marginLeft: -1,
-		backgroundColor: CHART.ended,
-	},
-	tlDot: {
-		position: 'absolute',
-		width: 12,
-		height: 12,
-		marginLeft: -6,
-		borderWidth: 1,
-		borderColor: colors.white,
-	},
-	tlTicks: { flexDirection: 'row', marginTop: 4 },
-	tlNameSpacer: { width: 70 },
-	tlTickRow: { flex: 1, flexDirection: 'row', justifyContent: 'space-between' },
-	tlTick: { flex: 1, fontSize: 12, color: colors.officer },
 });

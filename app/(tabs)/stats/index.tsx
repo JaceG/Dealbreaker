@@ -143,31 +143,13 @@ const Overall = ({ board, history, names }: { board: Board; history: HistoryRow[
 			</Section>
 
 			<Section title='Relationship Timeline'>
-				<Text style={styles.hint}>Each person from their first day to the end, or today.</Text>
+				<Text style={styles.hint}>
+					Each person from their first day to the end, or today, with a dot each time a flag showed up.
+				</Text>
 				{s.timeline.people.length === 0 ? (
 					<Text style={styles.muted}>No people yet.</Text>
 				) : (
-					<>
-						<Legend
-							items={[
-								{ label: 'Dating', color: CHART.line },
-								{ label: 'Ended', color: CHART.ended },
-								{ label: 'Turned red', color: CHART.red },
-								{ label: 'Dealbreaker', color: CHART.dealbreaker },
-							]}
-						/>
-						<Timeline
-							from={s.timeline.from}
-							to={s.timeline.to}
-							people={s.timeline.people}
-							summary={s.timeline.people
-								.map(
-									(p) =>
-										`${p.name}${p.ended ? ', ended' : ''}: ${p.events.length} times a card turned red or became a dealbreaker`,
-								)
-								.join('. ')}
-						/>
-					</>
+					<Timeline from={s.timeline.from} to={s.timeline.to} people={s.timeline.people} />
 				)}
 			</Section>
 
