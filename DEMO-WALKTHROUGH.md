@@ -235,7 +235,7 @@ Pie and line charts, axes and tap-for-detail wait for the chart library in the n
 - **Zoom:** − / + buttons for 1×, 2×, 4× and 8×. The chart scrolls sideways and keeps the middle in view. Pinch-to-zoom needs react-native-reanimated, so it waits for the next native build.
 - **Tap a dot** (from 2×): a panel shows the card, the person, what happened, the date, day N of the relationship and the note you wrote then. Tap the dot again or the X to close it. Dots too close to tap on their own merge into one with a number, and tapping it lists every flag in it. Zoom in to split them apart. VoiceOver reads the panel aloud.
 
-## 13. Native build 1.1.0 (2026-11-08, not built yet)
+## 13. Native build 1.1.0 (built 2026-11-08: app d0f434c, EAS build 2f0d758c, iOS build 7)
 
 Version 1.0.0 → 1.1.0. Over-the-air updates from now on only reach 1.1.0 installs, so your phone needs the new build (an EAS link). Old 1.0.0 installs keep update 6.
 
@@ -247,4 +247,16 @@ Version 1.0.0 → 1.1.0. Over-the-air updates from now on only reach 1.1.0 insta
 - **New chart, Flags Over Time:** a step line per person counting flags as they show up, with a Calendar/Aligned toggle. Press and hold to read each person's count at that point.
 - **Removed unused packages:** `@react-native-picker/picker`, `react-native-url-polyfill`, `expo-auth-session` and `@react-navigation/native`.
 - **Added:** expo-video, expo-audio (and expo-asset), react-native-reanimated, react-native-worklets, Skia, and Victory Native 42. Version 43 needs a Skia package that Expo SDK 58 doesn't use yet.
+
+**Installing 1.1.0:** open the EAS build page on your iPhone (https://expo.dev/accounts/jace88/projects/dealbreaker/builds/2f0d758c-fc6b-4f83-bf2c-21fe6ab3313b) and tap Install. It replaces 1.0.0 and keeps your sign-in. The provisioning profile was renewed on 2026-11-08 and runs until Sep 2027.
+
+**Phone test for 1.1.0:**
+1. **Voice memo:** on any card, change a color or add context → Voice Memo. Allow the microphone, record about 10 seconds, Stop, play it back in the popup, Submit. Open the card's 📋: the memo plays there. Try it again with the ringer switch on silent.
+2. **Cancel and close:** start a recording, then Cancel; then start one and close the popup. Nothing is saved either way.
+3. **Recording blocks playback:** while recording, the other memo and video tiles are greyed out.
+4. **Video:** Avery's "Never asks about me" note (Oct 25) has a concert video. Tap it to play full screen.
+5. **Sam's voice memo:** Sam / "Goes silent after fights" (Oct 11) now plays.
+6. **Pinch:** Stats → Relationship Timeline, pinch to zoom in and out, scroll sideways with one finger, tap a dot.
+7. **Flags Over Time:** under the timeline, the lines draw. Press and hold to read the counts, and try Aligned.
+8. **Upload failure:** put the phone in airplane mode, attach a photo and Submit. The popup stays open with "Upload Failed"; turn airplane mode off and Submit again.
 
