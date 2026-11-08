@@ -62,7 +62,8 @@ const Layout = () => {
 			currentProfileId,
 			setCurrentProfileId,
 			debugLog,
-			syncOfflineData
+			syncOfflineData,
+			boardLoadedRef
 		);
 
 	// Profile manager hook

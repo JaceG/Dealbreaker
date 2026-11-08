@@ -259,15 +259,19 @@ export const addFlagHistory = async (
 	}
 };
 
-// Removes a deleted profile's history from the server; local caches for it are left to expire.
+// Removes a deleted profile's history from the server. Tries 3 times, 15 s apart, to outlast a cold Render start.
+// shortcut: an app closed before the last try leaves the history behind; queue it with pendingChanges if that matters.
 export const deleteProfileHistory = async (profileId: string): Promise<boolean> => {
-	try {
-		await api.delete(`/flagHistory/profile/${encodeURIComponent(profileId)}`);
-		return true;
-	} catch (error) {
-		console.error('Error deleting profile history:', error);
-		return false;
+	for (let attempt = 1; attempt <= 3; attempt++) {
+		try {
+			await api.delete(`/flagHistory/profile/${encodeURIComponent(profileId)}`);
+			return true;
+		} catch (error) {
+			console.error(`Error deleting profile history (try ${attempt}):`, error);
+			if (attempt < 3) await new Promise((r) => setTimeout(r, 15000));
+		}
 	}
+	return false;
 };
 
 export const saveMyAccount = async (
@@ -426,10 +430,13 @@ export const syncPendingChanges = async () => {
 			const response = await api.post('/flagHistory/sync', { changes });
 
 			if (response.data.success) {
-				// Sync successful, clear pending changes
+				// Drop only what was sent; entries queued during the request stay for next time.
+				const latest = JSON.parse(
+					(await AsyncStorage.getItem('pendingChanges')) || '[]'
+				);
 				await AsyncStorage.setItem(
 					'pendingChanges',
-					JSON.stringify([])
+					JSON.stringify(latest.slice(changes.length))
 				);
 				return {
 					success: true,

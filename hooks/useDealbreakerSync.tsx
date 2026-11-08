@@ -24,7 +24,12 @@ export const useDealbreakerSync = (user: any) => {
 				const userDataObject = JSON.parse(userData);
 				const userId = userDataObject.id;
 				const response = await getDealbreakers(userId);
-				// From here on the board may be saved (an empty response is a new account).
+				// undefined = the request failed (Render may be asleep): keep saving off and try again.
+				if (response === undefined) {
+					setTimeout(fetchDealbreakers, 15000);
+					return;
+				}
+				// From here on the board may be saved (null is a new account with no board yet).
 				boardLoadedRef.current = true;
 				if (response) {
 					setDealbreaker(response);

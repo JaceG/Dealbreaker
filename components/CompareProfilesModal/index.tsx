@@ -3,6 +3,7 @@ import { Modal, View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'rea
 import AppButton from '../AppButton';
 import FlagDot from '../FlagDot';
 import StoreContext from '../../store';
+import { showToast } from '../../utils/functions';
 import { colors } from '../../libs/board/constants';
 import { DealbreakerState, FlagItem, Profile } from '../../models/dataModels';
 
@@ -26,7 +27,7 @@ const CompareProfilesModal = ({ visible, onClose }: { visible: boolean; onClose:
 	const [showAll, setShowAll] = useState(false);
 
 	useEffect(() => {
-		if (visible) setSelected(people.filter((p) => !dealbreaker[p.id]?.ended).map((p) => p.id));
+		if (visible) setSelected(people.filter((p) => !dealbreaker[p.id]?.ended).map((p) => p.id).slice(0, 5));
 	}, [visible]);
 
 	const shown = people.filter((p) => selected.includes(p.id));
@@ -39,8 +40,13 @@ const CompareProfilesModal = ({ visible, onClose }: { visible: boolean; onClose:
 				return s.isDealbreaker || s.color !== 'white';
 			})
 	);
-	const toggle = (id: string) =>
-		setSelected(selected.includes(id) ? selected.filter((s) => s !== id) : [...selected, id]);
+	// Five 64-wide columns fit a phone; more would run off the screen.
+	const MAX_PEOPLE = 5;
+	const toggle = (id: string) => {
+		if (selected.includes(id)) return setSelected(selected.filter((s) => s !== id));
+		if (selected.length >= MAX_PEOPLE) return showToast('info', `Compare up to ${MAX_PEOPLE} people at a time`);
+		setSelected([...selected, id]);
+	};
 
 	return (
 		<Modal visible={visible} animationType='slide' onRequestClose={onClose}>
@@ -110,7 +116,7 @@ const styles = StyleSheet.create({
 		paddingTop: 60,
 		paddingHorizontal: 20,
 		paddingBottom: 30,
-		backgroundColor: '#fff',
+		backgroundColor: colors.white,
 	},
 	title: {
 		fontSize: 20,

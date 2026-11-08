@@ -59,6 +59,13 @@ const getUniqueFilename = (fileUri: string) => {
 	return `image_${timestamp}_${random}.${extension}`;
 };
 
+// Thrown (not swallowed like other upload errors) so the user hears why the file wasn't uploaded.
+export class FileTooLargeError extends Error {
+	constructor() {
+		super('The file is over 10 MB, the upload limit');
+	}
+}
+
 // Upload a file to S3 via the backend API
 export const uploadToS3 = async (fileUri: string, fileName?: string) => {
 	if (!fileUri) {
@@ -98,6 +105,10 @@ export const uploadToS3 = async (fileUri: string, fileName?: string) => {
 			return null;
 		}
 		console.log(`[S3] File exists, size: ${fileInfo.size} bytes`);
+		// The backend refuses files over 10 MB; say so instead of sending the whole file first.
+		if (fileInfo.size > 10 * 1024 * 1024) {
+			throw new FileTooLargeError();
+		}
 
 		// Determine content type based on file extension
 		const contentType = getMimeType(finalFileName);
@@ -152,6 +163,7 @@ export const uploadToS3 = async (fileUri: string, fileName?: string) => {
 		console.error('[S3] Upload failed');
 		return null;
 	} catch (error) {
+		if (error instanceof FileTooLargeError) throw error;
 		console.error('[S3] Error during upload process:', error);
 		return null;
 	}

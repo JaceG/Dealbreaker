@@ -343,6 +343,7 @@ const useBoardManagement = () => {
 		refreshKey,
 		colorFilter,
 		setColorFilter,
+		setRefreshKey,
 
 		// Modal Visibility States
 		visible,

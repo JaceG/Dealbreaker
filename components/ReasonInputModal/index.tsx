@@ -240,12 +240,13 @@ const ReasonInputModal = ({
 					try {
 						// Generate a unique filename that keeps the file's own extension
 						const timestamp = Date.now();
+						// The picker names every video .mp4 and photo .jpg, so the real extension comes from the file path.
+						const extOf = (path = '') => {
+							const last = path.split('?')[0].split('/').pop() || '';
+							return last.includes('.') ? last.split('.').pop()!.toLowerCase() : '';
+						};
 						const extension =
-							(attachment.name || attachment.url)
-								.split('?')[0]
-								.split('.')
-								.pop()
-								?.toLowerCase() || 'jpg';
+							extOf(attachment.url) || extOf(attachment.name) || 'jpg';
 						const filename = `attachment_${timestamp}_${i}.${extension}`;
 
 						// Log details about the upload attempt

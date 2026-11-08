@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import NetInfo from '@react-native-community/netinfo';
 import {
-	setList,
 	getList,
 	setAtomicValue,
 	syncPendingChanges,
@@ -18,7 +17,11 @@ export const useNetworkSync = (
 	const syncInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
 	// Function to sync offline data with the server
+	// Launch, the network listener and the timer can all start a sync; one at a time, or entries are sent twice.
+	const syncingRef = useRef(false);
 	const syncOfflineData = async (forceSync = false) => {
+		if (syncingRef.current) return;
+		syncingRef.current = true;
 		try {
 			// First handle pending changes to MongoDB
 			const pendingChanges = await getList('pendingChanges');
@@ -28,8 +31,6 @@ export const useNetworkSync = (
 				if (result.success) {
 					// Only clear pending changes if sync was truly successful (not offline)
 					if (!result.offline) {
-						await setList('pendingChanges', []);
-
 						// Only show toast if this was a user-initiated sync (forceSync)
 						if (forceSync) {
 							showToast(
@@ -60,6 +61,8 @@ export const useNetworkSync = (
 					'There was a problem syncing with the server.'
 				);
 			}
+		} finally {
+			syncingRef.current = false;
 		}
 	};
 

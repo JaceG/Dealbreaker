@@ -54,7 +54,7 @@ const ProfileOverview = ({
 					<TouchableOpacity
 						key={color}
 						accessibilityRole='button'
-						accessibilityLabel={`Show only ${color} flags`}
+						accessibilityLabel={`${count(color)} ${color} flags. Show only these`}
 						accessibilityState={{ selected: colorFilter === color }}
 						style={[styles.countChip, colorFilter === color && styles.countChipActive]}
 						onPress={() => onFilterChange(colorFilter === color ? null : color)}>

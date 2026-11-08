@@ -15,7 +15,8 @@ export const useDataLoader = (
 	currentProfileId: string,
 	setCurrentProfileId: (id: string) => void,
 	debugLog: (...args: any[]) => void,
-	syncOfflineData: (forceSync?: boolean) => Promise<void>
+	syncOfflineData: (forceSync?: boolean) => Promise<void>,
+	boardLoadedRef: { current: boolean }
 ) => {
 	const [isLoaded, setIsLoaded] = useState(false);
 	const isProfileMountRef = useRef(false);
@@ -45,9 +46,11 @@ export const useDataLoader = (
 
 				// Load dealbreaker data
 				const savedDealbreaker = await getList('dealbreaker');
+				// Once the server's board is in, the phone's saved copy is older; don't let it replace it.
 				if (
 					savedDealbreaker &&
-					Object.keys(savedDealbreaker).length > 0
+					Object.keys(savedDealbreaker).length > 0 &&
+					!boardLoadedRef.current
 				) {
 					debugLog(
 						'Loaded dealbreaker state from storage:',

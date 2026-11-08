@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
+import AppButton from '../AppButton';
 import { colors } from '../../libs/board/constants';
 import { DealbreakerState, Profile } from '../../models/dataModels';
 
@@ -28,7 +29,7 @@ const PeopleOverview = ({ dealbreaker, profiles, onOpenProfile, onCompare }: Pro
 	const people = profiles
 		.filter((p) => p.id !== 'main' && dealbreaker[p.id])
 		.map((p) => ({ ...p, ...profileCounts(dealbreaker, p.id), ended: !!dealbreaker[p.id]?.ended }))
-		.sort((a, b) => b.dealbreakers * 100 + b.red * 10 + b.yellow - (a.dealbreakers * 100 + a.red * 10 + a.yellow));
+		.sort((a, b) => b.dealbreakers - a.dealbreakers || b.red - a.red || b.yellow - a.yellow);
 	const active = people.filter((p) => !p.ended);
 	const ended = people.filter((p) => p.ended);
 
@@ -58,7 +59,7 @@ const PeopleOverview = ({ dealbreaker, profiles, onOpenProfile, onCompare }: Pro
 			<View style={styles.header}>
 				<TouchableOpacity
 					accessibilityRole='button'
-					accessibilityLabel={expanded ? 'Hide people' : 'Show people'}
+					accessibilityLabel={`${active.length} dating, ${ended.length} ended. ${expanded ? 'Hide' : 'Show'} people`}
 					style={styles.headerToggle}
 					onPress={() => setExpanded(!expanded)}>
 					<Text style={styles.headerText}>
@@ -66,9 +67,7 @@ const PeopleOverview = ({ dealbreaker, profiles, onOpenProfile, onCompare }: Pro
 					</Text>
 					<Feather name={expanded ? 'chevron-up' : 'chevron-down'} size={20} color={colors.officer} />
 				</TouchableOpacity>
-				<TouchableOpacity accessibilityRole='button' style={styles.compare} onPress={onCompare}>
-					<Text style={styles.compareText}>Compare</Text>
-				</TouchableOpacity>
+				<AppButton title='Compare' onPress={onCompare} />
 			</View>
 			{expanded ? (
 				<View style={styles.list}>
@@ -110,17 +109,6 @@ const styles = StyleSheet.create({
 	},
 	headerText: {
 		fontSize: 16,
-		fontWeight: 'bold',
-	},
-	compare: {
-		paddingHorizontal: 10,
-		paddingVertical: 5,
-		borderRadius: 5,
-		backgroundColor: colors.exodusFruit,
-	},
-	compareText: {
-		color: colors.white,
-		fontSize: 14,
 		fontWeight: 'bold',
 	},
 	list: {

@@ -10,6 +10,9 @@ export const useBoardOperations = (
 	handleViewFlagHistory?: (item: any) => void,
 	colorFilter: string | null = null
 ) => {
+	// Board rebuilds can come from timers set in an earlier render, so they read the filter from here.
+	const colorFilterRef = useRef(colorFilter);
+	colorFilterRef.current = colorFilter;
 	// Board state
 	const [list, setList] = useState<BoardRepository | null>(null);
 	const [isRemount, setIsRemount] = useState(false);
@@ -155,16 +158,21 @@ export const useBoardOperations = (
 		});
 
 		// The overview's color filter hides other flags; the index maps above still hold full-list positions.
-		if (colorFilter) {
-			newData[0].rows = newData[0].rows.filter((row: any) => row.flag === colorFilter);
+		if (colorFilterRef.current) {
+			newData[0].rows = newData[0].rows.filter(
+				(row: any) => row.flag === colorFilterRef.current
+			);
 		}
 
 		// Set the board with the processed data
 		setList(new BoardRepository(newData));
 	};
 
+	// Columns register themselves when they mount, so a new board needs a remount (new key), not just new data.
 	useEffect(() => {
-		if (dealbreaker?.[currentProfileId]) updateBoard(true);
+		if (!dealbreaker?.[currentProfileId]) return;
+		updateBoard(true);
+		setRefreshKey(Date.now());
 	}, [colorFilter]);
 
 	// Effects for board management

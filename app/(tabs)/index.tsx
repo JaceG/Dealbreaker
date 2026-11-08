@@ -92,6 +92,7 @@ export default function Lists() {
 		handleViewFlagHistory,
 		colorFilter,
 		setColorFilter,
+		setRefreshKey,
 	} = useBoardManagement();
 	const { setCurrentProfileId, ensureProfileExists } = useContext<any>(StoreContext);
 	const [compareVisible, setCompareVisible] = useState(false);
@@ -217,6 +218,7 @@ export default function Lists() {
 								if (colorFilter) {
 									showToast('info', 'Clear the filter to move cards');
 									updateBoard(true);
+									setRefreshKey(Date.now());
 									return;
 								}
 
