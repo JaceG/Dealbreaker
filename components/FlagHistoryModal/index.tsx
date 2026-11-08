@@ -9,6 +9,7 @@ const FlagHistoryModal = ({
 	profileId,
 	flagId,
 	flagTitle,
+	flagDescription,
 	onAddReason,
 }: FlagHistoryModalProps) => {
 	// Add console logs for debugging
@@ -47,6 +48,7 @@ const FlagHistoryModal = ({
 						profileId={profileId}
 						flagId={flagId}
 						flagTitle={flagTitle || 'Unknown Item'}
+						flagDescription={flagDescription}
 						onClose={onClose}
 						onAddReason={onAddReason}
 					/>

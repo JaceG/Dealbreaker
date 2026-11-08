@@ -144,6 +144,21 @@ const Card: React.FC<CardProps> = ({
 									{item ? item.row().name : ''}
 								</Paragraph>
 							</View>
+							{item?.row().description ? (
+								<Paragraph
+									numberOfLines={2}
+									style={{
+										fontSize: 14,
+										fontFamily: cardNameFontFamily,
+										color: cardNameTextColor,
+										textAlign: 'center',
+										opacity: 0.85,
+										width: '90%',
+										marginTop: 4,
+									}}>
+									{item.row().description}
+								</Paragraph>
+							) : null}
 
 							{/* Second line - Icons and flag */}
 							<IconRowWrapper>

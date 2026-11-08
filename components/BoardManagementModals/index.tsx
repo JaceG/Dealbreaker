@@ -127,6 +127,7 @@ const BoardManagementModals = ({
 					profileId={currentProfileId}
 					flagId={selectedFlag?.id}
 					flagTitle={selectedFlag?.title || selectedFlag?.name || ''}
+					flagDescription={selectedFlag?.description}
 					onAddReason={handleOpenAddReasonModal}
 				/>
 			)}

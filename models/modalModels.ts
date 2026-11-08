@@ -36,6 +36,7 @@ export interface FlagHistoryModalProps extends BaseModalProps {
 	profileId: string;
 	flagId: string;
 	flagTitle: string;
+	flagDescription?: string;
 	onAddReason: () => void;
 }
 
@@ -157,6 +158,7 @@ export interface FlagHistoryTimelineProps {
 	profileId: string;
 	flagId: string;
 	flagTitle: string;
+	flagDescription?: string;
 	onClose: () => void;
 	onAddReason: () => void;
 }

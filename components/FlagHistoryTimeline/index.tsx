@@ -80,6 +80,7 @@ const FlagHistoryTimeline = ({
 	profileId,
 	flagId,
 	flagTitle,
+	flagDescription,
 	onClose,
 	onAddReason,
 }: FlagHistoryTimelineProps) => {
@@ -652,6 +653,9 @@ const FlagHistoryTimeline = ({
 		<View style={styles.container}>
 			<View style={isPortrait ? styles.header : styles.headerHorizontal}>
 				<Text style={styles.headerTitle}>{flagTitle}</Text>
+				{flagDescription ? (
+					<Text style={styles.headerDescription}>{flagDescription}</Text>
+				) : null}
 				<View
 					style={
 						isPortrait
@@ -735,6 +739,12 @@ const styles = StyleSheet.create({
 	headerTitle: {
 		fontSize: 18,
 		fontWeight: 'bold',
+	},
+	headerDescription: {
+		fontSize: 14,
+		color: colors.bay,
+		textAlign: 'center',
+		marginTop: 4,
 	},
 	headerButtons: {
 		flexDirection: 'row',
