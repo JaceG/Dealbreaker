@@ -11,7 +11,7 @@ Written 2026-11-08. The demo data lives in your account (jace.galloway@gmail.com
 
 Since update 2 (below) the app doesn't save the board until it has loaded the server's copy, so a phone's old saved board can no longer overwrite the server. Before that, launching could do exactly that, which is why the first version of these steps said to log out first. If the demo ever gets wiped, `node scripts/demo-seed/seed-demo.js` in the backend writes it again (section 8).
 
-### Phone test for update 2 (published 2026-11-08)
+### Phone test for update 2 (published 2026-11-08, update group 8e770ce5)
 
 1. **Sam:** tap the red count in the bar above the board, and the board should show only red cards. Drag a card: it goes back, with "Clear the filter to move cards". Tap the count again to clear.
 2. **Sam:** tap the chevron in the bar. "Disrespects boundaries" has a red "!"; tap it for the explanation.
