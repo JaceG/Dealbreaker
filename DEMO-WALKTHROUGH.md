@@ -84,7 +84,7 @@ Ordered by impact. Everything is from reading the code. I didn't run the app, so
 ## 6. Missing or unfinished
 
 - ~~No "ended" status~~ Added 2026-11-08: Edit Profile → **Mark as Ended**. Ended people sort last in Switch Profile and show "(ended)".
-- **The card description is never shown,** not on the card and not in the timeline. You only see it in Edit.
+- ~~The card description is never shown~~ Added 2026-11-08: under the title on the card and in its timeline.
 - No green flags (backend allows `green`). Jace: not needed for now.
 - ~~No overview~~ Added 2026-11-08: a count bar on each person (tap a count to filter the board, "!" marks Main dealbreakers), a ranked people list on Main, and Compare People.
 - **No onboarding or starter cards.** A new user faces an empty board.
@@ -117,3 +117,26 @@ Original questions:
   - Rewrite the demo: `node scripts/demo-seed/seed-demo.js`
   - Guard against a phone overwrite: `node scripts/demo-seed/seed-demo.js --watch=120`
   - Remove the demo and restore the old board: `node scripts/demo-seed/seed-demo.js --undo`
+
+## 9. Your notes from testing update 2 (2026-11-08)
+
+### Done in update 3 (not on your phone yet)
+
+| Your note | What changed |
+|---|---|
+| Edit popups trap the keyboard, so you can't save | Edit Item, Edit Profile and the Create Flag page now scroll above the keyboard, and a tap outside a field closes it. The two popups that worked were already built this way. |
+| No button standard | One shared button with three kinds: **main action** (dark purple), **cancel / back** (white with a purple outline) and **delete** (red). Every button is at least 48pt tall with text that passes 4.5:1 contrast. The old purple, gray-blue, light-blue and red buttons didn't pass. One shared **X** close button with a 44pt target. Card icons (flag, ✏️, 🗑️, 📋) have larger tap areas and screen-reader names. |
+| Notes icon needs a counter | 📋 shows a badge with how many history entries that card has on this person (or on Main). No badge means no history. Needs the new backend route, which is not deployed yet. |
+| "Home" title on a person's board, and Home does nothing | The title is the person's name. The bottom tab reads **Main** there and takes you back to Main. |
+| App always reopens on Main | It reopens on the profile you had open, after the board loads. Logging out and back in also returns you there. |
+| Logout needs a confirmation | "Are you sure you want to log out?" with Cancel. |
+| Side by side from inside a profile | Open the count bar on a person and tap **Compare with Others**. That person is the first column, and the rest are filled by who needs a look most. |
+| On Main, how many people have a card yellow / red / dealbreaker | Main's cards show colored dots with counts (a square is a dealbreaker), for people you're still seeing. Ended people aren't counted, because Main reads as "what's going on now". Ended people could be added as a fourth count. |
+
+### Proposals that need your call
+
+1. **Navigation.** Move Switch Profile and Logout out of the header, into a bottom bar on every board: **Main** (home) · **People** (the switcher, plus Create Profile) · **Create Flag** (on Main) · **Settings** (today's My Account, with Log Out at the bottom behind the new confirmation). The header would then show just the title. This is about a day of work and touches every screen, so I haven't started it.
+2. **A card's history across people.** In a card's history popup, add an **Everyone** tab listing that card's notes from all your people, newest first, each labeled with the person. It needs one more backend route (all your entries for one card). Small to medium.
+3. **Stats.** On Main: for each card, how many people it reached yellow, red or dealbreaker with; which cards were in play when a profile ended; how long yellow usually takes to turn red; how often you take a flag back down; and cards you flag on almost everyone, which can point at your own pattern rather than theirs. Per person: a flag timeline, days since the profile started, notes per month and the latest changes. This is the biggest item. I'd start with a plain list screen of Main's numbers before any charts.
+4. **Dragging cards** (cards lift on a tap, and are hard to drop): saved for later, as you said. It lives in the board library (`libs/board`). The likely fix is a long-press to lift, plus larger drop zones.
+

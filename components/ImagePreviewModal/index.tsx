@@ -4,13 +4,13 @@ import {
 	View,
 	Image,
 	StyleSheet,
-	TouchableOpacity,
 	Text,
 	SafeAreaView,
 	StatusBar,
 	ActivityIndicator,
 } from 'react-native';
 import { ImagePreviewModalProps } from '../../models/modalModels';
+import CloseButton from '../CloseButton';
 
 const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
 	visible,
@@ -38,12 +38,7 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
 				<StatusBar barStyle='light-content' />
 
 				<View style={styles.header}>
-					<TouchableOpacity
-						style={styles.closeButton}
-						onPress={onClose}
-						hitSlop={{ top: 20, left: 20, bottom: 20, right: 20 }}>
-						<Text style={styles.closeButtonText}>✕</Text>
-					</TouchableOpacity>
+					<CloseButton onDark onPress={onClose} />
 				</View>
 
 				<View style={styles.imageContainer}>
@@ -110,19 +105,6 @@ const styles = StyleSheet.create({
 		top: 40,
 		right: 20,
 		zIndex: 10,
-	},
-	closeButton: {
-		width: 40,
-		height: 40,
-		borderRadius: 20,
-		backgroundColor: 'rgba(0,0,0,0.5)',
-		alignItems: 'center',
-		justifyContent: 'center',
-	},
-	closeButtonText: {
-		color: 'white',
-		fontSize: 18,
-		fontWeight: 'bold',
 	},
 	imageContainer: {
 		flex: 1,

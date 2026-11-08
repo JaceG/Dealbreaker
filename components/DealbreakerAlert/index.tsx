@@ -58,14 +58,14 @@ const DealbreakerAlert = ({
 							<AppButton
 								title='Keep as Dealbreaker'
 								onPress={onClose}
-								color='#d9534f'
+								variant='destructive'
 							/>
 						</View>
 						<View style={styles.buttonWrapper}>
 							<AppButton
 								title='Undo'
 								onPress={onUndo}
-								color='#5bc0de'
+								variant='secondary'
 							/>
 						</View>
 					</View>

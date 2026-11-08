@@ -2,9 +2,14 @@ import { useContext, useEffect, useRef } from 'react';
 import * as SecureStore from 'expo-secure-store';
 import StoreContext from '../store';
 import { getDealbreakers } from '../utils/mongodbapi';
+import { getAtomicValue } from '../utils/storage';
 
 export const useDealbreakerSync = (user: any) => {
-	const { setDealbreaker, boardLoadedRef } = useContext<any>(StoreContext);
+	const { setDealbreaker, currentProfileId, setCurrentProfileId, boardLoadedRef } =
+		useContext<any>(StoreContext);
+	// Read when the board arrives: a profile picked while it loaded wins over the saved one.
+	const currentProfileIdRef = useRef(currentProfileId);
+	currentProfileIdRef.current = currentProfileId;
 	const isDealbreakerTimeoutRef = useRef<
 		boolean | ReturnType<typeof setTimeout>
 	>(false);
@@ -33,10 +38,19 @@ export const useDealbreakerSync = (user: any) => {
 					retryRef.current = setTimeout(fetchDealbreakers, 15000);
 					return;
 				}
+				// Reopen on the profile that was open last, if this board still has it.
+				const lastProfileId = await getAtomicValue('currentProfileId');
 				// From here on the board may be saved (null is a new account with no board yet).
 				boardLoadedRef.current = true;
 				if (response) {
 					setDealbreaker(response);
+					if (
+						lastProfileId &&
+						response[lastProfileId] &&
+						currentProfileIdRef.current === 'main'
+					) {
+						setCurrentProfileId(lastProfileId);
+					}
 				}
 			}, 1000);
 		}

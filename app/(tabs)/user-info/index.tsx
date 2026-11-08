@@ -4,7 +4,6 @@ import {
 	useWindowDimensions,
 	StyleSheet,
 	TextInput,
-	Button,
 	Modal,
 	Alert,
 	ScrollView,
@@ -20,6 +19,7 @@ import {
 	EXPO_PUBLIC_OAUTH_EXPO_CLIENT_ID,
 } from '@env';
 import { colors } from '../../../libs/board/constants';
+import AppButton from '../../../components/AppButton';
 import { useAuth } from '../../../context/Auth';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useFocusEffect } from 'expo-router';
@@ -306,10 +306,13 @@ export const UserInfo = () => {
 								placeholderTextColor={'white'}
 							/>
 						)}
-						<Button
-							title={isEditing ? 'Save New Name' : 'Edit'}
-							onPress={handleEdit}
-						/>
+						<View style={styles.inlineButton}>
+							<AppButton
+								title={isEditing ? 'Save' : 'Edit'}
+								onPress={handleEdit}
+								variant={isEditing ? 'primary' : 'secondary'}
+							/>
+						</View>
 					</View>
 				</View>
 				<Text style={styles.textHeader}>Sign-in Methods</Text>
@@ -319,7 +322,7 @@ export const UserInfo = () => {
 						<Text style={styles.textMuted}>
 							Couldn't load your sign-in methods.
 						</Text>
-						<Button title='Try Again' onPress={retryLoadMethods} />
+						<AppButton title='Try Again' onPress={retryLoadMethods} variant='secondary' />
 					</>
 				)}
 				{methods &&
@@ -331,15 +334,17 @@ export const UserInfo = () => {
 									{methods[type] ? 'Connected' : 'Not connected'}
 								</Text>
 								{methods[type] ? (
-									<Button
+									<AppButton
 										title='Disconnect'
 										onPress={() => handleDisconnect(type)}
+										variant='secondary'
 									/>
 								) : (
 									(type === 'google' || isAppleAvailable) && (
-										<Button
+										<AppButton
 											title='Connect'
 											onPress={() => handleConnect(type)}
+											variant='secondary'
 										/>
 									)
 								)}
@@ -386,7 +391,7 @@ export const UserInfo = () => {
 					/>
 				</View>
 				<View style={styles.passwordButtonContainer}>
-					<Button
+					<AppButton
 						title={hasPassword ? 'Save New Password' : 'Save Password'}
 						onPress={handleSave}
 					/>
@@ -400,10 +405,10 @@ export const UserInfo = () => {
 						account will permanently remove all your data, profiles, and
 						flags.
 					</Text>
-					<Button
+					<AppButton
 						title='Delete Account'
 						onPress={handleDeleteAccount}
-						color='#dc3545'
+						variant='destructive'
 					/>
 				</View>
 
@@ -434,16 +439,20 @@ export const UserInfo = () => {
 								placeholderTextColor={'#999'}
 							/>
 							<View style={styles.modalButtons}>
-								<Button
-									title='Cancel'
-									onPress={handleCancelDelete}
-									color='#6c757d'
-								/>
-								<Button
-									title='Delete Account'
-									onPress={handleConfirmDelete}
-									color='#dc3545'
-								/>
+								<View style={styles.modalButton}>
+									<AppButton
+										title='Cancel'
+										onPress={handleCancelDelete}
+										variant='secondary'
+									/>
+								</View>
+								<View style={styles.modalButton}>
+									<AppButton
+										title='Delete Account'
+										onPress={handleConfirmDelete}
+										variant='destructive'
+									/>
+								</View>
 							</View>
 						</View>
 					</View>
@@ -501,6 +510,10 @@ const styles = StyleSheet.create({
 	methodStatus: {
 		flexDirection: 'row' as const,
 		alignItems: 'center' as const,
+		gap: 8,
+	},
+	inlineButton: {
+		marginLeft: 8,
 	},
 	passwordTextInput: {
 		padding: 13,
@@ -642,6 +655,9 @@ const styles = StyleSheet.create({
 		flexDirection: 'row' as const,
 		justifyContent: 'space-between' as const,
 		gap: 10,
+	},
+	modalButton: {
+		flex: 1,
 	},
 });
 

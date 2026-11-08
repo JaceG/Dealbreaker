@@ -40,6 +40,43 @@ interface CardProps {
 
 const NEGATIVE_SPACE = 50;
 
+type PeopleCountsProps = { counts: { yellow: number; red: number; dealbreaker: number } };
+
+// One dot per color with how many people have the card that way; a square marks a dealbreaker, as in Compare.
+const PeopleCounts = ({ counts }: PeopleCountsProps) => {
+	const parts = [
+		{ key: 'yellow', n: counts.yellow, color: colors.flagYellow, square: false },
+		{ key: 'red', n: counts.red, color: colors.flagRed, square: false },
+		{ key: 'dealbreaker', n: counts.dealbreaker, color: colors.flagRed, square: true },
+	].filter((p) => p.n > 0);
+	if (parts.length === 0) return null;
+	const label = parts
+		.map((p) => `${p.n} ${p.n === 1 ? 'person' : 'people'} ${p.key}`)
+		.join(', ');
+	return (
+		<View
+			accessible
+			accessibilityLabel={label}
+			style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 6 }}>
+			{parts.map((p) => (
+				<View key={p.key} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+					<View
+						style={{
+							width: 12,
+							height: 12,
+							borderRadius: p.square ? 2 : 6,
+							backgroundColor: p.color,
+							borderWidth: 1,
+							borderColor: colors.white,
+						}}
+					/>
+					<Text style={{ color: colors.white, fontSize: 14, fontWeight: 'bold' }}>{p.n}</Text>
+				</View>
+			))}
+		</View>
+	);
+};
+
 const Card: React.FC<CardProps> = ({
 	cardBorderRadius = 10,
 	cardContent,
@@ -68,6 +105,8 @@ const Card: React.FC<CardProps> = ({
 		iconButton: ViewStyle;
 		iconText: TextStyle;
 		flagContainer: ViewStyle;
+		badge: ViewStyle;
+		badgeText: TextStyle;
 	} = {
 		iconContainer: {
 			flexDirection: 'row',
@@ -87,6 +126,23 @@ const Card: React.FC<CardProps> = ({
 		flagContainer: {
 			alignItems: 'center',
 			justifyContent: 'flex-start',
+		},
+		badge: {
+			position: 'absolute',
+			top: -4,
+			right: -6,
+			minWidth: 20,
+			height: 20,
+			borderRadius: 10,
+			paddingHorizontal: 4,
+			backgroundColor: colors.white,
+			alignItems: 'center',
+			justifyContent: 'center',
+		},
+		badgeText: {
+			fontSize: 12,
+			fontWeight: 'bold',
+			color: colors.exodusFruit,
 		},
 	};
 
@@ -160,6 +216,11 @@ const Card: React.FC<CardProps> = ({
 								</Paragraph>
 							) : null}
 
+							{/* Main only: how many active people have this card yellow, red or as a dealbreaker */}
+							{!hidden && item?.row().peopleCounts ? (
+								<PeopleCounts counts={item.row().peopleCounts} />
+							) : null}
+
 							{/* Second line - Icons and flag */}
 							<IconRowWrapper>
 								<View style={iconStyles.iconContainer}>
@@ -168,6 +229,9 @@ const Card: React.FC<CardProps> = ({
 										item &&
 										onDeleteItem && (
 											<TouchableOpacity
+												accessibilityRole='button'
+												accessibilityLabel='Delete card'
+												hitSlop={8}
 												onPress={() =>
 													onDeleteItem(item)
 												}
@@ -180,6 +244,9 @@ const Card: React.FC<CardProps> = ({
 										)}
 									{!hidden && item && onEditItem && (
 										<TouchableOpacity
+											accessibilityRole='button'
+											accessibilityLabel='Edit card'
+											hitSlop={8}
 											onPress={() => onEditItem(item)}
 											style={iconStyles.iconButton}>
 											<Text style={iconStyles.iconText}>
@@ -192,6 +259,9 @@ const Card: React.FC<CardProps> = ({
 										item.row &&
 										item.row().onLongPress && (
 											<TouchableOpacity
+												accessibilityRole='button'
+												accessibilityLabel={`Notes and history, ${item.row().historyCount || 'no'} ${item.row().historyCount === 1 ? 'entry' : 'entries'}`}
+												hitSlop={8}
 												onPress={() =>
 													item.row().onLongPress()
 												}
@@ -200,6 +270,13 @@ const Card: React.FC<CardProps> = ({
 													style={iconStyles.iconText}>
 													📋
 												</Text>
+												{item.row().historyCount ? (
+													<View style={iconStyles.badge}>
+														<Text style={iconStyles.badgeText}>
+															{item.row().historyCount}
+														</Text>
+													</View>
+												) : null}
 											</TouchableOpacity>
 										)}
 								</View>

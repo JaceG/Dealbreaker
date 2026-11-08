@@ -213,13 +213,13 @@ const SwitchProfileModal = memo<SwitchProfileModalProps>(
 							<AppButton
 								title='Close'
 								onPress={onClose}
-								color='#6c757d'
+								variant='secondary'
 							/>
 							{selectedId && canDeleteProfile(selectedId) ? (
 								<AppButton
 									title='Delete Profile'
 									onPress={handleDeleteProfile}
-									color='#d9534f'
+									variant='destructive'
 								/>
 							) : null}
 						</View>

@@ -3,10 +3,9 @@ import {
 	Text,
 	View,
 	TextInput,
-	TouchableOpacity,
 	useWindowDimensions,
 } from 'react-native';
-import { colors } from '../../../libs/board/constants';
+import AppButton from '../../../components/AppButton';
 import useCreateProfile from '../../../hooks/useCreateProfile';
 
 // Type definitions
@@ -53,17 +52,15 @@ export default function CreateUsers({ navigation }: CreateUsersProps) {
 				) : null}
 			</View>
 			<View style={{ width: '100%', marginTop: 20 }}>
-				<TouchableOpacity
-					style={styles.button}
+				<AppButton
+					title='Create Profile'
 					onPress={() => {
 						console.log(
 							'Create button pressed - handling submission'
 						);
 						handleSubmit();
 					}}
-					activeOpacity={0.7}>
-					<Text style={styles.buttonText}>CREATE PROFILE</Text>
-				</TouchableOpacity>
+				/>
 			</View>
 		</View>
 	);
@@ -118,22 +115,5 @@ const styles = StyleSheet.create({
 		fontSize: 16,
 		marginTop: 3,
 		marginBottom: 3,
-	},
-	button: {
-		backgroundColor: colors.exodusFruit,
-		paddingVertical: 15,
-		paddingHorizontal: 20,
-		borderRadius: 10,
-		alignItems: 'center' as const,
-		elevation: 3,
-		shadowColor: '#000',
-		shadowOffset: { width: 0, height: 2 },
-		shadowOpacity: 0.2,
-		shadowRadius: 2,
-	},
-	buttonText: {
-		color: '#fff',
-		fontSize: 18,
-		fontWeight: 'bold' as const,
 	},
 });

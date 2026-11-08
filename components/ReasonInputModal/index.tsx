@@ -10,11 +10,10 @@ import {
 	ScrollView,
 	Platform,
 	Alert,
-	ActivityIndicator,
 } from 'react-native';
 import { showToast, uploadToS3 } from '../../utils';
 import { imageUtils } from '../../utils/functions';
-import { colors } from '../../libs/board/constants';
+import AppButton from '../AppButton';
 import { SimpleAttachment } from '../../models';
 
 // Feature flags to disable native modules
@@ -1144,43 +1143,26 @@ const ReasonInputModal = ({
 					</ScrollView>
 
 					<View style={styles.footer}>
-						<TouchableOpacity
-							style={[styles.button, styles.cancelButton]}
-							onPress={() => {
-								// Stop any recording or playback in progress
-								if (AUDIO_ENABLED) {
-									cancelRecording();
-									stopPlayback();
-								}
-								// Clear state
-								setReason('');
-								setAttachments([]);
-								onClose();
-							}}>
-							<Text style={styles.buttonText}>Cancel</Text>
-						</TouchableOpacity>
-
-						<TouchableOpacity
-							onPress={handleSubmit}
-							disabled={isSubmitting}
-							style={[
-								styles.submitButton,
-								!reason.trim() &&
-									attachments.length === 0 &&
-									styles.disabledButton,
-								isSubmitting && styles.loadingButton,
-							]}>
-							{isSubmitting ? (
-								<ActivityIndicator
-									size='small'
-									color='#FFFFFF'
-								/>
-							) : (
-								<Text style={styles.submitButtonText}>
-									Submit
-								</Text>
-							)}
-						</TouchableOpacity>
+						<View style={styles.footerButton}>
+							<AppButton
+								title='Cancel'
+								variant='secondary'
+								onPress={() => {
+									// Stop any recording or playback in progress
+									if (AUDIO_ENABLED) {
+										cancelRecording();
+										stopPlayback();
+									}
+									// Clear state
+									setReason('');
+									setAttachments([]);
+									onClose();
+								}}
+							/>
+						</View>
+						<View style={styles.footerButton}>
+							<AppButton title='Submit' onPress={handleSubmit} loading={isSubmitting} />
+						</View>
 					</View>
 				</View>
 			</View>
@@ -1274,30 +1256,9 @@ const styles = StyleSheet.create({
 		borderTopWidth: 1,
 		borderTopColor: '#e0e0e0',
 	},
-	button: {
-		flex: 1,
-		padding: 10,
-		borderRadius: 5,
-		justifyContent: 'center',
-		alignItems: 'center',
-		marginHorizontal: 5,
-	},
-	cancelButton: {
-		backgroundColor: '#e0e0e0',
-	},
-	submitButton: {
-		padding: 10,
-		backgroundColor: colors.exodusFruit,
-		borderRadius: 4,
+	footerButton: {
 		flex: 1,
 		margin: 5,
-		minHeight: 50,
-		justifyContent: 'center',
-		alignItems: 'center',
-	},
-	buttonText: {
-		color: 'white',
-		fontWeight: 'bold',
 	},
 	// Attachment styles
 	attachmentSection: {
@@ -1566,16 +1527,6 @@ const styles = StyleSheet.create({
 		elevation: 6,
 		margin: 5,
 		minHeight: 50,
-	},
-	loadingButton: {
-		backgroundColor: '#ccc',
-	},
-	disabledButton: {
-		backgroundColor: '#ccc',
-	},
-	submitButtonText: {
-		color: 'white',
-		fontWeight: 'bold',
 	},
 });
 

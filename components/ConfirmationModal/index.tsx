@@ -4,10 +4,10 @@ import {
 	View,
 	Text,
 	Modal,
-	TouchableOpacity,
 	useWindowDimensions,
 } from 'react-native';
 import { ConfirmationModalProps } from '../../models/modalModels';
+import AppButton from '../AppButton';
 
 const ConfirmationModal = ({
 	visible,
@@ -47,16 +47,12 @@ const ConfirmationModal = ({
 								? styles.buttonContainer
 								: styles.buttonContainerHorizontal
 						}>
-						<TouchableOpacity
-							style={styles.cancelButton}
-							onPress={onClose}>
-							<Text style={styles.buttonText}>Cancel</Text>
-						</TouchableOpacity>
-						<TouchableOpacity
-							style={styles.confirmButton}
-							onPress={onConfirm}>
-							<Text style={styles.buttonText}>Confirm</Text>
-						</TouchableOpacity>
+						<View style={styles.cancelButton}>
+							<AppButton title='Cancel' onPress={onClose} variant='secondary' />
+						</View>
+						<View style={styles.confirmButton}>
+							<AppButton title='Confirm' onPress={onConfirm} variant='destructive' />
+						</View>
 					</View>
 				</View>
 			</View>
@@ -126,27 +122,12 @@ const styles = StyleSheet.create({
 		gap: 20,
 	},
 	cancelButton: {
-		backgroundColor: '#ccc',
-		borderRadius: 5,
-		padding: 10,
-		elevation: 2,
 		flex: 1,
 		marginRight: 10,
-		alignItems: 'center',
 	},
 	confirmButton: {
-		backgroundColor: '#eb4d4b',
-		borderRadius: 5,
-		padding: 10,
-		elevation: 2,
 		flex: 1,
 		marginLeft: 10,
-		alignItems: 'center',
-	},
-	buttonText: {
-		color: 'white',
-		fontWeight: 'bold',
-		textAlign: 'center',
 	},
 });
 

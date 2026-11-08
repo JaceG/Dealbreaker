@@ -56,7 +56,11 @@ export const Flag = ({ color, onFlagClicked, item }: any) => {
 
 	return (
 		<View>
-			<Pressable onPress={handleFlagClick}>
+			<Pressable
+				accessibilityRole='button'
+				accessibilityLabel={`${flagColor} flag. Change color`}
+				hitSlop={10}
+				onPress={handleFlagClick}>
 				<Image
 					style={{
 						tintColor: flagColor,

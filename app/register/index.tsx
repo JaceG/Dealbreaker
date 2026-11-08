@@ -18,6 +18,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { router } from 'expo-router';
 import { colors } from '../../libs/board/constants';
 import useRegister from '../../hooks/useRegister';
+import AppButton from '../../components/AppButton';
 import {
 	GoogleSignin,
 	statusCodes,
@@ -202,19 +203,14 @@ const Auth: React.FC<AuthProps> = () => {
 						<Text style={styles.errorText}>{localError}</Text>
 					) : null}
 
-					<TouchableOpacity
-						style={[
-							styles.button,
-							busy ? styles.buttonDisabled : null,
-						]}
-						onPress={handleSubmit}
-						disabled={busy}>
-						{isLoading ? (
-							<ActivityIndicator color='#fff' />
-						) : (
-							<Text style={styles.buttonText}>Register</Text>
-						)}
-					</TouchableOpacity>
+					<View style={styles.button}>
+						<AppButton
+							title='Register'
+							onPress={handleSubmit}
+							disabled={busy}
+							loading={isLoading}
+						/>
+					</View>
 					<TouchableOpacity
 						style={[
 							styles.googleButton,
@@ -319,19 +315,10 @@ const styles = StyleSheet.create({
 		borderColor: '#ddd',
 	},
 	button: {
-		backgroundColor: colors.exodusFruit,
-		padding: 15,
-		borderRadius: 10,
-		alignItems: 'center',
 		marginBottom: 15,
 	},
 	buttonDisabled: {
 		opacity: 0.7,
-	},
-	buttonText: {
-		color: '#fff',
-		fontSize: 16,
-		fontWeight: 'bold',
 	},
 	googleButton: {
 		backgroundColor: '#fff',

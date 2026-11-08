@@ -1,7 +1,7 @@
 import { router, Tabs } from 'expo-router';
 import { FontAwesome } from '@expo/vector-icons';
 import Feather from '@expo/vector-icons/Feather';
-import { Button, useWindowDimensions } from 'react-native';
+import { Alert, Button, useWindowDimensions } from 'react-native';
 import { useAuth } from '../../context/Auth';
 import SwitchProfileModal from '../../components/SwitchProfileModal';
 import { colors } from '../../libs/board/constants';
@@ -23,11 +23,15 @@ const Layout = () => {
 		closeSwitchProfileModal,
 	} = useLayoutModals();
 	useDealbreakerSync(user);
-	const { currentProfileId, profiles } = useContext<any>(StoreContext);
-	const isProfileMain = () => {
-		const profile = profiles.find((p: any) => p.id === currentProfileId);
-		return profile.id === 'main';
-	};
+	const { currentProfileId, setCurrentProfileId, profiles } =
+		useContext<any>(StoreContext);
+	const isProfileMain = () => currentProfileId === 'main';
+	const personName = profiles.find((p: any) => p.id === currentProfileId)?.name;
+	const confirmLogout = () =>
+		Alert.alert('Log Out', 'Are you sure you want to log out?', [
+			{ text: 'Cancel', style: 'cancel' },
+			{ text: 'Log Out', style: 'destructive', onPress: logout },
+		]);
 	return (
 		<>
 			<SwitchProfileModal
@@ -53,15 +57,21 @@ const Layout = () => {
 						),
 						tabBarActiveTintColor: colors.exodusFruit,
 						headerRight: () => (
-							<Button title='Logout' onPress={logout} />
+							<Button title='Logout' onPress={confirmLogout} />
 						),
 					}}
 				/>
 				<Tabs.Screen
 					name='index'
+					listeners={{
+						// On a person's board the Home tab takes you back to Main.
+						tabPress: () => {
+							if (!isProfileMain()) setCurrentProfileId('main');
+						},
+					}}
 					options={{
-						headerTitle: 'Home',
-						title: 'Home',
+						headerTitle: isProfileMain() ? 'Home' : personName || 'Profile',
+						title: isProfileMain() ? 'Home' : 'Main',
 						tabBarIcon: ({ color }) => (
 							<FontAwesome
 								name='home'
@@ -81,7 +91,7 @@ const Layout = () => {
 									/>
 								);
 							}
-							return <Button title='Logout' onPress={logout} />;
+							return <Button title='Logout' onPress={confirmLogout} />;
 						},
 						headerLeft: () => (
 							<Button
@@ -109,7 +119,7 @@ const Layout = () => {
 						),
 						tabBarActiveTintColor: colors.exodusFruit,
 						headerRight: () => (
-							<Button title='Logout' onPress={logout} />
+							<Button title='Logout' onPress={confirmLogout} />
 						),
 					}}
 				/>
@@ -131,7 +141,7 @@ const Layout = () => {
 						),
 						tabBarActiveTintColor: colors.exodusFruit,
 						headerRight: () => (
-							<Button title='Logout' onPress={logout} />
+							<Button title='Logout' onPress={confirmLogout} />
 						),
 					}}
 				/>

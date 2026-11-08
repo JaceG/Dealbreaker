@@ -259,6 +259,18 @@ export const addFlagHistory = async (
 	}
 };
 
+// How many history entries each card has on one profile: { [flagId]: count }. null when the server can't be reached.
+export const getHistoryCounts = async (
+	profileId: string
+): Promise<Record<string, number> | null> => {
+	try {
+		const response = await api.get(`/flagHistory/counts/${profileId}`);
+		return response.data || {};
+	} catch (error) {
+		return null;
+	}
+};
+
 // Removes a deleted profile's history from the server. Tries 3 times, 15 s apart, to outlast a cold Render start.
 // shortcut: an app closed before the last try leaves the history behind; queue it with pendingChanges if that matters.
 export const deleteProfileHistory = async (profileId: string): Promise<boolean> => {

@@ -14,6 +14,8 @@ import { getFlagHistory } from '../../utils/mongodb';
 import { showToast } from '../../utils';
 import { colors } from '../../libs/board/constants/colors';
 import { FlagHistoryTimelineProps } from '../../models/modalModels';
+import AppButton from '../AppButton';
+import CloseButton from '../CloseButton';
 
 // Set to false to disable debug logs
 const DEBUG_LOGGING = false;
@@ -662,16 +664,10 @@ const FlagHistoryTimeline = ({
 							? styles.headerButtons
 							: styles.headerButtonsHorizontal
 					}>
-					<TouchableOpacity
-						style={styles.addButton}
-						onPress={onAddReason}>
-						<Text style={styles.addButtonText}>Add Context</Text>
-					</TouchableOpacity>
-					<TouchableOpacity
-						style={styles.closeButton}
-						onPress={onClose}>
-						<Text style={styles.closeButtonText}>✕</Text>
-					</TouchableOpacity>
+					<View style={styles.addButton}>
+						<AppButton title='Add Context' onPress={onAddReason} />
+					</View>
+					<CloseButton onPress={onClose} />
 				</View>
 			</View>
 
@@ -769,29 +765,7 @@ const styles = StyleSheet.create({
 		marginTop: 10,
 	},
 	addButton: {
-		padding: 10,
-		backgroundColor: '#4CAF50',
-		borderRadius: 5,
 		marginRight: 8,
-		elevation: 3,
-		shadowColor: '#000',
-		shadowOffset: { width: 0, height: 2 },
-		shadowOpacity: 0.3,
-		shadowRadius: 2,
-	},
-	addButtonText: {
-		color: 'white',
-		fontWeight: 'bold',
-		fontSize: 14,
-	},
-	closeButton: {
-		padding: 8,
-		backgroundColor: '#ff6b6b',
-		borderRadius: 5,
-	},
-	closeButtonText: {
-		color: 'white',
-		fontWeight: 'bold',
 	},
 	loadingContainer: {
 		padding: 30,

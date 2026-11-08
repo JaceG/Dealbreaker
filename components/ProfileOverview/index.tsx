@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
+import AppButton from '../AppButton';
 import FlagDot from '../FlagDot';
 import { colors } from '../../libs/board/constants';
 import { FlagItem, ProfileData } from '../../models/dataModels';
@@ -12,6 +13,7 @@ type Props = {
 	colorFilter: string | null;
 	onFilterChange: (color: string | null) => void;
 	onOpenCard: (item: FlagItem) => void;
+	onCompare: () => void;
 };
 
 // profile_<ms> ids carry the day the profile was made
@@ -36,6 +38,7 @@ const ProfileOverview = ({
 	colorFilter,
 	onFilterChange,
 	onOpenCard,
+	onCompare,
 }: Props) => {
 	const [expanded, setExpanded] = useState(false);
 	const flags = profile.flag || [];
@@ -101,6 +104,7 @@ const ProfileOverview = ({
 					))}
 					{listed.length === 0 ? <Text style={styles.footer}>No flags of this color yet.</Text> : null}
 					{since ? <Text style={styles.footer}>Profile started {since}</Text> : null}
+					<AppButton title='Compare with Others' onPress={onCompare} />
 				</View>
 			) : null}
 		</View>

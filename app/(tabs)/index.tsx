@@ -197,11 +197,13 @@ export default function Lists() {
 							colorFilter={colorFilter}
 							onFilterChange={setColorFilter}
 							onOpenCard={handleViewFlagHistory}
+							onCompare={() => setCompareVisible(true)}
 						/>
 					)}
 					<CompareProfilesModal
 						visible={compareVisible}
 						onClose={() => setCompareVisible(false)}
+						focusId={currentProfileId !== 'main' ? currentProfileId : undefined}
 					/>
 					{!isRemount ? (
 						<Board

@@ -8,11 +8,14 @@ export const useBoardOperations = (
 	ensureProfileExists: (profileId: string) => boolean,
 	params: any,
 	handleViewFlagHistory?: (item: any) => void,
-	colorFilter: string | null = null
+	colorFilter: string | null = null,
+	historyCounts: Record<string, number> = {}
 ) => {
-	// Board rebuilds can come from timers set in an earlier render, so they read the filter from here.
+	// Board rebuilds can come from timers set in an earlier render, so they read the filter and counts from here.
 	const colorFilterRef = useRef(colorFilter);
 	colorFilterRef.current = colorFilter;
+	const historyCountsRef = useRef(historyCounts);
+	historyCountsRef.current = historyCounts;
 	// Board state
 	const [list, setList] = useState<BoardRepository | null>(null);
 	const [isRemount, setIsRemount] = useState(false);
@@ -114,6 +117,20 @@ export const useBoardOperations = (
 			(item: any) => item && item.id
 		);
 
+		// On Main, how many active people have each card yellow, red or as a dealbreaker.
+		const source = forceData || dealbreaker;
+		const peopleCounts = (cardId: string) => {
+			if (currentProfileId !== 'main') return undefined;
+			const counts = { yellow: 0, red: 0, dealbreaker: 0 };
+			Object.entries(source || {}).forEach(([id, person]: [string, any]) => {
+				if (id === 'main' || person?.ended) return;
+				if (person?.dealbreaker?.some((c: any) => c.id === cardId)) counts.dealbreaker++;
+				const flag = person?.flag?.find((c: any) => c.id === cardId)?.flag;
+				if (flag === 'yellow' || flag === 'red') counts[flag as 'yellow' | 'red']++;
+			});
+			return counts;
+		};
+
 		// Create a fresh board data structure
 		const newData = JSON.parse(JSON.stringify(data));
 		flagListIndexRef.current = new Map();
@@ -129,6 +146,8 @@ export const useBoardOperations = (
 				name: item.title,
 				description: item.description,
 				flag: item.flag || 'white', // Preserve the original flag color but default to white if missing
+				historyCount: historyCountsRef.current[item.id] || 0,
+				peopleCounts: peopleCounts(item.id),
 				// Note: onLongPress calls handleViewFlagHistory
 				onLongPress: () => {
 					console.log('Long press on flag item:', item.id);
@@ -147,6 +166,8 @@ export const useBoardOperations = (
 				name: item.title,
 				description: item.description,
 				flag: item.flag || 'white', // Preserve the original flag color but default to white if missing
+				historyCount: historyCountsRef.current[item.id] || 0,
+				peopleCounts: peopleCounts(item.id),
 				// Note: onLongPress calls handleViewFlagHistory
 				onLongPress: () => {
 					console.log('Long press on dealbreaker item:', item.id);
@@ -173,7 +194,7 @@ export const useBoardOperations = (
 		if (!dealbreaker?.[currentProfileId]) return;
 		updateBoard(true);
 		setRefreshKey(Date.now());
-	}, [colorFilter]);
+	}, [colorFilter, historyCounts]);
 
 	// Effects for board management
 	useEffect(() => {

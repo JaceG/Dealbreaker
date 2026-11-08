@@ -5,6 +5,7 @@ import StoreContext from '../store';
 import { useFlagContext } from '../context/FlagContext';
 import { useAuth } from '../context/Auth';
 import { showToast } from '../utils/functions';
+import { getHistoryCounts } from '../utils/api';
 import { data } from '../models/boardManagementModel';
 import { useModalStates } from './boardManagement/useModalStates';
 import { useBoardOperations } from './boardManagement/useBoardOperations';
@@ -46,6 +47,34 @@ const useBoardManagement = () => {
 		setAdditionalReasonModalVisible,
 	} = useFlagContext() as any;
 	const { user } = useAuth() as any;
+
+	// History entries per card on this profile, for the counter on each card's notes icon.
+	const [historyCounts, setHistoryCounts] = useState<Record<string, number>>({});
+	// Cards share ids across profiles, so the last profile's counts must not show on this one.
+	useEffect(
+		() => setHistoryCounts((prev) => (Object.keys(prev).length ? {} : prev)),
+		[currentProfileId]
+	);
+	const anyHistoryModalOpen =
+		historyModalVisible || additionalReasonModalVisible || reasonModalVisible;
+	useEffect(() => {
+		if (anyHistoryModalOpen) return;
+		let current = true;
+		// Waits a moment so a note saved as a popup closes is counted.
+		const timer = setTimeout(async () => {
+			const counts = await getHistoryCounts(currentProfileId);
+			// A failed request keeps the badges as they were instead of clearing them.
+			if (current && counts) {
+				setHistoryCounts((prev) =>
+					JSON.stringify(prev) === JSON.stringify(counts) ? prev : counts
+				);
+			}
+		}, 1500);
+		return () => {
+			current = false;
+			clearTimeout(timer);
+		};
+	}, [currentProfileId, dealbreaker, anyHistoryModalOpen]);
 
 	// Modal states hook
 	const {
@@ -96,7 +125,8 @@ const useBoardManagement = () => {
 		ensureProfileExists,
 		params,
 		handleViewFlagHistory,
-		colorFilter
+		colorFilter,
+		historyCounts
 	);
 
 	// Item operations hook

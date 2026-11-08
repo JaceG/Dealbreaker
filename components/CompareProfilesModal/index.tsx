@@ -20,7 +20,16 @@ const standing = (dealbreaker: DealbreakerState, profileId: string, cardId: stri
 };
 
 // Every card on its own line with one dot per person under it, so more people fit side by side.
-const CompareProfilesModal = ({ visible, onClose }: { visible: boolean; onClose: () => void }) => {
+// focusId: opened from a person's board, that person is always one of the columns, first.
+const CompareProfilesModal = ({
+	visible,
+	onClose,
+	focusId,
+}: {
+	visible: boolean;
+	onClose: () => void;
+	focusId?: string;
+}) => {
 	const { dealbreaker, profiles } = useContext(StoreContext) as unknown as {
 		dealbreaker: DealbreakerState;
 		profiles: Profile[];
@@ -37,15 +46,19 @@ const CompareProfilesModal = ({ visible, onClose }: { visible: boolean; onClose:
 			return [c.dealbreakers, c.red, c.yellow];
 		};
 		const byRank = people
-			.filter((p) => !dealbreaker[p.id]?.ended)
+			.filter((p) => !dealbreaker[p.id]?.ended && p.id !== focusId)
 			.sort((a, b) => {
 				const [x, y] = [rank(a.id), rank(b.id)];
 				return y[0] - x[0] || y[1] - x[1] || y[2] - x[2];
-			});
-		setSelected(byRank.slice(0, MAX_PEOPLE).map((p) => p.id));
-	}, [visible]);
+			})
+			.map((p) => p.id);
+		const first = focusId && dealbreaker[focusId] ? [focusId] : [];
+		setSelected([...first, ...byRank].slice(0, MAX_PEOPLE));
+	}, [visible, focusId]);
 
-	const shown = people.filter((p) => selected.includes(p.id));
+	const shown = people
+		.filter((p) => selected.includes(p.id))
+		.sort((a, b) => Number(b.id === focusId) - Number(a.id === focusId));
 	const cards: FlagItem[] = [...(dealbreaker.main?.flag || []), ...(dealbreaker.main?.dealbreaker || [])];
 	const rows = cards.filter(
 		(card) =>
@@ -117,7 +130,7 @@ const CompareProfilesModal = ({ visible, onClose }: { visible: boolean; onClose:
 						{showAll ? 'Show flagged cards only' : `Show all ${cards.length} cards`}
 					</Text>
 				</TouchableOpacity>
-				<AppButton title='Close' onPress={onClose} color='#6c757d' />
+				<AppButton title='Close' onPress={onClose} variant='secondary' />
 			</View>
 		</Modal>
 	);

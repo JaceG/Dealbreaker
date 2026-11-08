@@ -3,13 +3,13 @@ import {
 	Modal,
 	View,
 	StyleSheet,
+	ScrollView,
 	TextInput,
 	Text,
 	Alert,
 	useWindowDimensions,
 } from 'react-native';
 import AppButton from '../AppButton';
-import { colors } from '../../libs/board/constants';
 import { EditProfileModalProps } from '../../models/modalModels';
 import StoreContext from '../../store';
 import { showToast } from '../../utils/functions';
@@ -135,7 +135,12 @@ const EditProfileModal = ({
 				'landscape-right',
 			]}
 			onRequestClose={onClose}>
-			<View style={styles.centeredView}>
+			{/* A scroll view lets the popup move above the keyboard, and a tap outside the fields closes the keyboard. */}
+			<ScrollView
+				style={styles.backdrop}
+				contentContainerStyle={styles.centeredView}
+				keyboardShouldPersistTaps='handled'
+				automaticallyAdjustKeyboardInsets>
 				<View
 					style={
 						isPortrait
@@ -160,7 +165,7 @@ const EditProfileModal = ({
 					<AppButton
 						title={isEnded ? 'Mark as Active' : 'Mark as Ended'}
 						onPress={handleToggleEnded}
-						color={colors.bay}
+						variant='secondary'
 					/>
 
 					<View
@@ -173,29 +178,31 @@ const EditProfileModal = ({
 							<AppButton
 								title='Cancel'
 								onPress={onClose}
-								color='#6c757d'
+								variant='secondary'
 							/>
 						</View>
 						<View style={styles.buttonWrapper}>
 							<AppButton
 								title='Save'
 								onPress={handleSave}
-								color={colors.exodusFruit}
 							/>
 						</View>
 					</View>
 				</View>
-			</View>
+			</ScrollView>
 		</Modal>
 	);
 };
 
 const styles = StyleSheet.create({
+	backdrop: {
+		backgroundColor: 'rgba(0, 0, 0, 0.5)',
+	},
 	centeredView: {
-		flex: 1,
+		flexGrow: 1,
 		justifyContent: 'center',
 		alignItems: 'center',
-		backgroundColor: 'rgba(0, 0, 0, 0.5)',
+		paddingVertical: 20,
 	},
 	modalView: {
 		width: '90%',

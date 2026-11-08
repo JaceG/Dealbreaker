@@ -17,6 +17,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { router } from 'expo-router';
 import { colors } from '../../libs/board/constants';
 import useLogin from '../../hooks/useLogin';
+import AppButton from '../../components/AppButton';
 import { User, useAuth } from '../../context/Auth';
 import {
 	GoogleSignin,
@@ -228,21 +229,14 @@ const Auth: React.FC<AuthProps> = () => {
 						<Text style={styles.errorText}>{localError}</Text>
 					) : null}
 
-					<TouchableOpacity
-						style={[
-							styles.button,
-							busy ? styles.buttonDisabled : null,
-						]}
-						onPress={() => handleSubmit(false)}
-						disabled={busy}>
-						{isLoading || signingInWith === 'user' ? (
-							<ActivityIndicator color='#fff' />
-						) : (
-							<Text style={styles.buttonText}>
-								{isLogin ? 'Login' : 'Register'}
-							</Text>
-						)}
-					</TouchableOpacity>
+					<View style={styles.button}>
+						<AppButton
+							title={isLogin ? 'Login' : 'Register'}
+							onPress={() => handleSubmit(false)}
+							disabled={busy}
+							loading={isLoading || signingInWith === 'user'}
+						/>
+					</View>
 
 					{faceIdReady && (
 						<TouchableOpacity
@@ -342,19 +336,15 @@ const Auth: React.FC<AuthProps> = () => {
               <Text style={styles.testUserButtonText}>Create Test User</Text>
             </TouchableOpacity>
           )} */}
-					<TouchableOpacity
-						style={[
-							styles.button2,
-							busy ? styles.buttonDisabled : null,
-						]}
-						onPress={() => handleSubmit(true)}
-						disabled={busy}>
-						{isLoading || signingInWith === 'guest' ? (
-							<ActivityIndicator color='#fff' />
-						) : (
-							<Text style={styles.buttonText}>Just Try It</Text>
-						)}
-					</TouchableOpacity>
+					<View style={styles.button2}>
+						<AppButton
+							title='Just Try It'
+							onPress={() => handleSubmit(true)}
+							variant='secondary'
+							disabled={busy}
+							loading={isLoading || signingInWith === 'guest'}
+						/>
+					</View>
 					<TouchableOpacity
 						style={styles.switchButton}
 						onPress={() => router.push('/register')}
@@ -397,28 +387,15 @@ const styles = StyleSheet.create({
 		borderColor: '#ddd',
 	},
 	button: {
-		backgroundColor: colors.exodusFruit,
-		padding: 15,
-		borderRadius: 10,
-		alignItems: 'center',
 		marginBottom: 15,
 	},
 	button2: {
-		backgroundColor: colors.deepComaru,
 		width: '75%',
-		margin: 'auto',
-		padding: 15,
-		borderRadius: 10,
-		alignItems: 'center',
+		alignSelf: 'center',
 		marginBottom: 15,
 	},
 	buttonDisabled: {
 		opacity: 0.7,
-	},
-	buttonText: {
-		color: '#fff',
-		fontSize: 16,
-		fontWeight: 'bold',
 	},
 	googleButton: {
 		backgroundColor: '#fff',

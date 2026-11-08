@@ -3,7 +3,6 @@ import {
 	setList,
 	getList,
 	setAtomicValue,
-	getAtomicValue,
 } from '../utils';
 import { DealbreakerState, Profile } from '../models/boardManagementModel';
 
@@ -68,21 +67,7 @@ export const useDataLoader = (
 					setProfiles(savedProfiles);
 				}
 
-				// Load current profile ID
-				const savedCurrentProfileId = await getAtomicValue(
-					'currentProfileId'
-				);
-				if (savedCurrentProfileId) {
-					debugLog(
-						'Loaded current profile ID from storage:',
-						savedCurrentProfileId
-					);
-
-					// Force use main profile on startup to ensure we see flags
-					debugLog('Forcing switch to main profile on startup');
-					setCurrentProfileId('main');
-					await setAtomicValue('currentProfileId', 'main');
-				}
+				// The last open profile comes back once the server's board loads (useDealbreakerSync).
 
 				setIsLoaded(true);
 			} catch (error) {
@@ -125,7 +110,8 @@ export const useDataLoader = (
 
 	// Save current profile ID when it changes
 	useEffect(() => {
-		if (isCurrentProfileMountRef.current) {
+		// Logout and startup reset to Main before the board loads; those resets must not replace the saved profile.
+		if (isCurrentProfileMountRef.current && boardLoadedRef.current) {
 			setAtomicValue('currentProfileId', currentProfileId);
 			debugLog('Saved current profile ID to storage:', currentProfileId);
 		} else {

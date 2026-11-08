@@ -4,11 +4,11 @@ import {
 	Text,
 	View,
 	TextInput,
-	TouchableOpacity,
+	ScrollView,
 	useWindowDimensions,
 } from 'react-native';
 import RadioGroup from 'react-native-radio-buttons-group';
-import { colors } from '../../../libs/board/constants';
+import AppButton from '../../../components/AppButton';
 import useCreateFlag from '../../../hooks/useCreateFlag';
 
 // Types from app/_layout.tsx
@@ -43,8 +43,11 @@ const CreateFlags: React.FC<{}> = () => {
 	const { width, height } = useWindowDimensions();
 	const isPortrait = height >= width;
 	return (
-		<View
-			style={isPortrait ? styles.container : styles.horizontalContainer}>
+		<ScrollView
+			style={styles.screen}
+			contentContainerStyle={isPortrait ? styles.container : styles.horizontalContainer}
+			keyboardShouldPersistTaps='handled'
+			automaticallyAdjustKeyboardInsets>
 			<View style={styles.horizontalRow}>
 				<View style={styles.flexRow}>
 					<Text style={styles.text}>Flag Name:</Text>
@@ -96,20 +99,19 @@ const CreateFlags: React.FC<{}> = () => {
 				</View>
 			) : null}
 			<View style={{ width: '100%', marginTop: 20 }}>
-				<TouchableOpacity
-					style={styles.button}
-					onPress={handleSubmit}
-					activeOpacity={0.7}>
-					<Text style={styles.buttonText}>CREATE FLAG</Text>
-				</TouchableOpacity>
+				<AppButton title='Create Flag' onPress={handleSubmit} />
 			</View>
-		</View>
+		</ScrollView>
 	);
 };
 
 const styles = StyleSheet.create({
-	horizontalContainer: {
+	screen: {
 		flex: 1,
+		backgroundColor: '#fff',
+	},
+	horizontalContainer: {
+		flexGrow: 1,
 		backgroundColor: '#fff',
 		width: '100%',
 		paddingHorizontal: 70,
@@ -117,7 +119,7 @@ const styles = StyleSheet.create({
 		alignItems: 'center',
 	},
 	container: {
-		flex: 1,
+		flexGrow: 1,
 		backgroundColor: '#fff',
 		width: '100%',
 		alignItems: 'center',
@@ -169,23 +171,6 @@ const styles = StyleSheet.create({
 		fontSize: 16,
 		marginTop: 3,
 		marginBottom: 3,
-	},
-	button: {
-		backgroundColor: colors.exodusFruit,
-		paddingVertical: 15,
-		paddingHorizontal: 20,
-		borderRadius: 10,
-		alignItems: 'center',
-		elevation: 3,
-		shadowColor: '#000',
-		shadowOffset: { width: 0, height: 2 },
-		shadowOpacity: 0.2,
-		shadowRadius: 2,
-	},
-	buttonText: {
-		color: '#fff',
-		fontSize: 18,
-		fontWeight: 'bold',
 	},
 });
 
