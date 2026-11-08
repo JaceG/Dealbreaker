@@ -20,6 +20,17 @@ Since update 2 (below) the app doesn't save the board until it has loaded the se
 5. **Any card:** edit its description (✏️) and check it under the title on the card and in its history (📋).
 6. **Profile switcher and Edit Profile:** Riley and Jordan sit at the bottom with "(ended)"; Mark as Ended / Mark as Active works.
 
+### Phone test for update 3 (published 2026-11-08, update group f08bce3c)
+
+1. **Keyboard:** on any card tap ✏️, type in Description, then tap outside the fields: the keyboard closes and Save is reachable. Do the same on Create Flag.
+2. **Buttons:** every popup uses the same three kinds (purple main action, outlined cancel, red delete), and every X is the same.
+3. **Notes counter:** on Sam, cards with history show a number on 📋; cards without have none. Add context to one and the number goes up about 2 seconds after the popup closes.
+4. **Person board:** the title says the person's name; the bottom tab says **Main** and takes you back.
+5. **Reopen:** open Sam, force-close, reopen. It should come back on Sam once the board loads (Render may take 20–45 s).
+6. **Logout:** asks "Are you sure?" first. Log back in: you return to the last profile.
+7. **Compare:** on Sam open the count bar → **Compare with Others**: Sam is the first column.
+8. **Main cards:** dots with counts of people who have the card yellow, red or as a dealbreaker (square).
+
 ## 2. How I think the app is meant to be used
 
 - **Main Profile is your rulebook.** It holds your list of things to watch for. The **Flags** column has warning signs. The **Dealbreakers** column has your non-negotiables.
@@ -120,13 +131,13 @@ Original questions:
 
 ## 9. Your notes from testing update 2 (2026-11-08)
 
-### Done in update 3 (not on your phone yet)
+### Done in update 3 (published 2026-11-08: app 46e6793, backend 13f1987)
 
 | Your note | What changed |
 |---|---|
 | Edit popups trap the keyboard, so you can't save | Edit Item, Edit Profile and the Create Flag page now scroll above the keyboard, and a tap outside a field closes it. The two popups that worked were already built this way. |
 | No button standard | One shared button with three kinds: **main action** (dark purple), **cancel / back** (white with a purple outline) and **delete** (red). Every button is at least 48pt tall with text that passes 4.5:1 contrast. The old purple, gray-blue, light-blue and red buttons didn't pass. One shared **X** close button with a 44pt target. Card icons (flag, ✏️, 🗑️, 📋) have larger tap areas and screen-reader names. |
-| Notes icon needs a counter | 📋 shows a badge with how many history entries that card has on this person (or on Main). No badge means no history. Needs the new backend route, which is not deployed yet. |
+| Notes icon needs a counter | 📋 shows a badge with how many history entries that card has on this person (or on Main). No badge means no history. Uses a new backend route (live). |
 | "Home" title on a person's board, and Home does nothing | The title is the person's name. The bottom tab reads **Main** there and takes you back to Main. |
 | App always reopens on Main | It reopens on the profile you had open, after the board loads. Logging out and back in also returns you there. |
 | Logout needs a confirmation | "Are you sure you want to log out?" with Cancel. |
