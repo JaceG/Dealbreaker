@@ -12,20 +12,19 @@ export const useProfileManager = (
 	currentProfileId: string,
 	setCurrentProfileId: (id: string) => void
 ) => {
+	// A new person gets every card on main, all in Flags and all white: colors on a person are what you saw in them.
+	const mainCardsForNewProfile = (): FlagItem[] =>
+		[
+			...(dealbreaker.main?.flag || []),
+			...(dealbreaker.main?.dealbreaker || []),
+		].map((item) => ({ ...item, flag: 'white' }));
+
 	// Ensure a profile exists
 	const ensureProfileExists = (profileId: string) => {
 		if (!dealbreaker[profileId]) {
-			// Get flags from main profile to copy them
-			const mainFlags = dealbreaker.main?.flag || [];
-			const mainDealbreakers = dealbreaker.main?.dealbreaker || [];
-
 			const updatedDealbreaker = {
 				...dealbreaker,
-				[profileId]: {
-					// Copy all flags from main profile to maintain shared items across profiles
-					flag: JSON.parse(JSON.stringify(mainFlags)),
-					dealbreaker: JSON.parse(JSON.stringify(mainDealbreakers)),
-				},
+				[profileId]: { flag: mainCardsForNewProfile(), dealbreaker: [] },
 			};
 			updateDealbreaker(updatedDealbreaker);
 			return true;
@@ -63,24 +62,10 @@ export const useProfileManager = (
 		return profiles.length < allowedProfile;
 	};
 	const initializeProfile = (profileId: string, name?: string) => {
-		const updatedDealbreaker = { ...dealbreaker };
-		updatedDealbreaker[profileId] = {
-			flag: [],
-			dealbreaker: [],
-		};
-		const newProfileData = JSON.parse(
-			JSON.stringify(updatedDealbreaker['main'])
-		);
-		const newProfileDataDealbreakers = newProfileData.dealbreaker;
-		newProfileData.flag = [
-			...newProfileData.flag,
-			...newProfileDataDealbreakers,
-		];
-		newProfileData.dealbreaker = [];
-		// The copy carries main's name; replace it.
-		newProfileData.name = name;
-		updatedDealbreaker[profileId] = newProfileData;
-		updateDealbreaker(updatedDealbreaker);
+		updateDealbreaker({
+			...dealbreaker,
+			[profileId]: { name, flag: mainCardsForNewProfile(), dealbreaker: [] },
+		});
 	};
 	// Add item to all profiles
 	const addItemToAllProfiles = (
@@ -197,6 +182,15 @@ export const useProfileManager = (
 				[profileId]: { ...dealbreaker[profileId], name: newName },
 			});
 		}
+		return true;
+	};
+
+	const setProfileEnded = (profileId: string, ended: boolean) => {
+		if (profileId === 'main' || !dealbreaker[profileId]) return;
+		updateDealbreaker({
+			...dealbreaker,
+			[profileId]: { ...dealbreaker[profileId], ended },
+		});
 	};
 
 	return {
@@ -208,6 +202,7 @@ export const useProfileManager = (
 		createProfile,
 		deleteProfile,
 		renameProfile,
+		setProfileEnded,
 		isValidNoCardItems,
 		isValidNoProfileItems,
 		initializeProfile,

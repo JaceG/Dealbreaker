@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import {
 	Modal,
 	View,
@@ -11,6 +11,8 @@ import {
 import AppButton from '../AppButton';
 import { colors } from '../../libs/board/constants';
 import { EditProfileModalProps } from '../../models/modalModels';
+import StoreContext from '../../store';
+import { showToast } from '../../utils/functions';
 
 const EditProfileModal = ({
 	visible,
@@ -22,6 +24,17 @@ const EditProfileModal = ({
 }: EditProfileModalProps) => {
 	const [name, setName] = useState('');
 	const [error, setError] = useState('');
+	const { dealbreaker, setProfileEnded } = useContext(StoreContext) as any;
+	const isEnded = !!dealbreaker?.[profileId]?.ended;
+
+	const handleToggleEnded = () => {
+		setProfileEnded(profileId, !isEnded);
+		showToast(
+			'success',
+			isEnded ? 'Profile marked as active' : 'Profile marked as ended'
+		);
+		onClose();
+	};
 
 	// Initialize form values when the modal becomes visible or profileName changes
 	useEffect(() => {
@@ -129,7 +142,7 @@ const EditProfileModal = ({
 							? styles.modalView
 							: styles.modalViewHorizontal
 					}>
-					<Text style={styles.modalTitle}>Edit Profile Name</Text>
+					<Text style={styles.modalTitle}>Edit Profile</Text>
 
 					<View style={styles.inputContainer}>
 						<Text style={styles.inputLabel}>Name:</Text>
@@ -143,6 +156,12 @@ const EditProfileModal = ({
 							<Text style={styles.errorText}>{error}</Text>
 						) : null}
 					</View>
+
+					<AppButton
+						title={isEnded ? 'Mark as Active' : 'Mark as Ended'}
+						onPress={handleToggleEnded}
+						color={colors.bay}
+					/>
 
 					<View
 						style={

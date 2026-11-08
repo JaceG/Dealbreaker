@@ -96,6 +96,7 @@ const Layout = () => {
 		createProfile,
 		deleteProfile,
 		renameProfile,
+		setProfileEnded,
 		isValidNoCardItems,
 		isValidNoProfileItems,
 	} = useProfileManager(
@@ -173,6 +174,7 @@ const Layout = () => {
 					createProfile,
 					deleteProfile,
 					renameProfile,
+					setProfileEnded,
 					ensureProfileExists,
 					isOnline,
 					syncData: syncOfflineData,
@@ -252,7 +254,8 @@ declare module '../store' {
 		) => void;
 		createProfile: (name: string) => string;
 		deleteProfile: (profileId: string) => boolean;
-		renameProfile: (profileId: string, newName: string) => void;
+		renameProfile: (profileId: string, newName: string) => boolean;
+		setProfileEnded: (profileId: string, ended: boolean) => void;
 		ensureProfileExists: (profileId: string) => boolean;
 		isOnline: boolean;
 		syncData: (forceSync?: boolean) => Promise<void>;

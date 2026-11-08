@@ -46,6 +46,8 @@ export interface ProfileData {
 	dealbreaker: FlagItem[];
 	// Saved with the board so the name survives logout; the phone's profile list is wiped then.
 	name?: string;
+	// The relationship is over; the profile stays as a record.
+	ended?: boolean;
 }
 
 // Complete dealbreaker state

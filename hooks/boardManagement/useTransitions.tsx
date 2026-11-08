@@ -210,26 +210,47 @@ export const useTransitions = (
   };
 
   // Function to check if a flag change should trigger dealbreaker transition
-  const checkForDealbreakerTransition = () => {
+  // A red flag on a person that is a dealbreaker on main moves to their Dealbreakers column.
+  // colorChangeSaved: the history entry for the color change, so the move is recorded after it.
+  const checkForDealbreakerTransition = (colorChangeSaved?: Promise<unknown>) => {
     if (!pendingFlagChange) return;
 
     const { rowId, newFlag } = pendingFlagChange;
-
-    // Check if this should auto-transition to dealbreaker
     if (
-      newFlag === "red" &&
-      currentProfileId !== "main" &&
-      isItemOnMainDealbreakerList(rowId)
-    ) {
-      // This is a match for auto-transition!
-      console.log(
-        "Auto-transitioning item to dealbreaker:",
-        pendingFlagChange.item.attributes.row.name
-      );
+      newFlag !== "red" ||
+      currentProfileId === "main" ||
+      !isItemOnMainDealbreakerList(rowId)
+    )
+      return;
 
-      // Show the alert
-      setDealbreakerAlertVisible(true);
-    }
+    const updatedDealbreaker = JSON.parse(JSON.stringify(dealbreaker));
+    const profile = updatedDealbreaker[currentProfileId];
+    const index = profile?.flag?.findIndex((item: FlagItem) => item.id === rowId);
+    if (index === undefined || index === -1) return;
+
+    const [movedItem] = profile.flag.splice(index, 1);
+    movedItem.flag = "red";
+    profile.dealbreaker = [...(profile.dealbreaker || []), movedItem];
+    setDealbreaker(updatedDealbreaker);
+    setTransitionedItem(movedItem);
+    // iOS won't show a modal while the reason box is still sliding away (same wait as handleOpenAddReasonModal).
+    setTimeout(() => setDealbreakerAlertVisible(true), 600);
+
+    const profileName = getCurrentProfileName();
+    Promise.resolve(colorChangeSaved).finally(() =>
+      addFlagHistory(
+        currentProfileId,
+        profileName,
+        movedItem.id,
+        movedItem.title,
+        "red",
+        "red",
+        "Moved automatically: it's a dealbreaker on your main profile.",
+        user?.id || null,
+        "flag",
+        "dealbreaker"
+      )
+    );
   };
 
   // Keep the existing handleUndoTransition function
@@ -258,8 +279,8 @@ export const useTransitions = (
       isUndo: true, // Mark this as an undo operation
     });
 
-    // Save the transitioned item to be used if the user confirms the reason
-    setTransitionReasonModalVisible(true);
+    // Wait for the alert to close: iOS won't open the reason box while it is still on screen.
+    setTimeout(() => setTransitionReasonModalVisible(true), 600);
   };
 
   // Function to handle transition reason submission

@@ -19,6 +19,7 @@ const SwitchProfileModal = memo<SwitchProfileModalProps>(
 			currentProfileId,
 			setCurrentProfileId,
 			profiles = [],
+			dealbreaker,
 			ensureProfileExists,
 			deleteProfile,
 		} = useContext(StoreContext) as any;
@@ -37,11 +38,15 @@ const SwitchProfileModal = memo<SwitchProfileModalProps>(
 			if (visible) {
 				// Ensure profiles is an array before mapping
 				if (Array.isArray(profiles)) {
+					// Ended relationships go to the bottom of the list.
+					const isEnded = (id: string) => !!dealbreaker?.[id]?.ended;
 					setData(
-						profiles.map((p) => ({
-							label: p.name || 'Unnamed',
-							value: p.id,
-						}))
+						[...profiles]
+							.sort((a, b) => Number(isEnded(a.id)) - Number(isEnded(b.id)))
+							.map((p) => ({
+								label: `${p.name || 'Unnamed'}${isEnded(p.id) ? ' (ended)' : ''}`,
+								value: p.id,
+							}))
 					);
 					setSelectedId(currentProfileId);
 				} else {
@@ -49,7 +54,7 @@ const SwitchProfileModal = memo<SwitchProfileModalProps>(
 					setData([]);
 				}
 			}
-		}, [profiles, currentProfileId, visible]);
+		}, [profiles, dealbreaker, currentProfileId, visible]);
 
 		// Check if a profile can be deleted (not main and not the only profile)
 		const canDeleteProfile = useCallback(

@@ -317,10 +317,14 @@ const useBoardManagement = () => {
 		reason: any,
 		attachments: any[] = []
 	) => {
-		contextHandleFlagChangeWithReason(reason, attachments, profiles);
+		const colorChangeSaved = contextHandleFlagChangeWithReason(
+			reason,
+			attachments,
+			profiles
+		);
 
 		// Check if we need to handle dealbreaker transition
-		checkForDealbreakerTransition();
+		checkForDealbreakerTransition(colorChangeSaved);
 	};
 
 	console.log('dealbreaker: ', dealbreaker?.main?.dealbreaker);

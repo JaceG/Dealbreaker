@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Image, Pressable, View } from 'react-native';
+import { Alert, Image, Pressable, View } from 'react-native';
 
 export const Flag = ({ color, onFlagClicked, item }: any) => {
 	const whiteFlag = 'white';
@@ -34,21 +34,24 @@ export const Flag = ({ color, onFlagClicked, item }: any) => {
 		isFirstRender.current = false;
 	}, [item]);
 
-	const handleFlagClick = () => {
-		let newFlag;
-		if (flagColor === yellowFlag) {
-			newFlag = redFlag;
-		} else if (flagColor === redFlag) {
-			newFlag = whiteFlag;
-		} else {
-			newFlag = yellowFlag;
-		}
-
-		// Update local state immediately
+	const pickColor = (newFlag: string) => {
 		setFlagColor(newFlag);
-
-		// Notify parent of the change
 		onFlagClicked(newFlag, item);
+	};
+
+	// Offer the two other colors, so yellow can go straight back to white without a red step in the history.
+	const handleFlagClick = () => {
+		const name = (c: string) => c[0].toUpperCase() + c.slice(1);
+		Alert.alert(
+			'Change Flag',
+			`"${item?.row?.()?.name || 'This flag'}" is ${flagColor} now.`,
+			[
+				{ text: 'Cancel', style: 'cancel' as const },
+				...[whiteFlag, yellowFlag, redFlag]
+					.filter((c) => c !== flagColor)
+					.map((c) => ({ text: name(c), onPress: () => pickColor(c) })),
+			]
+		);
 	};
 
 	return (

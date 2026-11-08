@@ -392,7 +392,10 @@ const FlagHistoryTimeline = ({
 					</Text>
 				</View>
 
-				{item.type === 'add-reason' ? (
+				{/* Add Context saves the current color as both old and new */}
+				{item.type === 'add-reason' ||
+				((!item.cardTypeChange || item.cardTypeChange === 'none') &&
+					item.previousStatus === item.newStatus) ? (
 					<Text style={styles.flagStatusLabel}>
 						Additional context provided
 					</Text>

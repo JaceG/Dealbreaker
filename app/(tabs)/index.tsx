@@ -7,6 +7,7 @@ import {
 } from 'react-native';
 import { Board } from '../../libs/board/components';
 import AppButton from '../../components/AppButton';
+import { colors } from '../../libs/board/constants';
 import { router } from 'expo-router';
 import useBoardManagement from '../../hooks/useBoardManagement';
 import BoardManagementModals from '../../components/BoardManagementModals';
@@ -150,6 +151,9 @@ export default function Lists() {
 									<Text style={styles.profileText}>
 										{getCurrentProfileName()}
 									</Text>
+									{dealbreaker[currentProfileId]?.ended && (
+										<Text style={styles.endedTag}> (ended)</Text>
+									)}
 									{currentProfileId !== 'main' && (
 										<TouchableOpacity
 											style={styles.editProfileButton}
@@ -322,6 +326,10 @@ const styles = StyleSheet.create({
 	},
 	editProfileButton: {
 		marginLeft: 5,
+	},
+	endedTag: {
+		fontSize: 16,
+		color: colors.bay,
 	},
 	editProfileText: {
 		fontSize: 16,
