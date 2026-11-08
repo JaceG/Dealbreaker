@@ -303,6 +303,15 @@ const ReasonInputModal = ({
 							`SUBMIT: Error uploading attachment ${i} to S3:`,
 							error
 						);
+						// Too big to upload: leave it off rather than save a path only this phone can open.
+						if (error?.name === 'FileTooLargeError') {
+							showToast(
+								'error',
+								'Not attached',
+								`This ${attachment.type} is over 10 MB, the upload limit`
+							);
+							continue;
+						}
 						showToast(
 							'error',
 							'Upload failed',

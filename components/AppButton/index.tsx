@@ -11,7 +11,7 @@ const AppButton = ({
 	color?: string;
 }) => {
 	return (
-		<Pressable onPress={onPress}>
+		<Pressable accessibilityRole='button' onPress={onPress}>
 			<View style={[styles.container, { backgroundColor: color }]}>
 				<Text style={styles.buttonText}>{title}</Text>
 			</View>

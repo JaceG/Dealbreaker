@@ -2,12 +2,15 @@ import { useContext, useEffect, useState } from 'react';
 import { Modal, View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import AppButton from '../AppButton';
 import FlagDot from '../FlagDot';
+import { profileCounts } from '../PeopleOverview';
 import StoreContext from '../../store';
 import { showToast } from '../../utils/functions';
 import { colors } from '../../libs/board/constants';
 import { DealbreakerState, FlagItem, Profile } from '../../models/dataModels';
 
 const COLUMN = 64;
+// Five 64-wide columns fit a phone; more would run off the screen.
+const MAX_PEOPLE = 5;
 
 // Where a card stands for one person: its flag color, or in their Dealbreakers column.
 const standing = (dealbreaker: DealbreakerState, profileId: string, cardId: string) => {
@@ -27,7 +30,19 @@ const CompareProfilesModal = ({ visible, onClose }: { visible: boolean; onClose:
 	const [showAll, setShowAll] = useState(false);
 
 	useEffect(() => {
-		if (visible) setSelected(people.filter((p) => !dealbreaker[p.id]?.ended).map((p) => p.id).slice(0, 5));
+		if (!visible) return;
+		// Start with the five active people most in need of a look, ranked like Main's list.
+		const rank = (id: string) => {
+			const c = profileCounts(dealbreaker, id);
+			return [c.dealbreakers, c.red, c.yellow];
+		};
+		const byRank = people
+			.filter((p) => !dealbreaker[p.id]?.ended)
+			.sort((a, b) => {
+				const [x, y] = [rank(a.id), rank(b.id)];
+				return y[0] - x[0] || y[1] - x[1] || y[2] - x[2];
+			});
+		setSelected(byRank.slice(0, MAX_PEOPLE).map((p) => p.id));
 	}, [visible]);
 
 	const shown = people.filter((p) => selected.includes(p.id));
@@ -40,8 +55,6 @@ const CompareProfilesModal = ({ visible, onClose }: { visible: boolean; onClose:
 				return s.isDealbreaker || s.color !== 'white';
 			})
 	);
-	// Five 64-wide columns fit a phone; more would run off the screen.
-	const MAX_PEOPLE = 5;
 	const toggle = (id: string) => {
 		if (selected.includes(id)) return setSelected(selected.filter((s) => s !== id));
 		if (selected.length >= MAX_PEOPLE) return showToast('info', `Compare up to ${MAX_PEOPLE} people at a time`);
