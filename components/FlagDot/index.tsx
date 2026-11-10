@@ -25,7 +25,7 @@ const FlagDot = ({
 				height: size,
 				borderRadius: isDealbreaker ? 3 : size / 2,
 				backgroundColor: isDealbreaker
-					? colors.flagRed
+					? colors.dealbreaker
 					: FLAG_DOT_COLORS[color] || colors.flagWhite,
 			},
 		]}
@@ -35,7 +35,7 @@ const FlagDot = ({
 const styles = StyleSheet.create({
 	dot: {
 		borderWidth: 1,
-		borderColor: '#ccc',
+		borderColor: colors.outline,
 	},
 });
 

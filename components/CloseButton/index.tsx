@@ -10,7 +10,7 @@ const CloseButton = ({ onPress, onDark = false }: { onPress: () => void; onDark?
 		hitSlop={8}
 		onPress={onPress}
 		style={({ pressed }) => [styles.button, onDark && styles.onDark, pressed && styles.pressed]}>
-		<Feather name='x' size={24} color={onDark ? colors.white : colors.officer} />
+		<Feather name='x' size={24} color={onDark ? colors.onFill : colors.ink} />
 	</Pressable>
 );
 
@@ -23,7 +23,7 @@ const styles = StyleSheet.create({
 		justifyContent: 'center',
 	},
 	onDark: {
-		backgroundColor: 'rgba(0, 0, 0, 0.6)',
+		backgroundColor: colors.scrim,
 	},
 	pressed: {
 		opacity: 0.6,

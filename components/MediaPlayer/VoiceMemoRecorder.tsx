@@ -108,17 +108,17 @@ const VoiceMemoRecorder = ({
 
 const styles = StyleSheet.create({
 	container: {
-		backgroundColor: '#FADBD8',
+		backgroundColor: colors.blush,
 		borderRadius: 8,
 		borderWidth: 1,
-		borderColor: colors.chiGong,
+		borderColor: colors.danger,
 		padding: 12,
 		marginBottom: 15,
 	},
 	timer: {
 		fontSize: 20,
 		fontWeight: 'bold',
-		color: colors.chiGong,
+		color: colors.danger,
 		textAlign: 'center',
 		marginBottom: 10,
 	},

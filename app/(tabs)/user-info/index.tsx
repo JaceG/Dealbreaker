@@ -308,7 +308,7 @@ export const UserInfo = () => {
 								onChangeText={handleNameChange}
 								style={styles.textInput}
 								placeholder='Enter Name'
-								placeholderTextColor={'white'}
+								placeholderTextColor={colors.muted}
 							/>
 						)}
 						<View style={styles.inlineButton}>
@@ -368,7 +368,7 @@ export const UserInfo = () => {
 							onChangeText={setCurrentPassword}
 							style={styles.passwordTextInput}
 							placeholder='Enter Current Password'
-							placeholderTextColor={'white'}
+							placeholderTextColor={colors.muted}
 							secureTextEntry={true}
 						/>
 					</View>
@@ -380,7 +380,7 @@ export const UserInfo = () => {
 						onChangeText={setNewPassword}
 						style={styles.passwordTextInput}
 						placeholder='Enter New Password'
-						placeholderTextColor={'white'}
+						placeholderTextColor={colors.muted}
 						secureTextEntry={true}
 					/>
 				</View>
@@ -391,7 +391,7 @@ export const UserInfo = () => {
 						onChangeText={setConfirmPassword}
 						style={styles.passwordTextInput}
 						placeholder='Enter Confirm Password'
-						placeholderTextColor={'white'}
+						placeholderTextColor={colors.muted}
 						secureTextEntry={true}
 					/>
 				</View>
@@ -462,7 +462,7 @@ export const UserInfo = () => {
 								style={styles.confirmationInput}
 								placeholder='Type "Delete my account"'
 								autoCapitalize='none'
-								placeholderTextColor={'#999'}
+								placeholderTextColor={colors.muted}
 							/>
 							<View style={styles.modalButtons}>
 								<View style={styles.modalButton}>
@@ -494,21 +494,21 @@ const styles = StyleSheet.create({
 	},
 	diagnosticsNote: {
 		fontSize: 14,
-		color: colors.officer,
+		color: colors.ink,
 		marginBottom: 8,
 	},
 	scroll: {
 		flex: 1,
-		backgroundColor: 'white',
+		backgroundColor: colors.paper,
 	},
 	container: {
 		flex: 1,
-		backgroundColor: 'white',
+		backgroundColor: colors.paper,
 		padding: 10,
 	},
 	horizontalContainer: {
 		flex: 1,
-		backgroundColor: '#fff',
+		backgroundColor: colors.paper,
 		width: '100%',
 		paddingHorizontal: 70,
 		paddingTop: 10,
@@ -517,7 +517,7 @@ const styles = StyleSheet.create({
 	seperator: {
 		width: '100%',
 		height: 1,
-		backgroundColor: '#CCC',
+		backgroundColor: colors.hairline,
 		marginVertical: 10,
 	},
 	row: {
@@ -536,10 +536,10 @@ const styles = StyleSheet.create({
 	textInput: {
 		padding: 13,
 		borderWidth: 1,
-		borderColor: '#000',
+		borderColor: colors.outline,
 		borderRadius: 5,
 		flex: 1,
-		color: '#000',
+		color: colors.ink,
 	},
 	methodStatus: {
 		flexDirection: 'row' as const,
@@ -552,59 +552,59 @@ const styles = StyleSheet.create({
 	passwordTextInput: {
 		padding: 13,
 		borderWidth: 1,
-		borderColor: '#000',
+		borderColor: colors.outline,
 		borderRadius: 5,
 		width: '50%',
-		color: '#000',
+		color: colors.ink,
 	},
 	text: {
 		fontSize: 20,
 		marginBottom: 10,
 		fontWeight: 'bold' as const,
-		color: '#000',
+		color: colors.ink,
 	},
 	textHeader: {
 		fontSize: 20,
 		marginBottom: 10,
 		textAlign: 'center' as const,
 		fontWeight: 'bold' as const,
-		color: '#000',
+		color: colors.ink,
 	},
 	textMuted: {
 		fontSize: 20,
 		marginBottom: 10,
 		fontWeight: 'normal' as const,
-		color: '#000',
+		color: colors.ink,
 	},
 	description: {
 		height: 120,
 		textAlignVertical: 'top' as const,
-		color: '#000',
+		color: colors.ink,
 	},
 	radioButtonStyle: {
 		flexDirection: 'row' as const,
 		justifyContent: 'space-between' as const,
 	},
 	errorText: {
-		color: '#000',
+		color: colors.ink,
 		fontSize: 16,
 		marginTop: 3,
 		marginBottom: 3,
 	},
 	button: {
-		backgroundColor: colors.exodusFruit,
+		backgroundColor: colors.ink,
 		paddingVertical: 15,
 		paddingHorizontal: 20,
 		borderRadius: 10,
 		alignItems: 'center' as const,
 		elevation: 3,
-		shadowColor: '#000',
+		shadowColor: colors.ink,
 		shadowOffset: { width: 0, height: 2 },
 		shadowOpacity: 0.2,
 		shadowRadius: 2,
 	},
 	buttonText: {
-		color: '#fff',
+		color: colors.onFill,
 		fontSize: 18,
 		fontWeight: 'bold' as const,
 	},
@@ -619,31 +619,31 @@ const styles = StyleSheet.create({
 		marginTop: 30,
 		textAlign: 'center' as const,
 		fontWeight: 'bold' as const,
-		color: '#dc3545',
+		color: colors.danger,
 	},
 	deleteSection: {
-		backgroundColor: '#fff5f5',
+		backgroundColor: colors.blush,
 		padding: 15,
 		borderRadius: 8,
 		borderWidth: 1,
-		borderColor: '#fecaca',
+		borderColor: colors.hairline,
 		marginBottom: 20,
 	},
 	deleteWarningText: {
 		fontSize: 14,
-		color: '#dc2626',
+		color: colors.danger,
 		marginBottom: 15,
 		lineHeight: 20,
 	},
 	modalOverlay: {
 		flex: 1,
-		backgroundColor: 'rgba(0, 0, 0, 0.5)',
+		backgroundColor: colors.scrim,
 		justifyContent: 'center' as const,
 		alignItems: 'center' as const,
 		padding: 20,
 	},
 	modalContent: {
-		backgroundColor: 'white',
+		backgroundColor: colors.surface,
 		borderRadius: 10,
 		padding: 20,
 		width: '100%',
@@ -652,38 +652,38 @@ const styles = StyleSheet.create({
 	modalTitle: {
 		fontSize: 24,
 		fontWeight: 'bold' as const,
-		color: '#dc3545',
+		color: colors.danger,
 		textAlign: 'center' as const,
 		marginBottom: 15,
 	},
 	modalWarning: {
 		fontSize: 18,
-		color: '#dc2626',
+		color: colors.danger,
 		textAlign: 'center' as const,
 		marginBottom: 10,
 		fontWeight: 'bold' as const,
 	},
 	modalDescription: {
 		fontSize: 16,
-		color: '#374151',
+		color: colors.ink,
 		textAlign: 'center' as const,
 		marginBottom: 20,
 		lineHeight: 22,
 	},
 	modalInstruction: {
 		fontSize: 16,
-		color: '#000',
+		color: colors.ink,
 		marginBottom: 10,
 		fontWeight: '600' as const,
 	},
 	confirmationInput: {
 		borderWidth: 1,
-		borderColor: '#d1d5db',
+		borderColor: colors.outline,
 		borderRadius: 5,
 		padding: 12,
 		fontSize: 16,
 		marginBottom: 20,
-		color: '#000',
+		color: colors.ink,
 	},
 	modalButtons: {
 		flexDirection: 'row' as const,

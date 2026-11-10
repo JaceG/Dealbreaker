@@ -33,7 +33,7 @@ const MIN_STEP_PX = TICK_SPACING + TICK_SPACING / 2 - PAD;
 const KIND = {
 	yellow: { color: colors.flagYellow, label: 'Turned yellow', radius: 6 },
 	red: { color: colors.flagRed, label: 'Turned red', radius: 6 },
-	dealbreaker: { color: colors.deepComaru, label: 'Became a dealbreaker', radius: 2 },
+	dealbreaker: { color: colors.dealbreaker, label: 'Became a dealbreaker', radius: 2 },
 };
 
 const shortDate = (t: number) => new Date(t).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
@@ -223,7 +223,7 @@ export const Timeline = ({ from, to, people }: { from: number; to: number; peopl
 						disabled={!zoomOut}
 						style={[styles.zoomButton, !zoomOut && styles.disabled]}
 						onPress={() => zoomOut && zoomTo(zoomOut)}>
-						<Feather name='zoom-out' size={22} color={colors.blurple} />
+						<Feather name='zoom-out' size={22} color={colors.ink} />
 					</Pressable>
 					<Text
 						style={styles.zoomText}
@@ -238,7 +238,7 @@ export const Timeline = ({ from, to, people }: { from: number; to: number; peopl
 						disabled={!zoomIn}
 						style={[styles.zoomButton, !zoomIn && styles.disabled]}
 						onPress={() => zoomIn && zoomTo(zoomIn)}>
-						<Feather name='zoom-in' size={22} color={colors.blurple} />
+						<Feather name='zoom-in' size={22} color={colors.ink} />
 					</Pressable>
 				</View>
 			</View>
@@ -250,8 +250,8 @@ export const Timeline = ({ from, to, people }: { from: number; to: number; peopl
 
 			<View style={styles.legend} accessibilityElementsHidden importantForAccessibility='no-hide-descendants'>
 				{[
-					{ label: 'Dating', color: colors.blurple, radius: 2 },
-					{ label: 'Ended', color: colors.bay, radius: 2 },
+					{ label: 'Dating', color: colors.ink, radius: 2 },
+					{ label: 'Ended', color: colors.muted, radius: 2 },
 					...(['yellow', 'red', 'dealbreaker'] as const).map((k) => ({
 						label: k === 'dealbreaker' ? 'Dealbreaker' : k === 'red' ? 'Red' : 'Yellow',
 						color: KIND[k].color,
@@ -301,7 +301,7 @@ export const Timeline = ({ from, to, people }: { from: number; to: number; peopl
 													{
 														left: x(p, p.start),
 														width: Math.max(2, x(p, p.end) - x(p, p.start)),
-														backgroundColor: p.ended ? colors.bay : colors.blurple,
+														backgroundColor: p.ended ? colors.muted : colors.ink,
 													},
 												]}
 											/>
@@ -320,12 +320,12 @@ export const Timeline = ({ from, to, people }: { from: number; to: number; peopl
 																height: size,
 																borderRadius: c.kind === 'dealbreaker' ? 3 : size / 2,
 																backgroundColor: KIND[c.kind].color,
-																borderColor: on ? colors.black : colors.officer,
+																borderColor: on ? colors.ink : colors.outline,
 																borderWidth: on ? 3 : 1,
 															},
 														]}>
 														{many ? (
-															<Text style={[styles.count, c.kind === 'dealbreaker' && { color: colors.white }]}>
+															<Text style={[styles.count, c.kind === 'dealbreaker' && { color: colors.onFill }]}>
 																{c.events.length}
 															</Text>
 														) : null}
@@ -390,44 +390,44 @@ export const Timeline = ({ from, to, people }: { from: number; to: number; peopl
 
 const styles = StyleSheet.create({
 	controls: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 8 },
-	segment: { flexDirection: 'row', borderWidth: 2, borderColor: colors.blurple, borderRadius: 8, overflow: 'hidden' },
+	segment: { flexDirection: 'row', borderWidth: 2, borderColor: colors.ink, borderRadius: 8, overflow: 'hidden' },
 	segmentButton: { minHeight: 44, paddingHorizontal: 14, justifyContent: 'center' },
-	segmentOn: { backgroundColor: colors.blurple },
-	segmentText: { fontSize: 16, fontWeight: 'bold', color: colors.blurple },
-	segmentTextOn: { color: colors.white },
+	segmentOn: { backgroundColor: colors.ink },
+	segmentText: { fontSize: 16, fontWeight: 'bold', color: colors.ink },
+	segmentTextOn: { color: colors.onFill },
 	zoom: { flexDirection: 'row', alignItems: 'center' },
 	zoomButton: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-	zoomText: { minWidth: 28, textAlign: 'center', fontSize: 16, fontWeight: 'bold', color: colors.officer },
+	zoomText: { minWidth: 28, textAlign: 'center', fontSize: 16, fontWeight: 'bold', color: colors.ink },
 	disabled: { opacity: 0.35 },
-	hint: { fontSize: 14, color: colors.officer, marginBottom: 8 },
+	hint: { fontSize: 14, color: colors.ink, marginBottom: 8 },
 	legend: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 10 },
 	legendItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-	swatch: { width: 14, height: 14, borderWidth: 1, borderColor: colors.officer },
-	legendText: { fontSize: 14, color: colors.officer },
+	swatch: { width: 14, height: 14, borderWidth: 1, borderColor: colors.outline },
+	legendText: { fontSize: 14, color: colors.ink },
 	chart: { flexDirection: 'row' },
-	name: { height: ROW, lineHeight: ROW, fontSize: 14, color: colors.black },
-	ended: { color: colors.officer, fontStyle: 'italic' },
+	name: { height: ROW, lineHeight: ROW, fontSize: 14, color: colors.ink },
+	ended: { color: colors.ink, fontStyle: 'italic' },
 	track: { height: ROW },
 	line: { position: 'absolute', top: (ROW - 4) / 2, height: 4, borderRadius: 2 },
-	endMark: { position: 'absolute', top: (ROW - 16) / 2, width: 2, height: 16, backgroundColor: colors.bay },
+	endMark: { position: 'absolute', top: (ROW - 16) / 2, width: 2, height: 16, backgroundColor: colors.muted },
 	dotBox: { position: 'absolute', top: 0, width: ROW, height: ROW, alignItems: 'center', justifyContent: 'center' },
 	dot: { alignItems: 'center', justifyContent: 'center' },
-	count: { fontSize: 11, fontWeight: 'bold', color: colors.black },
+	count: { fontSize: 11, fontWeight: 'bold', color: colors.ink },
 	ticks: { height: 20, marginTop: 4 },
-	tick: { position: 'absolute', width: TICK_SPACING, textAlign: 'center', fontSize: 12, color: colors.officer },
+	tick: { position: 'absolute', width: TICK_SPACING, textAlign: 'center', fontSize: 12, color: colors.ink },
 	detail: {
 		marginTop: 12,
 		padding: 12,
 		borderRadius: 8,
 		borderWidth: 1,
-		borderColor: '#ccc',
-		backgroundColor: colors.fallingStar,
+		borderColor: colors.hairline,
+		backgroundColor: colors.paper,
 		gap: 6,
 	},
 	detailHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-	detailItem: { gap: 2, paddingTop: 8, borderTopWidth: 1, borderTopColor: '#e5e5e5' },
-	detailCard: { fontSize: 16, fontWeight: 'bold', color: colors.black },
-	detailTitle: { fontSize: 16, fontWeight: 'bold', color: colors.black },
-	detailMeta: { fontSize: 14, color: colors.officer },
-	detailReason: { fontSize: 15, color: colors.black, fontStyle: 'italic' },
+	detailItem: { gap: 2, paddingTop: 8, borderTopWidth: 1, borderTopColor: colors.hairline },
+	detailCard: { fontSize: 16, fontWeight: 'bold', color: colors.ink },
+	detailTitle: { fontSize: 16, fontWeight: 'bold', color: colors.ink },
+	detailMeta: { fontSize: 14, color: colors.ink },
+	detailReason: { fontSize: 15, color: colors.ink, fontStyle: 'italic' },
 });

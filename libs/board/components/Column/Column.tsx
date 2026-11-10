@@ -398,9 +398,9 @@ class Column extends React.Component<ColumnProps, ColumnState> {
 						emptyComponent()
 					) : (
 						<EmptyColumn
-							emptyIconColor={colors.blurple}
+							emptyIconColor={colors.ink}
 							emptyText='No items'
-							emptyTextColor={colors.bay}
+							emptyTextColor={colors.muted}
 							emptyTextFontFamily=''
 							emptyTextFontSize={16}
 							marginTop={columnHeight / 3}
@@ -447,17 +447,17 @@ class Column extends React.Component<ColumnProps, ColumnState> {
 // TypeScript interfaces provide better type safety than propTypes
 // @ts-ignore
 Column.defaultProps = {
-	badgeBackgroundColor: colors.blurple,
+	badgeBackgroundColor: colors.ink,
 	badgeBorderRadius: 15,
 	badgeHeight: 30,
 	badgeWidth: 30,
-	badgeTextColor: colors.white,
+	badgeTextColor: colors.onFill,
 	badgeTextFontFamily: '',
 	badgeTextFontSize: 14,
-	columnBackgroundColor: colors.fallingStar,
+	columnBackgroundColor: colors.paper,
 	columnBorderRadius: 6,
 	columnHeight: 620,
-	columnNameTextColor: colors.blurple,
+	columnNameTextColor: colors.ink,
 	columnNameFontFamily: '',
 	columnNameFontSize: 18,
 	isWithCountBadge: true,

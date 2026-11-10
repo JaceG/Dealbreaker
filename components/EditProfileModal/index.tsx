@@ -14,6 +14,7 @@ import { EditProfileModalProps } from '../../models/modalModels';
 import StoreContext from '../../store';
 import { showToast } from '../../utils/functions';
 
+import { colors } from '../../libs/board/constants';
 const EditProfileModal = ({
 	visible,
 	onClose,
@@ -196,7 +197,7 @@ const EditProfileModal = ({
 
 const styles = StyleSheet.create({
 	backdrop: {
-		backgroundColor: 'rgba(0, 0, 0, 0.5)',
+		backgroundColor: colors.scrim,
 	},
 	centeredView: {
 		flexGrow: 1,
@@ -206,10 +207,10 @@ const styles = StyleSheet.create({
 	},
 	modalView: {
 		width: '90%',
-		backgroundColor: 'white',
+		backgroundColor: colors.surface,
 		borderRadius: 10,
 		padding: 20,
-		shadowColor: '#000',
+		shadowColor: colors.ink,
 		shadowOffset: {
 			width: 0,
 			height: 2,
@@ -220,10 +221,10 @@ const styles = StyleSheet.create({
 	},
 	modalViewHorizontal: {
 		width: '70%',
-		backgroundColor: 'white',
+		backgroundColor: colors.surface,
 		borderRadius: 10,
 		padding: 20,
-		shadowColor: '#000',
+		shadowColor: colors.ink,
 		shadowOffset: {
 			width: 0,
 			height: 2,
@@ -248,7 +249,7 @@ const styles = StyleSheet.create({
 	},
 	nameInput: {
 		borderWidth: 1,
-		borderColor: '#ccc',
+		borderColor: colors.outline,
 		borderRadius: 5,
 		padding: 10,
 		fontSize: 16,
@@ -269,7 +270,7 @@ const styles = StyleSheet.create({
 		flex: 1,
 	},
 	errorText: {
-		color: 'red',
+		color: colors.danger,
 		fontSize: 14,
 		marginTop: 5,
 	},

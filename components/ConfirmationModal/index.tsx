@@ -9,6 +9,7 @@ import {
 import { ConfirmationModalProps } from '../../models/modalModels';
 import AppButton from '../AppButton';
 
+import { colors } from '../../libs/board/constants';
 const ConfirmationModal = ({
 	visible,
 	onClose,
@@ -65,15 +66,15 @@ const styles = StyleSheet.create({
 		flex: 1,
 		justifyContent: 'center',
 		alignItems: 'center',
-		backgroundColor: 'rgba(0, 0, 0, 0.5)',
+		backgroundColor: colors.scrim,
 	},
 	modalView: {
 		margin: 20,
-		backgroundColor: 'white',
+		backgroundColor: colors.surface,
 		borderRadius: 10,
 		padding: 20,
 		alignItems: 'center',
-		shadowColor: '#000',
+		shadowColor: colors.ink,
 		shadowOffset: {
 			width: 0,
 			height: 2,
@@ -85,11 +86,11 @@ const styles = StyleSheet.create({
 	},
 	modalViewHorizontal: {
 		margin: 20,
-		backgroundColor: 'white',
+		backgroundColor: colors.surface,
 		borderRadius: 10,
 		padding: 20,
 		alignItems: 'center',
-		shadowColor: '#000',
+		shadowColor: colors.ink,
 		shadowOffset: {
 			width: 0,
 			height: 2,

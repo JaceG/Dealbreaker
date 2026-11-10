@@ -42,7 +42,7 @@ const PeopleOverview = ({ dealbreaker, profiles, onOpenProfile, onCompare }: Pro
 				{p.ended ? <Text style={styles.ended}> (ended)</Text> : null}
 			</Text>
 			<View style={styles.bar}>
-				<View style={{ flex: p.dealbreakers, backgroundColor: colors.chiGong }} />
+				<View style={{ flex: p.dealbreakers, backgroundColor: colors.dealbreaker }} />
 				<View style={{ flex: p.red, backgroundColor: colors.flagRed }} />
 				<View style={{ flex: p.yellow, backgroundColor: colors.flagYellow }} />
 				<View style={{ flex: Math.max(p.total - p.red - p.yellow - p.dealbreakers, 0), backgroundColor: colors.flagWhite }} />
@@ -65,7 +65,7 @@ const PeopleOverview = ({ dealbreaker, profiles, onOpenProfile, onCompare }: Pro
 					<Text style={styles.headerText}>
 						{active.length} dating · {ended.length} ended
 					</Text>
-					<Feather name={expanded ? 'chevron-up' : 'chevron-down'} size={20} color={colors.officer} />
+					<Feather name={expanded ? 'chevron-up' : 'chevron-down'} size={20} color={colors.ink} />
 				</TouchableOpacity>
 				<AppButton title='Compare' onPress={onCompare} />
 			</View>
@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
 		paddingHorizontal: 10,
 		paddingVertical: 5,
 		borderWidth: 1,
-		borderColor: '#ccc',
+		borderColor: colors.hairline,
 		borderRadius: 10,
 	},
 	header: {
@@ -114,19 +114,19 @@ const styles = StyleSheet.create({
 	list: {
 		marginTop: 5,
 		borderTopWidth: 1,
-		borderTopColor: '#ccc',
+		borderTopColor: colors.hairline,
 	},
 	row: {
 		paddingVertical: 10,
 		borderBottomWidth: 1,
-		borderBottomColor: '#eee',
+		borderBottomColor: colors.hairline,
 		gap: 5,
 	},
 	name: {
 		fontSize: 16,
 	},
 	ended: {
-		color: colors.bay,
+		color: colors.muted,
 	},
 	bar: {
 		flexDirection: 'row',
@@ -134,15 +134,15 @@ const styles = StyleSheet.create({
 		borderRadius: 5,
 		overflow: 'hidden',
 		borderWidth: 1,
-		borderColor: '#ccc',
+		borderColor: colors.outline,
 	},
 	counts: {
 		fontSize: 14,
-		color: colors.bay,
+		color: colors.muted,
 	},
 	footer: {
 		fontSize: 14,
-		color: colors.exodusFruit,
+		color: colors.ink,
 		paddingVertical: 10,
 	},
 });

@@ -12,6 +12,7 @@ import {
 import { ImagePreviewModalProps } from '../../models/modalModels';
 import CloseButton from '../CloseButton';
 
+import { colors } from '../../libs/board/constants';
 const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
 	visible,
 	imageUri,
@@ -44,7 +45,7 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
 				<View style={styles.imageContainer}>
 					{loading && (
 						<View style={styles.loadingContainer}>
-							<ActivityIndicator size='large' color='#FFF' />
+							<ActivityIndicator size='large' color={colors.onFill} />
 						</View>
 					)}
 
@@ -98,7 +99,7 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
-		backgroundColor: 'rgba(0,0,0,0.9)',
+		backgroundColor: colors.backdrop,
 	},
 	header: {
 		position: 'absolute',
@@ -127,11 +128,11 @@ const styles = StyleSheet.create({
 	errorContainer: {
 		position: 'absolute',
 		padding: 20,
-		backgroundColor: 'rgba(0,0,0,0.7)',
+		backgroundColor: colors.scrim,
 		borderRadius: 10,
 	},
 	errorText: {
-		color: 'white',
+		color: colors.onFill,
 		fontSize: 16,
 	},
 });

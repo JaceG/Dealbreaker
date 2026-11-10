@@ -67,7 +67,7 @@ const BoardLogModal = ({ visible, onClose }: { visible: boolean; onClose: () => 
 };
 
 const styles = StyleSheet.create({
-	container: { flex: 1, backgroundColor: colors.white },
+	container: { flex: 1, backgroundColor: colors.surface },
 	header: {
 		flexDirection: 'row',
 		alignItems: 'center',
@@ -75,15 +75,15 @@ const styles = StyleSheet.create({
 		paddingHorizontal: 16,
 		paddingTop: 8,
 	},
-	title: { fontSize: 20, fontWeight: 'bold', color: colors.black },
-	status: { paddingHorizontal: 16, paddingVertical: 8, fontSize: 14, color: colors.officer },
+	title: { fontSize: 20, fontWeight: 'bold', color: colors.ink },
+	status: { paddingHorizontal: 16, paddingVertical: 8, fontSize: 14, color: colors.ink },
 	buttons: { flexDirection: 'row', gap: 12, paddingHorizontal: 16, paddingBottom: 8 },
 	button: { flex: 1 },
 	line: {
 		paddingHorizontal: 16,
 		paddingVertical: 3,
 		fontSize: 11,
-		color: colors.black,
+		color: colors.ink,
 		fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
 	},
 });

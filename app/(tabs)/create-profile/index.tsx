@@ -8,6 +8,7 @@ import {
 import AppButton from '../../../components/AppButton';
 import useCreateProfile from '../../../hooks/useCreateProfile';
 
+import { colors } from '../../../libs/board/constants';
 // Type definitions
 export interface Profile {
 	id: string;
@@ -45,7 +46,7 @@ export default function CreateUsers({ navigation }: CreateUsersProps) {
 					onChangeText={handleNameChange}
 					style={styles.textInput}
 					placeholder='Enter Name'
-					placeholderTextColor={'white'}
+					placeholderTextColor={colors.muted}
 				/>
 				{error.name ? (
 					<Text style={styles.errorText}>{error.name}</Text>
@@ -69,12 +70,12 @@ export default function CreateUsers({ navigation }: CreateUsersProps) {
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
-		backgroundColor: 'white',
+		backgroundColor: colors.paper,
 		padding: 10,
 	},
 	horizontalContainer: {
 		flex: 1,
-		backgroundColor: '#fff',
+		backgroundColor: colors.paper,
 		width: '100%',
 		paddingHorizontal: 70,
 		paddingTop: 10,
@@ -90,28 +91,28 @@ const styles = StyleSheet.create({
 	textInput: {
 		padding: 13,
 		borderWidth: 1,
-		borderColor: '#000',
+		borderColor: colors.outline,
 		borderRadius: 5,
 		width: '100%',
-		color: '#000',
+		color: colors.ink,
 	},
 	text: {
 		fontSize: 20,
 		marginBottom: 10,
 		fontWeight: 'bold' as const,
-		color: '#000',
+		color: colors.ink,
 	},
 	description: {
 		height: 120,
 		textAlignVertical: 'top' as const,
-		color: '#000',
+		color: colors.ink,
 	},
 	radioButtonStyle: {
 		flexDirection: 'row' as const,
 		justifyContent: 'space-between' as const,
 	},
 	errorText: {
-		color: '#000',
+		color: colors.ink,
 		fontSize: 16,
 		marginTop: 3,
 		marginBottom: 3,

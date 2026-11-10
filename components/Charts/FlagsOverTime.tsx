@@ -19,7 +19,7 @@ const DAY = 86400000;
 const HEIGHT = 220;
 const MAX_TICKS = 5; // fits a 375pt phone
 // Dark enough to see on white and apart from each other (Okabe-Ito based); the legend and panel name each line.
-const PALETTE = ['#0072B2', '#D55E00', '#009E73', colors.blurple, '#B5367A', '#8C510A'];
+const PALETTE = ['#0072B2', '#D55E00', '#009E73', '#4834D4', '#B5367A', '#8C510A'];
 const colorOf = (i: number) => PALETTE[i % PALETTE.length];
 
 const longDate = (t: number) =>
@@ -140,7 +140,7 @@ export const FlagsOverTime = ({ from, people }: { from: number; people: Timeline
 						tickValues: x.ticks,
 						tickCount: x.ticks.length,
 						formatXLabel: x.label,
-						labelColor: colors.officer,
+						labelColor: colors.ink,
 					}}
 					yAxis={[
 						{
@@ -148,7 +148,7 @@ export const FlagsOverTime = ({ from, people }: { from: number; people: Timeline
 							tickValues: yTicks,
 							tickCount: yTicks.length,
 							formatYLabel: (v) => String(v),
-							labelColor: colors.officer,
+							labelColor: colors.ink,
 						},
 					]}>
 					{({ points, xScale, chartBounds }) => (
@@ -168,7 +168,7 @@ export const FlagsOverTime = ({ from, people }: { from: number; people: Timeline
 								<SkiaLine
 									p1={vec(xScale(row.x), chartBounds.top)}
 									p2={vec(xScale(row.x), chartBounds.bottom)}
-									color={colors.officer}
+									color={colors.ink}
 									strokeWidth={1}
 								/>
 							) : null}
@@ -211,30 +211,30 @@ const styles = StyleSheet.create({
 		flexDirection: 'row',
 		alignSelf: 'flex-start',
 		borderWidth: 2,
-		borderColor: colors.blurple,
+		borderColor: colors.ink,
 		borderRadius: 8,
 		overflow: 'hidden',
 		marginBottom: 8,
 	},
 	segmentButton: { minHeight: 44, paddingHorizontal: 14, justifyContent: 'center' },
-	segmentOn: { backgroundColor: colors.blurple },
-	segmentText: { fontSize: 16, fontWeight: 'bold', color: colors.blurple },
-	segmentTextOn: { color: colors.white },
-	hint: { fontSize: 14, color: colors.officer, marginBottom: 8 },
+	segmentOn: { backgroundColor: colors.ink },
+	segmentText: { fontSize: 16, fontWeight: 'bold', color: colors.ink },
+	segmentTextOn: { color: colors.onFill },
+	hint: { fontSize: 14, color: colors.ink, marginBottom: 8 },
 	detail: {
 		marginTop: 12,
 		padding: 12,
 		borderRadius: 8,
 		borderWidth: 1,
-		borderColor: '#ccc',
-		backgroundColor: colors.fallingStar,
+		borderColor: colors.hairline,
+		backgroundColor: colors.paper,
 		gap: 6,
 	},
 	detailHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-	detailTitle: { fontSize: 16, fontWeight: 'bold', color: colors.black },
+	detailTitle: { fontSize: 16, fontWeight: 'bold', color: colors.ink },
 	detailItem: { flexDirection: 'row', alignItems: 'center', gap: 8 },
 	swatch: { width: 14, height: 14, borderRadius: 3 },
-	detailName: { flex: 1, fontSize: 15, color: colors.black },
-	detailCount: { fontSize: 15, fontWeight: 'bold', color: colors.black },
-	ended: { color: colors.officer, fontStyle: 'italic' },
+	detailName: { flex: 1, fontSize: 15, color: colors.ink },
+	detailCount: { fontSize: 15, fontWeight: 'bold', color: colors.ink },
+	ended: { color: colors.ink, fontStyle: 'italic' },
 });

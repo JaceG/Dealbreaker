@@ -14,9 +14,9 @@ interface EmptyColumnProps {
 }
 
 const EmptyColumn: React.FC<EmptyColumnProps> = ({
-	emptyIconColor = colors.blurple,
+	emptyIconColor = colors.ink,
 	emptyText = 'No items',
-	emptyTextColor = colors.bay,
+	emptyTextColor = colors.muted,
 	emptyTextFontFamily = '',
 	emptyTextFontSize = 16,
 	marginTop,

@@ -219,13 +219,13 @@ const Auth: React.FC<AuthProps> = () => {
 						onPress={promptGoogleSignIn}
 						disabled={busy}>
 						{signingInWith === 'google' ? (
-							<ActivityIndicator color='#4285F4' />
+							<ActivityIndicator color={colors.ink} />
 						) : (
 							<View style={styles.googleButtonContent}>
 								<AntDesign
 									name='google'
 									size={20}
-									color='#4285F4'
+									color={colors.ink}
 								/>
 								<Text style={styles.googleButtonText}>
 									Continue with Google
@@ -241,7 +241,7 @@ const Auth: React.FC<AuthProps> = () => {
 								styles.appleButtonBusy,
 								styles.buttonDisabled,
 							]}>
-							<ActivityIndicator color='#fff' />
+							<ActivityIndicator color={colors.onFill} />
 						</View>
 					) : isAppleAvailable ? (
 						<AppleAuthentication.AppleAuthenticationButton
@@ -265,7 +265,7 @@ const Auth: React.FC<AuthProps> = () => {
 							<Text
 								style={{
 									textAlign: 'center',
-									color: '#666',
+									color: colors.muted,
 									marginBottom: 15,
 								}}>
 								Apple Sign-In not available on this
@@ -290,7 +290,7 @@ const Auth: React.FC<AuthProps> = () => {
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
-		backgroundColor: '#f5f5f5',
+		backgroundColor: colors.paper,
 	},
 	scrollContainer: {
 		flexGrow: 1,
@@ -304,15 +304,15 @@ const styles = StyleSheet.create({
 		fontWeight: 'bold',
 		marginBottom: 20,
 		textAlign: 'center',
-		color: '#333',
+		color: colors.ink,
 	},
 	input: {
-		backgroundColor: '#fff',
+		backgroundColor: colors.surface,
 		padding: 15,
 		borderRadius: 10,
 		marginBottom: 15,
 		borderWidth: 1,
-		borderColor: '#ddd',
+		borderColor: colors.outline,
 	},
 	button: {
 		marginBottom: 15,
@@ -321,14 +321,14 @@ const styles = StyleSheet.create({
 		opacity: 0.7,
 	},
 	googleButton: {
-		backgroundColor: '#fff',
+		backgroundColor: colors.surface,
 		padding: 15,
 		borderRadius: 10,
 		alignItems: 'center',
 		marginBottom: 15,
 		borderWidth: 1,
-		borderColor: '#ddd',
-		shadowColor: '#000',
+		borderColor: colors.hairline,
+		shadowColor: colors.ink,
 		shadowOffset: {
 			width: 0,
 			height: 2,
@@ -343,7 +343,7 @@ const styles = StyleSheet.create({
 		justifyContent: 'center',
 	},
 	googleButtonText: {
-		color: '#333',
+		color: colors.ink,
 		fontSize: 16,
 		fontWeight: '500',
 		marginLeft: 10,
@@ -355,19 +355,19 @@ const styles = StyleSheet.create({
 	},
 	// Matches the black Apple button while its sign-in runs.
 	appleButtonBusy: {
-		backgroundColor: '#000',
+		backgroundColor: colors.ink,
 		borderRadius: 10,
 		justifyContent: 'center',
 	},
 	testUserButton: {
-		backgroundColor: '#28a745',
+		backgroundColor: colors.ink,
 		padding: 15,
 		borderRadius: 10,
 		alignItems: 'center',
 		marginBottom: 15,
 	},
 	testUserButtonText: {
-		color: '#fff',
+		color: colors.onFill,
 		fontSize: 16,
 		fontWeight: '500',
 	},
@@ -375,11 +375,11 @@ const styles = StyleSheet.create({
 		alignItems: 'center',
 	},
 	switchButtonText: {
-		color: colors.exodusFruit,
+		color: colors.ink,
 		fontSize: 14,
 	},
 	errorText: {
-		color: 'red',
+		color: colors.danger,
 		textAlign: 'center',
 		marginBottom: 15,
 	},

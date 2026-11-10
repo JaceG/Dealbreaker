@@ -13,6 +13,7 @@ import AppButton from '../AppButton';
 import StoreContext from '../../store';
 import { SwitchProfileModalProps } from '../../models/modalModels';
 
+import { colors } from '../../libs/board/constants';
 const SwitchProfileModal = memo<SwitchProfileModalProps>(
 	({ visible, onClose }) => {
 		// Move all context usage to the top level of the component
@@ -187,7 +188,7 @@ const SwitchProfileModal = memo<SwitchProfileModalProps>(
 							data={data}
 							style={[
 								styles.dropdown,
-								isFocus && { borderColor: 'blue' },
+								isFocus && { borderColor: colors.ink },
 							]}
 							placeholderStyle={styles.placeholderStyle}
 							selectedTextStyle={styles.selectedTextStyle}
@@ -249,7 +250,7 @@ const styles = StyleSheet.create({
 	dropdown: {
 		height: 50,
 		width: 200,
-		borderColor: 'gray',
+		borderColor: colors.outline,
 		borderWidth: 0.5,
 		borderRadius: 8,
 		paddingHorizontal: 8,
@@ -259,7 +260,7 @@ const styles = StyleSheet.create({
 	},
 	label: {
 		position: 'absolute',
-		backgroundColor: 'white',
+		backgroundColor: colors.surface,
 		left: 22,
 		top: 8,
 		zIndex: 999,

@@ -9,7 +9,7 @@ const CardContainer = styled.View<BorderRadiusProps>`
   paddingVertical: 15;
   width: 94.5%;
   shadow-radius: 15px;
-  shadow-color: ${colors.black};
+  shadow-color: ${colors.ink};
   shadow-offset: 0px 3px;
   marginTop: 4;
   marginBottom: 4;

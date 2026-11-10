@@ -666,7 +666,7 @@ class Board extends React.Component<BoardProps, BoardState> {
 	}
 
 	static defaultProps: Partial<BoardProps> = {
-		boardBackground: colors.deepComaru,
+		boardBackground: colors.legacyFrame,
 	};
 
 	static propTypes = {

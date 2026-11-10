@@ -9,6 +9,7 @@ import {
 import AppButton from '../AppButton';
 import { DealbreakerAlertProps } from '../../models/modalModels';
 
+import { colors } from '../../libs/board/constants';
 const DealbreakerAlert = ({
 	visible,
 	onClose,
@@ -80,15 +81,15 @@ const styles = StyleSheet.create({
 		flex: 1,
 		justifyContent: 'center',
 		alignItems: 'center',
-		backgroundColor: 'rgba(0, 0, 0, 0.5)',
+		backgroundColor: colors.scrim,
 	},
 	modalView: {
 		width: '90%',
-		backgroundColor: 'white',
+		backgroundColor: colors.surface,
 		borderRadius: 10,
 		padding: 20,
 		alignItems: 'center',
-		shadowColor: '#000',
+		shadowColor: colors.ink,
 		shadowOffset: {
 			width: 0,
 			height: 2,
@@ -99,11 +100,11 @@ const styles = StyleSheet.create({
 	},
 	modalViewHorizontal: {
 		width: '70%',
-		backgroundColor: 'white',
+		backgroundColor: colors.surface,
 		borderRadius: 10,
 		padding: 20,
 		alignItems: 'center',
-		shadowColor: '#000',
+		shadowColor: colors.ink,
 		shadowOffset: {
 			width: 0,
 			height: 2,
@@ -132,7 +133,7 @@ const styles = StyleSheet.create({
 		fontSize: 22,
 		fontWeight: 'bold',
 		marginBottom: 15,
-		color: '#d9534f',
+		color: colors.danger,
 	},
 	modalText: {
 		marginBottom: 20,

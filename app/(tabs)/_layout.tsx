@@ -47,7 +47,7 @@ const Layout = () => {
 				visible={switchProfileModalVisible}
 				onClose={closeSwitchProfileModal}
 			/>
-			<Tabs screenOptions={{ tabBarActiveTintColor: colors.blurple }}>
+			<Tabs screenOptions={{ tabBarActiveTintColor: colors.ink }}>
 				<Tabs.Screen
 					name='index'
 					listeners={{

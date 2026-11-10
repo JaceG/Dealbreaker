@@ -9,13 +9,13 @@ export type Segment = { value: number; color: string };
 
 // Chart colors. Yellow is light, so every bar gets a dark outline to stay visible on white.
 export const CHART = {
-	changes: colors.blurple,
-	notes: colors.bay,
+	changes: colors.ink,
+	notes: colors.muted,
 	yellow: colors.flagYellow,
 	red: colors.flagRed,
-	dealbreaker: colors.deepComaru,
-	line: colors.blurple,
-	ended: colors.bay,
+	dealbreaker: colors.dealbreaker,
+	line: colors.ink,
+	ended: colors.muted,
 };
 
 const total = (segments: Segment[]) => segments.reduce((n, s) => n + s.value, 0);
@@ -119,34 +119,34 @@ const styles = StyleSheet.create({
 		height: 14,
 		borderRadius: 3,
 		borderWidth: 1,
-		borderColor: colors.officer,
+		borderColor: colors.outline,
 	},
-	legendText: { fontSize: 14, color: colors.officer },
+	legendText: { fontSize: 14, color: colors.ink },
 	columns: { flexDirection: 'row', alignItems: 'flex-end' },
 	column: { flex: 1, alignItems: 'center' },
-	columnTotal: { fontSize: 12, color: colors.officer, height: 16 },
+	columnTotal: { fontSize: 12, color: colors.ink, height: 16 },
 	stack: {
 		width: '100%',
 		borderWidth: 1,
-		borderColor: colors.officer,
+		borderColor: colors.outline,
 		borderRadius: 3,
 		overflow: 'hidden',
 	},
-	zero: { height: 1, backgroundColor: '#ccc' },
-	columnLabel: { fontSize: 12, color: colors.officer, marginTop: 4 },
+	zero: { height: 1, backgroundColor: colors.outline },
+	columnLabel: { fontSize: 12, color: colors.ink, marginTop: 4 },
 	row: {
 		flexDirection: 'row',
 		alignItems: 'center',
 		gap: 8,
 		paddingVertical: 5,
 	},
-	rowLabel: { fontSize: 14, color: colors.black },
+	rowLabel: { fontSize: 14, color: colors.ink },
 	rowTrack: { flex: 1, height: 18, overflow: 'hidden' },
 	rowBar: {
 		height: '100%',
 		flexDirection: 'row',
 		borderWidth: 1,
-		borderColor: colors.officer,
+		borderColor: colors.outline,
 		borderRadius: 3,
 		overflow: 'hidden',
 	},
@@ -156,5 +156,5 @@ const styles = StyleSheet.create({
 		fontWeight: 'bold',
 		textAlign: 'right',
 	},
-	muted: { color: colors.officer, fontStyle: 'italic' },
+	muted: { color: colors.ink, fontStyle: 'italic' },
 });

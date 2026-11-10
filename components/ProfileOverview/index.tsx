@@ -73,7 +73,7 @@ const ProfileOverview = ({
 					accessibilityLabel={expanded ? 'Hide flag list' : 'Show flag list'}
 					style={styles.chevron}
 					onPress={() => setExpanded(!expanded)}>
-					<Feather name={expanded ? 'chevron-up' : 'chevron-down'} size={20} color={colors.officer} />
+					<Feather name={expanded ? 'chevron-up' : 'chevron-down'} size={20} color={colors.ink} />
 				</TouchableOpacity>
 			</View>
 
@@ -97,7 +97,7 @@ const ProfileOverview = ({
 									accessibilityLabel='Why this is marked'
 									hitSlop={10}
 									onPress={() => explainMainDealbreaker(item.title || '')}>
-									<Feather name='alert-circle' size={18} color={colors.chiGong} />
+									<Feather name='alert-circle' size={18} color={colors.dealbreaker} />
 								</TouchableOpacity>
 							) : null}
 						</TouchableOpacity>
@@ -118,7 +118,7 @@ const styles = StyleSheet.create({
 		paddingHorizontal: 10,
 		paddingVertical: 5,
 		borderWidth: 1,
-		borderColor: '#ccc',
+		borderColor: colors.hairline,
 		borderRadius: 10,
 	},
 	countRow: {
@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
 		borderColor: 'transparent',
 	},
 	countChipActive: {
-		borderColor: colors.exodusFruit,
+		borderColor: colors.ink,
 	},
 	countText: {
 		fontSize: 16,
@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
 	},
 	dealbreakerCount: {
 		fontSize: 14,
-		color: colors.bay,
+		color: colors.muted,
 		flex: 1,
 	},
 	chevron: {
@@ -153,13 +153,13 @@ const styles = StyleSheet.create({
 	},
 	filterNote: {
 		fontSize: 14,
-		color: colors.exodusFruit,
+		color: colors.ink,
 		paddingVertical: 5,
 	},
 	list: {
 		marginTop: 5,
 		borderTopWidth: 1,
-		borderTopColor: '#ccc',
+		borderTopColor: colors.hairline,
 	},
 	row: {
 		flexDirection: 'row',
@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
 		gap: 10,
 		paddingVertical: 10,
 		borderBottomWidth: 1,
-		borderBottomColor: '#eee',
+		borderBottomColor: colors.hairline,
 	},
 	rowTitle: {
 		flex: 1,
@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
 	},
 	footer: {
 		fontSize: 14,
-		color: colors.bay,
+		color: colors.muted,
 		paddingVertical: 5,
 	},
 });

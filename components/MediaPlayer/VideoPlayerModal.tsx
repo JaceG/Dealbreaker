@@ -3,6 +3,7 @@ import { useVideoPlayer, VideoView } from 'expo-video';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import CloseButton from '../CloseButton';
 
+import { colors } from '../../libs/board/constants';
 // Render it only while a video is open: unmounting releases the player, which stops the sound.
 const VideoPlayerModal = ({ url, onClose }: { url: string; onClose: () => void }) => {
 	const player = useVideoPlayer(url, (p) => p.play());
@@ -34,7 +35,7 @@ const VideoPlayerModal = ({ url, onClose }: { url: string; onClose: () => void }
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
-		backgroundColor: '#000',
+		backgroundColor: colors.backdrop,
 	},
 	video: {
 		flex: 1,

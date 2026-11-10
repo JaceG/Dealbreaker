@@ -314,17 +314,21 @@ const ReasonInputModal = ({
 	const getStatusColor = (status: string) => {
 		switch (status) {
 			case 'white':
-				return '#f0f0f0';
+				return colors.flagWhite;
 			case 'yellow':
-				return '#FFD700';
+				return colors.flagYellow;
 			case 'red':
-				return '#FF0000';
+				return colors.flagRed;
 			case 'dealbreaker':
-				return '#FF0000'; // Using red for dealbreaker
+				return colors.dealbreaker;
 			default:
-				return '#cccccc';
+				return colors.hairline;
 		}
 	};
+
+	// White text on the dark dealbreaker fill; ink reads better than white on the other three, red included.
+	const getStatusTextColor = (status: string) =>
+		status === 'dealbreaker' ? colors.onFill : colors.ink;
 
 	return (
 		<Modal
@@ -366,7 +370,7 @@ const ReasonInputModal = ({
 											getStatusColor(prevStatus),
 									},
 								]}>
-								<Text style={styles.statusText}>
+								<Text style={[styles.statusText, { color: getStatusTextColor(prevStatus) }]}>
 									{getStatusText(prevStatus)}
 								</Text>
 							</View>
@@ -381,7 +385,7 @@ const ReasonInputModal = ({
 													getStatusColor(newStatus),
 											},
 										]}>
-										<Text style={styles.statusText}>
+										<Text style={[styles.statusText, { color: getStatusTextColor(newStatus) }]}>
 											{getStatusText(newStatus)}
 										</Text>
 									</View>
@@ -427,7 +431,7 @@ const ReasonInputModal = ({
 										accessibilityRole='button'
 										accessibilityLabel='Add photo or video'
 										onPress={pickMedia}>
-										<Feather name='image' size={20} color={colors.white} />
+										<Feather name='image' size={20} color={colors.onFill} />
 										<Text style={styles.mediaButtonText}>PHOTO/VIDEO</Text>
 									</TouchableOpacity>
 									<TouchableOpacity
@@ -435,7 +439,7 @@ const ReasonInputModal = ({
 										accessibilityRole='button'
 										accessibilityLabel='Record voice memo'
 										onPress={startVoiceMemo}>
-										<Feather name='mic' size={20} color={colors.white} />
+										<Feather name='mic' size={20} color={colors.onFill} />
 										<Text style={styles.mediaButtonText}>VOICE MEMO</Text>
 									</TouchableOpacity>
 								</View>
@@ -459,7 +463,7 @@ const ReasonInputModal = ({
 													accessibilityState={{ disabled: recording }}
 													onPress={() => setVideoUrl(attachment.url)}
 													style={styles.videoTile}>
-													<Feather name='play-circle' size={36} color={colors.white} />
+													<Feather name='play-circle' size={36} color={colors.onFill} />
 													<Text style={styles.videoLabel}>
 														{attachment.duration
 															? imageUtils.formatDuration(attachment.duration)
@@ -539,7 +543,7 @@ const styles = StyleSheet.create({
 		flex: 1,
 		justifyContent: 'center',
 		alignItems: 'center',
-		backgroundColor: 'rgba(0, 0, 0, 0.7)',
+		backgroundColor: colors.scrim,
 		zIndex: 99999,
 		position: 'absolute',
 		top: 0,
@@ -551,21 +555,21 @@ const styles = StyleSheet.create({
 	},
 	modalContent: {
 		width: '90%',
-		backgroundColor: 'white',
+		backgroundColor: colors.surface,
 		borderRadius: 10,
 		overflow: 'hidden',
 		elevation: 10,
-		shadowColor: '#000',
+		shadowColor: colors.ink,
 		shadowOffset: { width: 0, height: 5 },
 		shadowOpacity: 0.5,
 		shadowRadius: 5,
 		maxHeight: '80%',
 	},
 	header: {
-		backgroundColor: '#f8f8f8',
+		backgroundColor: colors.paper,
 		padding: 15,
 		borderBottomWidth: 1,
-		borderBottomColor: '#e0e0e0',
+		borderBottomColor: colors.hairline,
 	},
 	title: {
 		fontSize: 18,
@@ -592,6 +596,9 @@ const styles = StyleSheet.create({
 		paddingHorizontal: 10,
 		paddingVertical: 5,
 		borderRadius: 5,
+		// A white flag's badge is white on a white popup without it.
+		borderWidth: 1,
+		borderColor: colors.outline,
 	},
 	statusText: {
 		fontWeight: 'bold',
@@ -606,7 +613,7 @@ const styles = StyleSheet.create({
 	},
 	input: {
 		borderWidth: 1,
-		borderColor: '#ddd',
+		borderColor: colors.outline,
 		borderRadius: 5,
 		paddingHorizontal: 10,
 		paddingVertical: 8,
@@ -618,7 +625,7 @@ const styles = StyleSheet.create({
 		justifyContent: 'space-between',
 		padding: 15,
 		borderTopWidth: 1,
-		borderTopColor: '#e0e0e0',
+		borderTopColor: colors.hairline,
 	},
 	footerButton: {
 		flex: 1,
@@ -628,10 +635,10 @@ const styles = StyleSheet.create({
 	attachmentSection: {
 		marginTop: 20,
 		borderTopWidth: 1,
-		borderTopColor: '#eee',
+		borderTopColor: colors.hairline,
 		paddingTop: 15,
 		borderRadius: 8,
-		backgroundColor: '#f9f9f9',
+		backgroundColor: colors.paper,
 		padding: 15,
 		marginBottom: 20,
 	},
@@ -644,16 +651,16 @@ const styles = StyleSheet.create({
 		fontSize: 18,
 		fontWeight: 'bold',
 		marginRight: 6,
-		color: '#222',
+		color: colors.ink,
 	},
 	optionalText: {
 		fontSize: 12,
-		color: '#666',
+		color: colors.muted,
 		fontStyle: 'italic',
 	},
 	attachmentHelperText: {
 		fontSize: 14,
-		color: '#555',
+		color: colors.muted,
 		marginBottom: 12,
 	},
 	mediaButtonsRow: {
@@ -663,13 +670,13 @@ const styles = StyleSheet.create({
 	},
 	mediaButton: {
 		flex: 1,
-		backgroundColor: '#2F80ED',
+		backgroundColor: colors.ink,
 		padding: 12,
 		borderRadius: 8,
 		flexDirection: 'row',
 		alignItems: 'center',
 		justifyContent: 'center',
-		shadowColor: '#000',
+		shadowColor: colors.ink,
 		shadowOffset: { width: 0, height: 2 },
 		shadowOpacity: 0.2,
 		shadowRadius: 3,
@@ -679,10 +686,10 @@ const styles = StyleSheet.create({
 		gap: 6,
 	},
 	recordButton: {
-		backgroundColor: '#E74C3C',
+		backgroundColor: colors.danger,
 	},
 	mediaButtonText: {
-		color: 'white',
+		color: colors.onFill,
 		fontWeight: 'bold',
 		fontSize: 12,
 	},
@@ -702,43 +709,43 @@ const styles = StyleSheet.create({
 		height: '100%',
 		borderRadius: 5,
 		borderWidth: 1,
-		borderColor: '#ddd',
-		backgroundColor: '#f0f0f0',
+		borderColor: colors.hairline,
+		backgroundColor: colors.paper,
 		resizeMode: 'cover',
 	},
 	removeAttachmentButton: {
 		position: 'absolute',
 		top: -8,
 		right: -8,
-		backgroundColor: '#ff4d4f',
+		backgroundColor: colors.danger,
 		width: 24,
 		height: 24,
 		borderRadius: 12,
 		justifyContent: 'center',
 		alignItems: 'center',
-		shadowColor: '#000',
+		shadowColor: colors.ink,
 		shadowOffset: { width: 0, height: 1 },
 		shadowOpacity: 0.2,
 		shadowRadius: 1,
 		elevation: 2,
 	},
 	removeAttachmentText: {
-		color: 'white',
+		color: colors.onFill,
 		fontWeight: 'bold',
 		fontSize: 12,
 	},
 	noAttachmentsContainer: {
 		borderWidth: 1,
-		borderColor: '#ddd',
+		borderColor: colors.hairline,
 		borderStyle: 'dashed',
 		borderRadius: 5,
 		padding: 15,
 		alignItems: 'center',
 		justifyContent: 'center',
-		backgroundColor: '#f0f0f0',
+		backgroundColor: colors.paper,
 	},
 	noAttachmentsText: {
-		color: '#666',
+		color: colors.muted,
 		textAlign: 'center',
 		fontSize: 14,
 	},
@@ -746,12 +753,12 @@ const styles = StyleSheet.create({
 		width: '100%',
 		height: '100%',
 		borderRadius: 5,
-		backgroundColor: '#282828',
+		backgroundColor: colors.ink,
 		alignItems: 'center',
 		justifyContent: 'center',
 	},
 	videoLabel: {
-		color: 'white',
+		color: colors.onFill,
 		fontSize: 10,
 		fontWeight: 'bold',
 		marginTop: 4,
@@ -763,8 +770,8 @@ const styles = StyleSheet.create({
 		justifyContent: 'center',
 		borderRadius: 5,
 		borderWidth: 1,
-		borderColor: '#ddd',
-		backgroundColor: '#F7F9FA',
+		borderColor: colors.hairline,
+		backgroundColor: colors.paper,
 	},
 });
 

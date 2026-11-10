@@ -106,7 +106,7 @@ const Stats = () => {
 				</View>
 			) : !history ? (
 				<View style={styles.center}>
-					<ActivityIndicator size='large' color={colors.blurple} />
+					<ActivityIndicator size='large' color={colors.ink} />
 					<Text style={styles.muted}>Loading (the server can take up to a minute to wake)</Text>
 				</View>
 			) : (
@@ -362,7 +362,7 @@ const Count = ({ color, n, dealbreaker = false }: { color: string; n: number; de
 );
 
 const styles = StyleSheet.create({
-	screen: { flex: 1, backgroundColor: colors.white },
+	screen: { flex: 1, backgroundColor: colors.paper },
 	chipBar: { flexGrow: 0 },
 	chips: { gap: 8, paddingHorizontal: 10, paddingVertical: 10 },
 	chip: {
@@ -371,11 +371,11 @@ const styles = StyleSheet.create({
 		paddingHorizontal: 14,
 		borderRadius: 22,
 		borderWidth: 2,
-		borderColor: colors.blurple,
+		borderColor: colors.ink,
 	},
-	chipOn: { backgroundColor: colors.blurple },
-	chipText: { fontSize: 16, color: colors.blurple, fontWeight: 'bold' },
-	chipTextOn: { color: colors.white },
+	chipOn: { backgroundColor: colors.ink },
+	chipText: { fontSize: 16, color: colors.ink, fontWeight: 'bold' },
+	chipTextOn: { color: colors.onFill },
 	center: {
 		flex: 1,
 		alignItems: 'center',
@@ -388,11 +388,11 @@ const styles = StyleSheet.create({
 	sectionTitle: {
 		fontSize: 20,
 		fontWeight: 'bold',
-		color: colors.officer,
+		color: colors.ink,
 		marginBottom: 8,
 	},
-	hint: { fontSize: 14, color: colors.officer, marginBottom: 8 },
-	muted: { fontSize: 14, color: colors.officer, textAlign: 'center' },
+	hint: { fontSize: 14, color: colors.ink, marginBottom: 8 },
+	muted: { fontSize: 14, color: colors.ink, textAlign: 'center' },
 	line: {
 		flexDirection: 'row',
 		justifyContent: 'space-between',
@@ -400,23 +400,23 @@ const styles = StyleSheet.create({
 		gap: 10,
 		paddingVertical: 8,
 		borderBottomWidth: 1,
-		borderBottomColor: '#eee',
+		borderBottomColor: colors.hairline,
 	},
-	lineLabel: { fontSize: 16, color: colors.black, flexShrink: 1 },
-	lineValue: { fontSize: 16, fontWeight: 'bold', color: colors.black },
+	lineLabel: { fontSize: 16, color: colors.ink, flexShrink: 1 },
+	lineValue: { fontSize: 16, fontWeight: 'bold', color: colors.ink },
 	counts: { flexDirection: 'row', gap: 10 },
 	count: { flexDirection: 'row', alignItems: 'center', gap: 4 },
 	countText: { fontSize: 16, fontWeight: 'bold' },
 	ending: {
 		paddingVertical: 8,
 		borderBottomWidth: 1,
-		borderBottomColor: '#eee',
+		borderBottomColor: colors.hairline,
 		gap: 4,
 	},
 	endingName: { fontSize: 16, fontWeight: 'bold' },
 	endingCard: { flexDirection: 'row', alignItems: 'center', gap: 8 },
 	latest: { flexDirection: 'row', gap: 10, paddingVertical: 6 },
-	latestDate: { width: 56, fontSize: 14, color: colors.officer },
+	latestDate: { width: 56, fontSize: 14, color: colors.ink },
 });
 
 export default Stats;

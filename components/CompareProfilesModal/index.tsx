@@ -142,7 +142,7 @@ const styles = StyleSheet.create({
 		paddingTop: 60,
 		paddingHorizontal: 20,
 		paddingBottom: 30,
-		backgroundColor: colors.white,
+		backgroundColor: colors.surface,
 	},
 	title: {
 		fontSize: 20,
@@ -160,17 +160,17 @@ const styles = StyleSheet.create({
 		paddingVertical: 5,
 		borderRadius: 15,
 		borderWidth: 1,
-		borderColor: colors.exodusFruit,
+		borderColor: colors.ink,
 	},
 	chipOn: {
-		backgroundColor: colors.exodusFruit,
+		backgroundColor: colors.ink,
 	},
 	chipText: {
 		fontSize: 14,
-		color: colors.exodusFruit,
+		color: colors.ink,
 	},
 	chipTextOn: {
-		color: colors.white,
+		color: colors.onFill,
 	},
 	legend: {
 		flexDirection: 'row',
@@ -180,7 +180,7 @@ const styles = StyleSheet.create({
 	},
 	legendText: {
 		fontSize: 14,
-		color: colors.bay,
+		color: colors.muted,
 		marginRight: 5,
 	},
 	namesRow: {
@@ -188,7 +188,7 @@ const styles = StyleSheet.create({
 		marginTop: 10,
 		paddingBottom: 5,
 		borderBottomWidth: 1,
-		borderBottomColor: '#ccc',
+		borderBottomColor: colors.hairline,
 	},
 	name: {
 		width: COLUMN,
@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
 	row: {
 		paddingVertical: 10,
 		borderBottomWidth: 1,
-		borderBottomColor: '#eee',
+		borderBottomColor: colors.hairline,
 	},
 	cardTitle: {
 		fontSize: 16,
@@ -217,12 +217,12 @@ const styles = StyleSheet.create({
 	},
 	empty: {
 		fontSize: 14,
-		color: colors.bay,
+		color: colors.muted,
 		paddingVertical: 10,
 	},
 	showAll: {
 		fontSize: 14,
-		color: colors.exodusFruit,
+		color: colors.ink,
 		textAlign: 'center',
 		paddingVertical: 10,
 	},

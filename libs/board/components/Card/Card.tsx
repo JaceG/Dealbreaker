@@ -64,10 +64,10 @@ const PeopleCounts = ({ counts }: PeopleCountsProps) => {
 							borderRadius: p.square ? 2 : 6,
 							backgroundColor: p.color,
 							borderWidth: 1,
-							borderColor: colors.white,
+							borderColor: colors.onFill,
 						}}
 					/>
-					<Text style={{ color: colors.white, fontSize: 14, fontWeight: 'bold' }}>{p.n}</Text>
+					<Text style={{ color: colors.onFill, fontSize: 14, fontWeight: 'bold' }}>{p.n}</Text>
 				</View>
 			))}
 		</View>
@@ -77,8 +77,8 @@ const PeopleCounts = ({ counts }: PeopleCountsProps) => {
 const Card: React.FC<CardProps> = ({
 	cardBorderRadius = 10,
 	cardContent,
-	cardIconColor = colors.blurple,
-	cardNameTextColor = colors.blurple,
+	cardIconColor = colors.ink,
+	cardNameTextColor = colors.ink,
 	cardNameFontSize = 18,
 	cardNameFontFamily = '',
 	hidden = false,
@@ -117,7 +117,7 @@ const Card: React.FC<CardProps> = ({
 		},
 		iconText: {
 			fontSize: 18,
-			color: '#fff',
+			color: colors.onFill,
 		},
 		flagContainer: {
 			alignItems: 'center',
@@ -131,14 +131,14 @@ const Card: React.FC<CardProps> = ({
 			height: 20,
 			borderRadius: 10,
 			paddingHorizontal: 4,
-			backgroundColor: colors.white,
+			backgroundColor: colors.onFill,
 			alignItems: 'center',
 			justifyContent: 'center',
 		},
 		badgeText: {
 			fontSize: 12,
 			fontWeight: 'bold',
-			color: colors.exodusFruit,
+			color: colors.legacyCard,
 		},
 	};
 
@@ -162,8 +162,8 @@ const Card: React.FC<CardProps> = ({
 						style={{
 							backgroundColor:
 								item?.columnId() === 2
-									? colors.chiGong
-									: colors.exodusFruit,
+									? colors.legacyDealbreakerCard
+									: colors.legacyCard,
 							elevation: isCardWithShadow ? 5 : 0,
 							shadowOpacity: isCardWithShadow ? 0.1 : 0,
 						}}>

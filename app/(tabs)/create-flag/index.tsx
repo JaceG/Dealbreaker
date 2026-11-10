@@ -11,6 +11,7 @@ import RadioGroup from 'react-native-radio-buttons-group';
 import AppButton from '../../../components/AppButton';
 import useCreateFlag from '../../../hooks/useCreateFlag';
 
+import { colors } from '../../../libs/board/constants';
 // Types from app/_layout.tsx
 export interface FlagItem {
 	id: string;
@@ -56,7 +57,7 @@ const CreateFlags: React.FC<{}> = () => {
 						onChangeText={handleTitleChange}
 						style={styles.textInput}
 						placeholder='Enter Name'
-						placeholderTextColor={'white'}
+						placeholderTextColor={colors.muted}
 					/>
 					{error.title ? (
 						<Text style={styles.errorText}>{error.title}</Text>
@@ -82,7 +83,7 @@ const CreateFlags: React.FC<{}> = () => {
 					style={{ ...styles.textInput, ...styles.description }}
 					multiline={true}
 					placeholder='Enter Description'
-					placeholderTextColor={'white'}
+					placeholderTextColor={colors.muted}
 				/>
 				{error.description ? (
 					<Text style={styles.errorText}>{error.description}</Text>
@@ -108,11 +109,11 @@ const CreateFlags: React.FC<{}> = () => {
 const styles = StyleSheet.create({
 	screen: {
 		flex: 1,
-		backgroundColor: '#fff',
+		backgroundColor: colors.paper,
 	},
 	horizontalContainer: {
 		flexGrow: 1,
-		backgroundColor: '#fff',
+		backgroundColor: colors.paper,
 		width: '100%',
 		paddingHorizontal: 70,
 		paddingTop: 10,
@@ -120,7 +121,7 @@ const styles = StyleSheet.create({
 	},
 	container: {
 		flexGrow: 1,
-		backgroundColor: '#fff',
+		backgroundColor: colors.paper,
 		width: '100%',
 		alignItems: 'center',
 		padding: 10,
@@ -145,7 +146,7 @@ const styles = StyleSheet.create({
 	textInput: {
 		padding: 13,
 		borderWidth: 1,
-		borderColor: '#000',
+		borderColor: colors.outline,
 		borderRadius: 5,
 		width: '100%',
 	},
@@ -153,12 +154,12 @@ const styles = StyleSheet.create({
 		fontSize: 20,
 		marginBottom: 10,
 		fontWeight: 'bold',
-		color: '#000',
+		color: colors.ink,
 	},
 	description: {
 		height: 70,
 		textAlignVertical: 'top',
-		color: '#000',
+		color: colors.ink,
 	},
 	radioButtonStyle: {
 		flexDirection: 'row',
@@ -167,7 +168,7 @@ const styles = StyleSheet.create({
 		paddingTop: 10,
 	},
 	errorText: {
-		color: '#000',
+		color: colors.ink,
 		fontSize: 16,
 		marginTop: 3,
 		marginBottom: 3,

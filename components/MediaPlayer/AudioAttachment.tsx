@@ -37,7 +37,7 @@ const AudioAttachment = ({
 			onPress={() => audio.toggle(url)}
 			style={({ pressed }) => [styles.container, style, pressed && styles.pressed, disabled && styles.disabled]}>
 			<View style={styles.icon}>
-				<Feather name={playing ? 'pause' : 'play'} size={20} color={colors.white} />
+				<Feather name={playing ? 'pause' : 'play'} size={20} color={colors.onFill} />
 			</View>
 			<Text style={styles.time}>{time}</Text>
 		</Pressable>
@@ -58,14 +58,14 @@ const styles = StyleSheet.create({
 		width: 44,
 		height: 44,
 		borderRadius: 22,
-		backgroundColor: colors.blurple,
+		backgroundColor: colors.ink,
 		alignItems: 'center',
 		justifyContent: 'center',
 	},
 	time: {
 		fontSize: 13,
 		fontWeight: 'bold',
-		color: colors.officer,
+		color: colors.ink,
 	},
 });
 

@@ -3,6 +3,7 @@ import { Modal, View, StyleSheet } from 'react-native';
 import FlagHistoryTimeline from '../FlagHistoryTimeline';
 import { FlagHistoryModalProps } from '../../models/modalModels';
 
+import { colors } from '../../libs/board/constants';
 const FlagHistoryModal = ({
 	visible,
 	onClose,
@@ -63,17 +64,17 @@ const styles = StyleSheet.create({
 		flex: 1,
 		justifyContent: 'center',
 		alignItems: 'center',
-		backgroundColor: 'rgba(0, 0, 0, 0.5)',
+		backgroundColor: colors.scrim,
 		zIndex: 999,
 	},
 	modalContent: {
 		width: '90%',
 		height: '80%',
-		backgroundColor: 'white',
+		backgroundColor: colors.surface,
 		borderRadius: 10,
 		overflow: 'hidden',
 		elevation: 5,
-		shadowColor: '#000',
+		shadowColor: colors.ink,
 		shadowOffset: { width: 0, height: 2 },
 		shadowOpacity: 0.25,
 		shadowRadius: 3.84,

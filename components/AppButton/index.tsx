@@ -8,9 +8,9 @@ import { colors } from '../../libs/board/constants';
 export type ButtonVariant = 'primary' | 'secondary' | 'destructive';
 
 const VARIANTS: Record<ButtonVariant, { fill: string; text: string; border: string }> = {
-	primary: { fill: colors.blurple, text: colors.white, border: colors.blurple },
-	secondary: { fill: colors.white, text: colors.blurple, border: colors.blurple },
-	destructive: { fill: colors.chiGong, text: colors.white, border: colors.chiGong },
+	primary: { fill: colors.ink, text: colors.onFill, border: colors.ink },
+	secondary: { fill: colors.surface, text: colors.ink, border: colors.ink },
+	destructive: { fill: colors.danger, text: colors.onFill, border: colors.danger },
 };
 
 const AppButton = ({

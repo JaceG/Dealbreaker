@@ -305,7 +305,7 @@ export default function Lists() {
 							onDeleteItem={handleDeleteItem}
 							onEditItem={handleEditItem}
 							isWithCountBadge={false}
-							cardNameTextColor='white'
+							cardNameTextColor={colors.onFill}
 						/>
 					) : null}
 				</>
@@ -344,7 +344,7 @@ export default function Lists() {
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
-		backgroundColor: '#fff',
+		backgroundColor: colors.paper,
 		// justifyContent: 'fl',
 	},
 	noDealbreakerContainer: {
@@ -403,7 +403,7 @@ const styles = StyleSheet.create({
 	},
 	endedTag: {
 		fontSize: 16,
-		color: colors.bay,
+		color: colors.muted,
 	},
 	editProfileText: {
 		fontSize: 16,

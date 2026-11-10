@@ -19,6 +19,7 @@ import { colors } from '../../libs/board/constants/colors';
 import { FlagHistoryTimelineProps } from '../../models/modalModels';
 import AppButton from '../AppButton';
 import CloseButton from '../CloseButton';
+import FlagIcon from '../FlagIcon';
 import Feather from '@expo/vector-icons/Feather';
 import AudioAttachment from '../MediaPlayer/AudioAttachment';
 import VideoPlayerModal from '../MediaPlayer/VideoPlayerModal';
@@ -262,26 +263,26 @@ const FlagHistoryTimeline = ({
 	const getStatusColor = (status: string) => {
 		switch (status) {
 			case 'white':
-				return '#f0f0f0';
+				return colors.flagWhite;
 			case 'yellow':
-				return '#FFD700';
+				return colors.flagYellow;
 			case 'red':
-				return '#FF0000';
+				return colors.flagRed;
 			default:
-				return '#cccccc';
+				return colors.hairline;
 		}
 	};
 
 	const getStatusColorText = (status: string) => {
 		switch (status) {
 			case 'white':
-				return '#000000';
+				return colors.ink;
 			case 'yellow':
-				return '#000000';
+				return colors.ink;
 			case 'red':
-				return '#FFFFFF';
+				return colors.onFill;
 			default:
-				return '#000000';
+				return colors.ink;
 		}
 	};
 
@@ -296,32 +297,16 @@ const FlagHistoryTimeline = ({
 		});
 	};
 
-	// Helper function to get flag colors
-	const getColorForFlag = (status: string) => {
-		switch (status) {
-			case 'white':
-				return '#f0f0f0'; // Light gray for white flags to be visible
-			case 'yellow':
-				return '#FFD700';
-			case 'red':
-				return '#FF0000';
-			case 'dealbreaker':
-				return '#FF0000';
-			default:
-				return '#cccccc';
-		}
-	};
-
 	// Helper function to get text color for a flag status (for contrast)
 	const getTextColorForFlag = (flag: string) => {
 		switch (flag?.toLowerCase()) {
 			case 'yellow':
 			case 'green':
 			case 'white':
-				return '#000000';
+				return colors.ink;
 			case 'red':
 			default:
-				return '#ffffff';
+				return colors.onFill;
 		}
 	};
 
@@ -387,31 +372,11 @@ const FlagHistoryTimeline = ({
 							Flag changed:{' '}
 						</Text>
 						<View style={styles.flagContainer}>
-							<Image
-								style={[
-									styles.flagImage,
-									{
-										tintColor: getColorForFlag(
-											item.previousStatus || ''
-										),
-									},
-								]}
-								source={require('../../libs/board/assets/icons/flag.png')}
-							/>
+							<FlagIcon flag={item.previousStatus || ''} />
 						</View>
 						<Text style={styles.flagStatusArrow}> → </Text>
 						<View style={styles.flagContainer}>
-							<Image
-								style={[
-									styles.flagImage,
-									{
-										tintColor: getColorForFlag(
-											item.newStatus || ''
-										),
-									},
-								]}
-								source={require('../../libs/board/assets/icons/flag.png')}
-							/>
+							<FlagIcon flag={item.newStatus || ''} />
 						</View>
 					</View>
 				)}
@@ -535,7 +500,7 @@ const FlagHistoryTimeline = ({
 											accessibilityLabel='Play video'
 											onPress={() => setVideoUrl(attachment.url)}>
 											<View style={styles.videoThumbnail}>
-												<Feather name='play-circle' size={40} color={colors.white} />
+												<Feather name='play-circle' size={40} color={colors.onFill} />
 												<Text style={styles.videoLabel}>VIDEO</Text>
 											</View>
 										</TouchableOpacity>
@@ -651,7 +616,7 @@ const FlagHistoryTimeline = ({
 					</View>
 				) : everyone === null ? (
 					<View style={styles.loadingContainer}>
-						<ActivityIndicator size='large' color='#4A90E2' />
+						<ActivityIndicator size='large' color={colors.ink} />
 						<Text style={styles.loadingText}>Loading history...</Text>
 					</View>
 				) : everyone.length === 0 ? (
@@ -672,7 +637,7 @@ const FlagHistoryTimeline = ({
 				)
 			) : loading ? (
 				<View style={styles.loadingContainer}>
-					<ActivityIndicator size='large' color='#4A90E2' />
+					<ActivityIndicator size='large' color={colors.ink} />
 					<Text style={styles.loadingText}>Loading history...</Text>
 				</View>
 			) : history.length === 0 ? (
@@ -710,7 +675,7 @@ const FlagHistoryTimeline = ({
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
-		backgroundColor: '#fff',
+		backgroundColor: colors.surface,
 		borderRadius: 10,
 		overflow: 'hidden',
 		margin: 5,
@@ -720,9 +685,9 @@ const styles = StyleSheet.create({
 		justifyContent: 'space-between',
 		alignItems: 'center',
 		padding: 16,
-		backgroundColor: '#f0f0f0',
+		backgroundColor: colors.paper,
 		borderBottomWidth: 1,
-		borderBottomColor: '#ccc',
+		borderBottomColor: colors.hairline,
 	},
 	headerHorizontal: {
 		flexDirection: 'row',
@@ -730,9 +695,9 @@ const styles = StyleSheet.create({
 		alignItems: 'center',
 		padding: 1,
 		paddingHorizontal: 30,
-		backgroundColor: '#f0f0f0',
+		backgroundColor: colors.paper,
 		borderBottomWidth: 1,
-		borderBottomColor: '#ccc',
+		borderBottomColor: colors.hairline,
 	},
 	headerTitle: {
 		fontSize: 18,
@@ -745,7 +710,7 @@ const styles = StyleSheet.create({
 	},
 	headerDescription: {
 		fontSize: 14,
-		color: colors.bay,
+		color: colors.muted,
 		textAlign: 'center',
 		marginTop: 4,
 	},
@@ -777,7 +742,7 @@ const styles = StyleSheet.create({
 	loadingText: {
 		marginTop: 10,
 		fontSize: 14,
-		color: '#666',
+		color: colors.muted,
 	},
 	emptyContainer: {
 		padding: 30,
@@ -786,7 +751,7 @@ const styles = StyleSheet.create({
 	},
 	emptyText: {
 		fontSize: 14,
-		color: '#666',
+		color: colors.muted,
 	},
 	listContent: {
 		padding: 16,
@@ -795,7 +760,7 @@ const styles = StyleSheet.create({
 		flexDirection: 'row',
 		margin: 12,
 		borderWidth: 2,
-		borderColor: colors.blurple,
+		borderColor: colors.ink,
 		borderRadius: 8,
 		overflow: 'hidden',
 	},
@@ -804,18 +769,18 @@ const styles = StyleSheet.create({
 		minHeight: 44,
 		alignItems: 'center',
 		justifyContent: 'center',
-		backgroundColor: colors.white,
+		backgroundColor: colors.surface,
 	},
 	tabSelected: {
-		backgroundColor: colors.blurple,
+		backgroundColor: colors.ink,
 	},
 	tabText: {
 		fontSize: 16,
 		fontWeight: '600',
-		color: colors.blurple,
+		color: colors.ink,
 	},
 	tabTextSelected: {
-		color: colors.white,
+		color: colors.onFill,
 	},
 	retryButton: {
 		marginTop: 12,
@@ -823,7 +788,7 @@ const styles = StyleSheet.create({
 	personName: {
 		fontSize: 15,
 		fontWeight: 'bold',
-		color: '#fff',
+		color: colors.ink,
 		marginBottom: 4,
 	},
 	timelineItem: {
@@ -838,29 +803,31 @@ const styles = StyleSheet.create({
 		width: 16,
 		height: 16,
 		borderRadius: 8,
-		backgroundColor: '#4A90E2',
+		backgroundColor: colors.ink,
 		borderWidth: 2,
-		borderColor: '#333',
+		borderColor: colors.outline,
 	},
 	redTimelineBullet: {
-		backgroundColor: '#FF0000',
+		backgroundColor: colors.dealbreaker,
 	},
 	timelineLine: {
 		width: 2,
 		flex: 1,
-		backgroundColor: '#ccc',
+		backgroundColor: colors.hairline,
 		marginTop: 4,
 	},
 	timelineContent: {
 		flex: 1,
 		marginLeft: 12,
-		backgroundColor: colors.exodusFruit,
+		backgroundColor: colors.surface,
+		borderWidth: 1,
+		borderColor: colors.hairline,
 		borderRadius: 8,
 		paddingHorizontal: 10,
 		paddingVertical: 15,
 		width: '94.5%',
 		shadowRadius: 15,
-		shadowColor: colors.black,
+		shadowColor: colors.ink,
 		shadowOffset: { width: 0, height: 3 },
 		elevation: 6,
 		marginTop: 4,
@@ -874,7 +841,7 @@ const styles = StyleSheet.create({
 	},
 	timelineDate: {
 		fontSize: 12,
-		color: '#fff',
+		color: colors.muted,
 	},
 	flagStatusRow: {
 		flexDirection: 'row',
@@ -884,7 +851,7 @@ const styles = StyleSheet.create({
 	flagStatusLabel: {
 		fontWeight: 'bold',
 		marginRight: 8,
-		color: '#fff',
+		color: colors.muted,
 	},
 	flagStatusText: {
 		fontWeight: 'bold',
@@ -892,7 +859,7 @@ const styles = StyleSheet.create({
 	},
 	flagStatusArrow: {
 		fontSize: 16,
-		color: '#fff',
+		color: colors.muted,
 		marginHorizontal: 4,
 	},
 	statusIndicator: {
@@ -900,12 +867,12 @@ const styles = StyleSheet.create({
 		height: 16,
 		borderRadius: 8,
 		borderWidth: 2,
-		borderColor: '#333',
+		borderColor: colors.outline,
 		marginLeft: 6,
 	},
 	reasonContainer: {
 		marginTop: 8,
-		backgroundColor: 'rgba(255, 255, 255, 0.9)',
+		backgroundColor: colors.paper,
 		padding: 8,
 		borderRadius: 4,
 	},
@@ -913,15 +880,15 @@ const styles = StyleSheet.create({
 		fontWeight: 'bold',
 		fontSize: 14,
 		marginBottom: 4,
-		color: '#333',
+		color: colors.ink,
 	},
 	reasonText: {
 		fontSize: 14,
-		color: '#333',
+		color: colors.ink,
 	},
 	attachmentsContainer: {
 		marginTop: 12,
-		backgroundColor: '#f5f5f5',
+		backgroundColor: colors.paper,
 		borderRadius: 4,
 		padding: 10,
 	},
@@ -942,28 +909,28 @@ const styles = StyleSheet.create({
 		borderRadius: 6,
 		overflow: 'hidden',
 		borderWidth: 1,
-		borderColor: '#ddd',
-		backgroundColor: '#fff',
+		borderColor: colors.hairline,
+		backgroundColor: colors.surface,
 	},
 	thumbnailImage: {
 		width: '100%',
 		height: '100%',
 		borderRadius: 6,
 		borderWidth: 1,
-		borderColor: '#ddd',
-		backgroundColor: '#282828',
+		borderColor: colors.hairline,
+		backgroundColor: colors.ink,
 	},
 	videoThumbnail: {
 		width: '100%',
 		height: '100%',
-		backgroundColor: '#282828',
+		backgroundColor: colors.ink,
 		borderRadius: 6,
 		overflow: 'hidden',
 		justifyContent: 'center',
 		alignItems: 'center',
 	},
 	videoLabel: {
-		color: 'white',
+		color: colors.onFill,
 		fontSize: 10,
 		fontWeight: 'bold',
 	},
@@ -971,10 +938,10 @@ const styles = StyleSheet.create({
 		flexDirection: 'row',
 		alignItems: 'center',
 		padding: 10,
-		backgroundColor: '#f1f9fe',
+		backgroundColor: colors.blush,
 		borderRadius: 5,
 		borderWidth: 1,
-		borderColor: '#cfe7fa',
+		borderColor: colors.hairline,
 		width: '100%',
 	},
 	attachmentLabel: {
@@ -982,8 +949,8 @@ const styles = StyleSheet.create({
 		bottom: 0,
 		left: 0,
 		right: 0,
-		backgroundColor: 'rgba(0, 0, 0, 0.5)',
-		color: 'white',
+		backgroundColor: colors.scrim,
+		color: colors.onFill,
 		padding: 4,
 		borderBottomLeftRadius: 6,
 		borderBottomRightRadius: 6,
@@ -992,20 +959,20 @@ const styles = StyleSheet.create({
 		marginRight: 8,
 		marginBottom: 8,
 		padding: 10,
-		backgroundColor: '#f0f0f0',
+		backgroundColor: colors.paper,
 		borderRadius: 6,
 		overflow: 'hidden',
 	},
 	genericAttachmentText: {
 		fontSize: 14,
-		color: '#666',
+		color: colors.muted,
 	},
 	debugContainer: {
 		marginVertical: 8,
 		padding: 8,
-		backgroundColor: '#f9f9f9',
+		backgroundColor: colors.paper,
 		borderWidth: 1,
-		borderColor: '#ddd',
+		borderColor: colors.hairline,
 		borderRadius: 4,
 	},
 	debugTitle: {
@@ -1015,24 +982,24 @@ const styles = StyleSheet.create({
 	},
 	debugText: {
 		fontSize: 12,
-		color: '#666',
+		color: colors.muted,
 	},
 	errorImagePlaceholder: {
 		flex: 1,
 		justifyContent: 'center',
 		alignItems: 'center',
-		backgroundColor: '#f0f0f0',
+		backgroundColor: colors.paper,
 		borderRadius: 6,
 		padding: 10,
 	},
 	errorImageText: {
 		fontSize: 14,
 		fontWeight: 'bold',
-		color: '#666',
+		color: colors.muted,
 	},
 	errorImageSubtext: {
 		fontSize: 12,
-		color: '#666',
+		color: colors.muted,
 	},
 	imageContainer: {
 		flex: 1,
@@ -1040,22 +1007,22 @@ const styles = StyleSheet.create({
 		alignItems: 'center',
 	},
 	testButton: {
-		backgroundColor: '#3498db',
+		backgroundColor: colors.ink,
 		padding: 8,
 		borderRadius: 5,
 		marginRight: 8,
 	},
 	testButtonText: {
-		color: 'white',
+		color: colors.onFill,
 		fontWeight: 'bold',
 		fontSize: 12,
 	},
 	disabledButton: {
-		backgroundColor: '#cccccc',
+		backgroundColor: colors.outline,
 	},
 	cardTypeTransitionContainer: {
 		marginTop: 8,
-		backgroundColor: '#e8f4fd',
+		backgroundColor: colors.blush,
 		padding: 8,
 		borderRadius: 4,
 	},
@@ -1070,7 +1037,7 @@ const styles = StyleSheet.create({
 	},
 	cardTypeTransitionText: {
 		fontSize: 14,
-		color: '#333',
+		color: colors.ink,
 	},
 	flagContainer: {
 		flexDirection: 'column',
@@ -1079,15 +1046,11 @@ const styles = StyleSheet.create({
 	},
 	flagColorLabel: {
 		fontSize: 10,
-		color: '#555',
+		color: colors.muted,
 		marginTop: 4,
 	},
-	flagImage: {
-		width: 20,
-		height: 20,
-	},
 	whiteFlagBackground: {
-		backgroundColor: '#333333',
+		backgroundColor: colors.ink,
 		borderRadius: 4,
 		padding: 4,
 	},
