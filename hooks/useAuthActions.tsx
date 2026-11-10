@@ -3,6 +3,7 @@ import { Alert } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import { clearKeys } from '../utils/storage';
 import { syncPendingChanges } from '../utils/api';
+import { resetBoardLog, setBoardLogEnabled } from '../utils/boardLog';
 import { useContext } from 'react';
 import StoreContext from '../store';
 import { useAuth } from '../context/Auth';
@@ -16,6 +17,9 @@ export const useAuthActions = (): AuthActionsReturn => {
 	const clearSecureStore = async () => {
 		// Stop saving first, so the emptied board below never reaches the server.
 		boardLoadedRef.current = false;
+		// The board log is per account: stop it and forget what it recorded.
+		setBoardLogEnabled(false);
+		await resetBoardLog();
 		// Send queued offline notes while this account's token still works. Whatever can't be sent stays queued,
 		// marked as this account's, and is only sent the next time this same account signs in.
 		await syncPendingChanges().catch(() => {});

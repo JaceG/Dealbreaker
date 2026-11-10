@@ -28,6 +28,8 @@ export const useBoardOperations = (
 	const skipUpdateRef = useRef(false);
 	const dealbreakerListIndexRef = useRef<Map<string, number>>(new Map());
 	const isMountRef = useRef(false);
+	const currentProfileIdRef = useRef(currentProfileId);
+	currentProfileIdRef.current = currentProfileId;
 
 	// Add this debug function to help track what's happening with flag colors
 	const logProfileFlags = (label: string) => {
@@ -74,6 +76,8 @@ export const useBoardOperations = (
 	};
 
 	const updateBoard = (force: boolean = false, forceData: any = null) => {
+		// A rebuild scheduled before a person switch would tag the board with the person just left.
+		if (currentProfileIdRef.current !== currentProfileId) return;
 		boardLog('board.update', { force, forceData: !!forceData, profile: currentProfileId });
 		// Skip if requested
 		if (!force && skipUpdateRef.current) {
@@ -188,8 +192,11 @@ export const useBoardOperations = (
 			);
 		}
 
-		// Set the board with the processed data
-		setList(new BoardRepository(newData));
+		// Set the board with the processed data, tagged with whose board it is, so the screen never draws
+		// one person's cards under another person's header for a frame after a switch.
+		const board = new BoardRepository(newData);
+		(board as any).profileId = currentProfileId;
+		setList(board);
 	};
 
 	// Columns re-register when handed a new board repository, so new data no longer needs a remount.
@@ -235,22 +242,9 @@ export const useBoardOperations = (
 			return;
 		}
 
-		boardLog('board.remount', { reason: 'profile switch' });
-		setIsRemount(true);
-		setTimeout(() => {
-			reloadBoard();
-			setIsRemount(false);
-		}, 1000);
+		// No blanking here: the effect below rebuilds the board for the new person right away.
+		boardLog('board.personSwitch', { profile: currentProfileId });
 	}, [currentProfileId]);
-
-	useEffect(() => {
-		boardLog('board.remount', { reason: 'first load' });
-		setIsRemount(true);
-		setTimeout(() => {
-			reloadBoard();
-			setIsRemount(false);
-		}, 1000);
-	}, []);
 
 	// Handle navigation params for forced refreshes
 	useEffect(() => {

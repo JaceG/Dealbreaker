@@ -197,28 +197,8 @@ const useBoardManagement = () => {
 		reloadBoard();
 	}, [dealbreaker]);
 
-	useEffect(() => {
-		// Create the profile if it doesn't exist
-		if (ensureCurrentProfileExists()) {
-			// Don't continue with remount - let the state update trigger it
-			return;
-		}
-
-		boardLog('board.remount', { reason: 'profile switch (useBoardManagement)' });
-		setIsRemount(true);
-		setTimeout(() => {
-			reloadBoard();
-			setIsRemount(false);
-		}, 1000);
-	}, [currentProfileId]);
-	useEffect(() => {
-		boardLog('board.remount', { reason: 'first load (useBoardManagement)' });
-		setIsRemount(true);
-		setTimeout(() => {
-			reloadBoard();
-			setIsRemount(false);
-		}, 1000);
-	}, []);
+	// (The person-switch and first-load effects that hid the board for a second lived here and in
+	// useBoardOperations; the board now rebuilds in place, so they're gone.)
 	// Handle navigation params for forced refreshes
 	useEffect(() => {
 		const hasRefreshParam = params.refresh || params.forceRefresh;

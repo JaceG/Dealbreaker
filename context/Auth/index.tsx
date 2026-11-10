@@ -1,7 +1,10 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
+import { AppState } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import * as WebBrowser from 'expo-web-browser';
 import { router } from 'expo-router';
+import { API_BASE_URL } from '../../constants/api';
+import { resetBoardLog, setBoardLogEnabled } from '../../utils/boardLog';
 
 interface AuthContextType {
 	user: User;
@@ -33,6 +36,11 @@ export type User = {
 	[key: string]: any;
 } | null;
 
+export const diagnosticsActive = (user: User) =>
+	!!user?.diagnosticsUntil && new Date(user.diagnosticsUntil).getTime() > Date.now();
+
+export const boardLogAllowed = (user: User) => !!user?.developer || diagnosticsActive(user);
+
 export const AuthProvider = ({
 	children,
 }: {
@@ -49,6 +57,8 @@ export const AuthProvider = ({
 		}
 	}
 	const logout = async () => {
+		setBoardLogEnabled(false);
+		await resetBoardLog();
 		await clearSecureStore();
 		setTimeout(() => {
 			try {
@@ -73,6 +83,7 @@ export const AuthProvider = ({
 			if (token && userData) {
 				setAuthToken(token);
 				setUser(JSON.parse(userData));
+				refreshDeveloperFlag(token);
 				// Add delay to ensure navigation is ready
 				setTimeout(() => {
 					try {
@@ -102,6 +113,57 @@ export const AuthProvider = ({
 			setIsLoading(false);
 		}
 	};
+
+	// The saved user predates server-side switches (developer, diagnostics), so read them fresh on launch and
+	// whenever the app comes back to the foreground; support can turn diagnostics on while the app is open.
+	// Only those fields are taken; a failed request leaves the saved user as it was.
+	async function refreshDeveloperFlag(token: string) {
+		try {
+			const response = await fetch(`${API_BASE_URL}/api/auth/user`, {
+				headers: { 'x-auth-token': token },
+			});
+			if (!response.ok) return;
+			const fresh = await response.json();
+			// Only for the account it was asked for: a slow reply mustn't land on whoever signed in since.
+			if (!fresh?._id) return;
+			const switches = {
+				developer: !!fresh?.developer,
+				diagnosticsUntil: fresh?.diagnosticsUntil || null,
+			};
+			setUser((current) =>
+				current && (current.id === fresh._id || current._id === fresh._id) ? { ...current, ...switches } : current
+			);
+			const saved = await SecureStore.getItemAsync('userData');
+			const savedUser = saved ? JSON.parse(saved) : null;
+			if (savedUser && (savedUser.id === fresh._id || savedUser._id === fresh._id)) {
+				await SecureStore.setItemAsync('userData', JSON.stringify({ ...savedUser, ...switches }));
+			}
+		} catch {
+			// Offline or the server is asleep: keep the saved values.
+		}
+	}
+
+	useEffect(() => {
+		const subscription = AppState.addEventListener('change', (state) => {
+			if (state === 'active' && authToken) refreshDeveloperFlag(authToken);
+		});
+		return () => subscription.remove();
+	}, [authToken]);
+
+	// The board log follows the signed-in account: always for developers, and for anyone else while support has
+	// diagnostics switched on. A different account starts from an empty log; diagnostics stop at their end time.
+	const lastUserIdRef = React.useRef<string | undefined>(undefined);
+	useEffect(() => {
+		const id = user?.id || user?._id;
+		if (lastUserIdRef.current && id !== lastUserIdRef.current) resetBoardLog();
+		lastUserIdRef.current = id;
+		setBoardLogEnabled(boardLogAllowed(user));
+		if (!user?.developer && diagnosticsActive(user)) {
+			const msLeft = new Date(user!.diagnosticsUntil).getTime() - Date.now();
+			const timer = setTimeout(() => setBoardLogEnabled(false), Math.min(msLeft, 2 ** 31 - 1));
+			return () => clearTimeout(timer);
+		}
+	}, [user]);
 
 	function loginAuth(user: unknown, token: string) {
 		setUser(user as User);

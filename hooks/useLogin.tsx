@@ -266,7 +266,6 @@ const useLogin = (): LoginHookReturn => {
 		}
 
 		const userData = await userResponse.json();
-		console.log('User info response:', userData);
 		console.log('User data received:', {
 			...userData,
 			_id: userData._id ? '••••••••' : undefined,

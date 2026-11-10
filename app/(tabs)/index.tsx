@@ -206,7 +206,7 @@ export default function Lists() {
 							onCompare={() => setCompareVisible(true)}
 						/>
 					)}
-					{!isRemount ? (
+					{!isRemount && (list as any)?.profileId === currentProfileId ? (
 						<Board
 							cardBorderRadius='10px'
 							// Only a person switch remounts the board; saves update it in place (no flash).

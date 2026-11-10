@@ -11,6 +11,16 @@ Written 2026-11-08. The demo data lives in your account (jace.galloway@gmail.com
 
 Since update 2 (below) the app doesn't save the board until it has loaded the server's copy, so a phone's old saved board can no longer overwrite the server. Before that, launching could do exactly that, which is why the first version of these steps said to log out first. If the demo ever gets wiped, `node scripts/demo-seed/seed-demo.js` in the backend writes it again (section 8).
 
+### Phone test for no launch/person-switch flash and the developer-only board log (published 2026-11-10)
+
+1. Open the app and switch people: no blank second; the board appears right away.
+2. Settings > Board Log is there for your account (developer flag). If it's missing, switch away from the app and back.
+3. Support diagnostics for any account, from the backend folder:
+   `node scripts/set-diagnostics.js someone@example.com --days 7` (or `--off`). They see a note in Settings while it's on.
+   Developer flag: `node scripts/set-developer.js email [--off]`. Both write to production; both print the database host.
+
+The app no longer prints the login token or account details to the device logs.
+
 ### Phone test for no flash, auto-scroll and the move popup (published 2026-11-09)
 
 1. Drag a card and drop it: no blank flash; the board stays where it was.

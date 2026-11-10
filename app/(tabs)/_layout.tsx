@@ -12,7 +12,6 @@ import { useContext } from 'react';
 
 const Layout = () => {
 	const { user } = useAuth();
-	console.log('user: ', user);
 	const { width, height } = useWindowDimensions();
 	const isPortrait = height >= width;
 	const {

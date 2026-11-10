@@ -21,8 +21,7 @@ import {
 import { colors } from '../../../libs/board/constants';
 import AppButton from '../../../components/AppButton';
 import BoardLogModal from '../../../components/BoardLogModal';
-import { boardLogEnabled } from '../../../utils/boardLog';
-import { useAuth } from '../../../context/Auth';
+import { boardLogAllowed, diagnosticsActive, useAuth } from '../../../context/Auth';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useFocusEffect } from 'expo-router';
 import {
@@ -61,7 +60,6 @@ const getIdToken = async (type: SignInType): Promise<string | null> => {
 
 export const UserInfo = () => {
 	const { user, updateUserName, authToken } = useAuth();
-	console.log('authToken: ', authToken);
 	const [name, setName] = useState('');
 	const [isEditing, setIsEditing] = useState(false);
 	const [currentPassword, setCurrentPassword] = useState('');
@@ -280,7 +278,6 @@ export const UserInfo = () => {
 	useEffect(() => {
 		setName(user?.name || '');
 	}, [user]);
-	console.log(user);
 	const { width, height } = useWindowDimensions();
 	const isPortrait = height >= width;
 	return (
@@ -405,10 +402,17 @@ export const UserInfo = () => {
 					/>
 				</View>
 
-				{/* Testing aid, test builds only: board and drag events, also uploaded for review. */}
-				{boardLogEnabled ? (
+				{/* Developer accounts, or support diagnostics: board and drag events, also uploaded for review. */}
+				{boardLogAllowed(user) ? (
 					<>
 						<View style={styles.logoutSection}>
+							{!user?.developer && diagnosticsActive(user) ? (
+								<Text style={styles.diagnosticsNote}>
+									Diagnostics are on until{' '}
+									{new Date(user!.diagnosticsUntil).toLocaleDateString()}. What you do on the
+									board is shared with support so they can find the problem.
+								</Text>
+							) : null}
 							<AppButton title='Board Log' onPress={() => setBoardLogVisible(true)} variant='secondary' />
 						</View>
 						<BoardLogModal visible={boardLogVisible} onClose={() => setBoardLogVisible(false)} />
@@ -487,6 +491,11 @@ export const UserInfo = () => {
 const styles = StyleSheet.create({
 	logoutSection: {
 		marginTop: 30,
+	},
+	diagnosticsNote: {
+		fontSize: 14,
+		color: colors.officer,
+		marginBottom: 8,
 	},
 	scroll: {
 		flex: 1,
