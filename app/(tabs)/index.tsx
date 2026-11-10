@@ -208,7 +208,6 @@ export default function Lists() {
 					)}
 					{!isRemount && (list as any)?.profileId === currentProfileId ? (
 						<Board
-							cardBorderRadius='10px'
 							// Only a person switch remounts the board; saves update it in place (no flash).
 							key={`board-${currentProfileId}`}
 							viewKey={currentProfileId}
@@ -305,7 +304,6 @@ export default function Lists() {
 							onDeleteItem={handleDeleteItem}
 							onEditItem={handleEditItem}
 							isWithCountBadge={false}
-							cardNameTextColor={colors.onFill}
 						/>
 					) : null}
 				</>

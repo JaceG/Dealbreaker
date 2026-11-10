@@ -8,9 +8,11 @@ import {
 	ViewStyle,
 	TextStyle,
 } from 'react-native';
+import Feather from '@expo/vector-icons/Feather';
 import { bool, func, number, object, string } from 'prop-types';
+import { FLAG_DOT_COLORS } from '../../../../components/FlagDot';
 import { colors } from '../../constants';
-import { Flag } from '../Icons';
+import { Flag, chipStyles } from '../Icons/Flag';
 import {
 	CardContainer,
 	IconRowWrapper,
@@ -27,7 +29,6 @@ interface CardProps {
 	cardNameFontFamily: string;
 	hidden?: boolean;
 	item?: any;
-	isCardWithShadow: boolean;
 	onPress?: () => void;
 	style?: ViewStyle;
 	onFlagClicked?: (newFlag: string, item: any) => void;
@@ -44,7 +45,7 @@ const PeopleCounts = ({ counts }: PeopleCountsProps) => {
 	const parts = [
 		{ key: 'yellow', n: counts.yellow, color: colors.flagYellow, square: false },
 		{ key: 'red', n: counts.red, color: colors.flagRed, square: false },
-		{ key: 'dealbreaker', n: counts.dealbreaker, color: colors.flagRed, square: true },
+		{ key: 'dealbreaker', n: counts.dealbreaker, color: colors.dealbreaker, square: true },
 	].filter((p) => p.n > 0);
 	if (parts.length === 0) return null;
 	const label = parts
@@ -54,20 +55,18 @@ const PeopleCounts = ({ counts }: PeopleCountsProps) => {
 		<View
 			accessible
 			accessibilityLabel={label}
-			style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+			style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingTop: 4 }}>
 			{parts.map((p) => (
 				<View key={p.key} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
 					<View
 						style={{
-							width: 12,
-							height: 12,
-							borderRadius: p.square ? 2 : 6,
+							width: 10,
+							height: 10,
+							borderRadius: p.square ? 2 : 5,
 							backgroundColor: p.color,
-							borderWidth: 1,
-							borderColor: colors.onFill,
 						}}
 					/>
-					<Text style={{ color: colors.onFill, fontSize: 14, fontWeight: 'bold' }}>{p.n}</Text>
+					<Text style={{ color: colors.ink, fontSize: 13, fontWeight: '600' }}>{p.n}</Text>
 				</View>
 			))}
 		</View>
@@ -75,15 +74,14 @@ const PeopleCounts = ({ counts }: PeopleCountsProps) => {
 };
 
 const Card: React.FC<CardProps> = ({
-	cardBorderRadius = 10,
+	cardBorderRadius = 14,
 	cardContent,
-	cardIconColor = colors.ink,
+	cardIconColor = colors.muted,
 	cardNameTextColor = colors.ink,
-	cardNameFontSize = 18,
+	cardNameFontSize = 17,
 	cardNameFontFamily = '',
 	hidden = false,
 	item,
-	isCardWithShadow = true,
 	onPress,
 	style,
 	onFlagClicked,
@@ -99,48 +97,39 @@ const Card: React.FC<CardProps> = ({
 	const iconStyles: {
 		iconContainer: ViewStyle;
 		iconButton: ViewStyle;
-		iconText: TextStyle;
-		flagContainer: ViewStyle;
 		badge: ViewStyle;
 		badgeText: TextStyle;
 	} = {
 		iconContainer: {
 			flexDirection: 'row',
 			alignItems: 'center',
-			justifyContent: 'center',
-			alignSelf: 'flex-end',
-			paddingTop: 20,
 		},
 		iconButton: {
-			padding: 5,
-			marginRight: 5,
-		},
-		iconText: {
-			fontSize: 18,
-			color: colors.onFill,
-		},
-		flagContainer: {
-			alignItems: 'center',
-			justifyContent: 'flex-start',
+			padding: 6,
+			marginLeft: 12,
 		},
 		badge: {
 			position: 'absolute',
 			top: -4,
 			right: -6,
-			minWidth: 20,
-			height: 20,
-			borderRadius: 10,
+			minWidth: 18,
+			height: 18,
+			borderRadius: 9,
 			paddingHorizontal: 4,
-			backgroundColor: colors.onFill,
+			backgroundColor: colors.ink,
 			alignItems: 'center',
 			justifyContent: 'center',
 		},
 		badgeText: {
-			fontSize: 12,
+			fontSize: 11,
 			fontWeight: 'bold',
-			color: colors.legacyCard,
+			color: colors.onFill,
 		},
 	};
+
+	const isDealbreaker = item?.columnId() === 2;
+	// 44pt wide and 48pt tall with the padding; the sides meet in the 12pt gap, so no tap lands on a neighbour.
+	const iconSlop = { top: 8, bottom: 8, left: 6, right: 6 };
 
 	const handlePress = () => {
 		if (onPress) {
@@ -160,91 +149,76 @@ const Card: React.FC<CardProps> = ({
 					<CardContainer
 						borderRadius={cardBorderRadius}
 						style={{
-							backgroundColor:
-								item?.columnId() === 2
-									? colors.legacyDealbreakerCard
-									: colors.legacyCard,
-							elevation: isCardWithShadow ? 5 : 0,
-							shadowOpacity: isCardWithShadow ? 0.1 : 0,
+							backgroundColor: colors.surface,
+							borderWidth: 1,
+							borderColor: colors.hairline,
+							// Clips the stripe to the rounded corners.
+							overflow: 'hidden',
 						}}>
-						{/* Main only: how many active people have this card yellow, red or as a dealbreaker, in the top-right corner */}
-						{!hidden && item?.row().peopleCounts ? (
-							<View style={{ position: 'absolute', top: 8, right: 10, zIndex: 1 }}>
-								<PeopleCounts counts={item.row().peopleCounts} />
-							</View>
-						) : null}
-						<RowWrapper
+						{/* The card's state down its left edge. A white flag's stripe doesn't show on the white card. */}
+						<View
 							style={{
-								justifyContent: 'center',
-								alignItems: 'center',
-							}}>
-							{/* First line - Title only */}
-							<View
-								style={{
-									width: '40%',
-									alignItems: 'center',
-									justifyContent: 'flex-start',
-								}}>
+								position: 'absolute',
+								left: 0,
+								top: 0,
+								bottom: 0,
+								width: 4,
+								backgroundColor: isDealbreaker
+									? colors.dealbreaker
+									: FLAG_DOT_COLORS[item?.row().flag] || colors.flagWhite,
+							}}
+						/>
+						<RowWrapper>
+							<View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
 								<Paragraph
 									style={{
+										flex: 1,
 										fontSize: cardNameFontSize,
 										fontFamily: cardNameFontFamily,
 										color: cardNameTextColor,
-										textAlign: 'center',
-										fontWeight: 'bold',
+										fontWeight: '600',
 									}}>
 									{item ? item.row().name : ''}
 								</Paragraph>
+								{/* Main only: how many active people have this card yellow, red or as a dealbreaker */}
+								{item?.row().peopleCounts ? (
+									<PeopleCounts counts={item.row().peopleCounts} />
+								) : null}
 							</View>
 							{item?.row().description ? (
 								<Paragraph
 									numberOfLines={2}
 									style={{
-										fontSize: 14,
+										fontSize: 15,
 										fontFamily: cardNameFontFamily,
-										color: cardNameTextColor,
-										textAlign: 'center',
-										opacity: 0.85,
-										width: '90%',
+										color: colors.muted,
 										marginTop: 4,
 									}}>
 									{item.row().description}
 								</Paragraph>
 							) : null}
 
-							{/* Second line - Icons and flag */}
-							<IconRowWrapper>
+							{/* The min height keeps a hidden card, which has no buttons, as tall as a shown one. */}
+							<IconRowWrapper style={{ marginTop: 12, minHeight: 33 }}>
+								{isDealbreaker ? (
+									<View
+										style={[
+											chipStyles.chip,
+											{
+												paddingLeft: 11,
+												backgroundColor: colors.dealbreaker,
+												borderColor: colors.dealbreaker,
+											},
+										]}>
+										<Text style={[chipStyles.text, { color: colors.onFill }]}>
+											Dealbreaker
+										</Text>
+									</View>
+								) : (
+									<Flag onFlagClicked={onFlagClicked} item={item} />
+								)}
+
 								<View style={iconStyles.iconContainer}>
-									{!hidden &&
-										showDeleteItem &&
-										item &&
-										onDeleteItem && (
-											<TouchableOpacity
-												accessibilityRole='button'
-												accessibilityLabel='Delete card'
-												hitSlop={8}
-												onPress={() =>
-													onDeleteItem(item)
-												}
-												style={iconStyles.iconButton}>
-												<Text
-													style={iconStyles.iconText}>
-													🗑️
-												</Text>
-											</TouchableOpacity>
-										)}
-									{!hidden && item && onEditItem && (
-										<TouchableOpacity
-											accessibilityRole='button'
-											accessibilityLabel='Edit card'
-											hitSlop={8}
-											onPress={() => onEditItem(item)}
-											style={iconStyles.iconButton}>
-											<Text style={iconStyles.iconText}>
-												✏️
-											</Text>
-										</TouchableOpacity>
-									)}
 									{!hidden &&
 										item &&
 										item.row &&
@@ -252,15 +226,12 @@ const Card: React.FC<CardProps> = ({
 											<TouchableOpacity
 												accessibilityRole='button'
 												accessibilityLabel={`Notes and history, ${item.row().historyCount || 'no'} ${item.row().historyCount === 1 ? 'entry' : 'entries'}`}
-												hitSlop={8}
+												hitSlop={iconSlop}
 												onPress={() =>
 													item.row().onLongPress()
 												}
 												style={iconStyles.iconButton}>
-												<Text
-													style={iconStyles.iconText}>
-													📋
-												</Text>
+												<Feather name='clipboard' size={20} color={cardIconColor} />
 												{item.row().historyCount ? (
 													<View style={iconStyles.badge}>
 														<Text style={iconStyles.badgeText}>
@@ -270,17 +241,31 @@ const Card: React.FC<CardProps> = ({
 												) : null}
 											</TouchableOpacity>
 										)}
-								</View>
-
-								<View style={iconStyles.flagContainer}>
-									{!hidden &&
-									item?.columnId() === 2 ? null : (
-										<Flag
-											color={cardIconColor}
-											onFlagClicked={onFlagClicked}
-											item={item}
-										/>
+									{!hidden && item && onEditItem && (
+										<TouchableOpacity
+											accessibilityRole='button'
+											accessibilityLabel='Edit card'
+											hitSlop={iconSlop}
+											onPress={() => onEditItem(item)}
+											style={iconStyles.iconButton}>
+											<Feather name='edit-2' size={20} color={cardIconColor} />
+										</TouchableOpacity>
 									)}
+									{!hidden &&
+										showDeleteItem &&
+										item &&
+										onDeleteItem && (
+											<TouchableOpacity
+												accessibilityRole='button'
+												accessibilityLabel='Delete card'
+												hitSlop={iconSlop}
+												onPress={() =>
+													onDeleteItem(item)
+												}
+												style={iconStyles.iconButton}>
+												<Feather name='trash-2' size={20} color={cardIconColor} />
+											</TouchableOpacity>
+										)}
 								</View>
 							</IconRowWrapper>
 						</RowWrapper>
@@ -300,7 +285,6 @@ Card.propTypes = {
 	cardNameFontFamily: string.isRequired,
 	hidden: bool,
 	item: object,
-	isCardWithShadow: bool.isRequired,
 	onPress: func,
 
 	style: object,

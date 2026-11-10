@@ -1,7 +1,27 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Alert, Image, Pressable, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text } from 'react-native';
+import FlagIcon from '../../../../components/FlagIcon';
+import { colors } from '../../constants';
 
-export const Flag = ({ color, onFlagClicked, item }: any) => {
+const name = (c: string) => c[0].toUpperCase() + c.slice(1);
+
+// The pill at the bottom-left of a board card. The card fills it for a dealbreaker.
+export const chipStyles = StyleSheet.create({
+	chip: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		gap: 6,
+		paddingVertical: 5,
+		paddingLeft: 8,
+		paddingRight: 11,
+		borderRadius: 999,
+		borderWidth: 1,
+		borderColor: colors.hairline,
+	},
+	text: { fontSize: 13, fontWeight: '500', color: colors.ink },
+});
+
+export const Flag = ({ onFlagClicked, item }: any) => {
 	const whiteFlag = 'white';
 	const yellowFlag = 'yellow';
 	const redFlag = 'red';
@@ -41,7 +61,6 @@ export const Flag = ({ color, onFlagClicked, item }: any) => {
 
 	// Offer the two other colors, so yellow can go straight back to white without a red step in the history.
 	const handleFlagClick = () => {
-		const name = (c: string) => c[0].toUpperCase() + c.slice(1);
 		Alert.alert(
 			'Change Flag',
 			`"${item?.row?.()?.name || 'This flag'}" is ${flagColor} now.`,
@@ -55,21 +74,14 @@ export const Flag = ({ color, onFlagClicked, item }: any) => {
 	};
 
 	return (
-		<View>
-			<Pressable
-				accessibilityRole='button'
-				accessibilityLabel={`${flagColor} flag. Change color`}
-				hitSlop={10}
-				onPress={handleFlagClick}>
-				<Image
-					style={{
-						tintColor: flagColor,
-						width: 25,
-						height: 25,
-					}}
-					source={require('../../assets/icons/flag.png')}
-				/>
-			</Pressable>
-		</View>
+		<Pressable
+			accessibilityRole='button'
+			accessibilityLabel={`${flagColor} flag. Change color`}
+			hitSlop={10}
+			onPress={handleFlagClick}
+			style={chipStyles.chip}>
+			<FlagIcon flag={flagColor} size={16} />
+			<Text style={chipStyles.text}>{name(flagColor)}</Text>
+		</Pressable>
 	);
 };

@@ -1,16 +1,13 @@
 import styled from 'styled-components/native';
 import { borderRadius, color, fontFamily, fontSize, BorderRadiusProps } from 'styled-system';
-import { colors } from '../../constants';
 
 const CardContainer = styled.View<BorderRadiusProps>`
 	${borderRadius}
   marginHorizontal: 8;
-  paddingHorizontal: 10;
-  paddingVertical: 15;
+  paddingLeft: 18;
+  paddingRight: 12;
+  paddingVertical: 14;
   width: 94.5%;
-  shadow-radius: 15px;
-  shadow-color: ${colors.ink};
-  shadow-offset: 0px 3px;
   marginTop: 4;
   marginBottom: 4;
 `;

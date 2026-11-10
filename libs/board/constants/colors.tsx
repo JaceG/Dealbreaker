@@ -15,16 +15,11 @@ const colors = {
 
 	// Flags, in rising order. Yellow and red are the app's original colours, kept at Jace's request.
 	// White stays white, so its shape always needs an outline (FlagIcon and FlagDot draw one). Yellow is
-	// too light for text on white (1.4:1).
+	// too light for text on white (1.4:1), and Jace keeps its flag plain, without the outline.
 	flagWhite: '#FFFFFF',
 	flagYellow: '#FFD700',
 	flagRed: '#FF0000',
 	dealbreaker: '#9F1239',
-
-	// The board card and frame keep today's look until the card restyle, which deletes these.
-	legacyCard: '#686de0',
-	legacyDealbreakerCard: '#d63031',
-	legacyFrame: '#30336b',
 };
 
 export { colors };
