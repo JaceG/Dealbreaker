@@ -30,7 +30,7 @@ interface CardProps {
 	item?: any;
 	isCardWithShadow: boolean;
 	onPress?: () => void;
-	onPressIn?: (pageY: number) => void;
+	onLift?: (pageY: number) => void;
 	style?: ViewStyle;
 	onFlagClicked?: (newFlag: string, item: any) => void;
 	onDeleteItem?: (item: any) => void;
@@ -88,7 +88,7 @@ const Card: React.FC<CardProps> = ({
 	item,
 	isCardWithShadow = true,
 	onPress,
-	onPressIn,
+	onLift,
 	style,
 	onFlagClicked,
 	onDeleteItem,
@@ -152,16 +152,18 @@ const Card: React.FC<CardProps> = ({
 		}
 	};
 
-	const handlePressIn = (evt: GestureResponderEvent) => {
-		console.log('page Y', evt.nativeEvent.pageY);
-		if (onPressIn) {
-			onPressIn(evt.nativeEvent.pageY - NEGATIVE_SPACE);
+	// Press and hold to lift the card; a tap only opens it.
+	const handleLongPress = (evt: GestureResponderEvent) => {
+		if (onLift) {
+			onLift(evt.nativeEvent.pageY - NEGATIVE_SPACE);
 		}
 	};
 
 	return (
 		<TouchableWithoutFeedback
-			onPressIn={handlePressIn}
+			onLongPress={handleLongPress}
+			delayLongPress={350}
+			accessibilityHint={onLift ? 'Press and hold to move' : undefined}
 			onPress={handlePress}>
 			<Animated.View style={styles}>
 				{cardContent !== undefined ? (
@@ -312,7 +314,7 @@ Card.propTypes = {
 	item: object,
 	isCardWithShadow: bool.isRequired,
 	onPress: func,
-	onPressIn: func,
+	onLift: func,
 	style: object,
 	onFlagClicked: func,
 	onDeleteItem: func,

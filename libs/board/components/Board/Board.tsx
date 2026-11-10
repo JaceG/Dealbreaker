@@ -30,7 +30,6 @@ interface BoardProps {
 	cardBorderRadius?: string | number;
 	cardNameTextColor?: string;
 	isWithCountBadge?: boolean;
-	clearTimeout: (timeoutId: NodeJS.Timeout) => void;
 	onDragEnd: (srcColumn: any, destColumn: any, draggedItem: any) => void;
 	open: (item: any) => void;
 	requestAnimationFrame: (callback: () => void) => void;
@@ -73,7 +72,8 @@ class Board extends React.Component<BoardProps, BoardState> {
 	private y: number | null = null;
 	private scrolling: boolean = false;
 	private carousel: CarouselRef | null = null;
-	private movingSubscription: NodeJS.Timeout | null = null;
+	private dropping: boolean = false;
+	private moved: boolean = false;
 	private scrollViewRef: any = null;
 
 	constructor(props: BoardProps) {
@@ -94,6 +94,8 @@ class Board extends React.Component<BoardProps, BoardState> {
 		};
 
 		this.panResponder = PanResponder.create({
+			// Capture, so the board takes the finger from the card and list once a card is lifted.
+			onMoveShouldSetPanResponderCapture: () => this.state.movingMode,
 			onMoveShouldSetPanResponder: () => this.state.movingMode,
 			onPanResponderMove: this.onPanResponderMove,
 			onPanResponderRelease: this.onPanResponderRelease,
@@ -126,7 +128,6 @@ class Board extends React.Component<BoardProps, BoardState> {
 
 	componentWillUnmount() {
 		// Dimensions.removeEventListener('change', this.onOrientationChange);
-		this.unsubscribeFromMovingMode();
 	}
 
 	onPanResponderMove = (
@@ -136,10 +137,9 @@ class Board extends React.Component<BoardProps, BoardState> {
 		try {
 			const { draggedItem, pan, startingX, startingY } = this.state;
 			const { boardRepository } = this.props;
-			this.unsubscribeFromMovingMode();
 
-			if (draggedItem) {
-				this.setState({ movingMode: true });
+			if (draggedItem && this.state.movingMode) {
+				this.moved = true;
 				const { x0, y0 } = gesture;
 				this.x = x0 - startingX + gesture.dx;
 				this.y = y0 + gesture.dy;
@@ -239,6 +239,8 @@ class Board extends React.Component<BoardProps, BoardState> {
 	};
 
 	endMoving = () => {
+		// Only a lifted card can be dropped, so a late call can't fire onDragEnd twice.
+		if (!this.state.movingMode) return;
 		try {
 			this.setState({ movingMode: false });
 			const { draggedItem, pan, srcColumnId } = this.state;
@@ -252,6 +254,11 @@ class Board extends React.Component<BoardProps, BoardState> {
 			const destColumnId = draggedItem.columnId();
 			pan.setValue({ x: 0, y: 0 });
 			this.setState({ startingX: 0, startingY: 0 });
+
+			// Lifted and released without moving: nothing to save.
+			if (!this.moved) {
+				return;
+			}
 
 			return (
 				onDragEnd &&
@@ -289,16 +296,21 @@ class Board extends React.Component<BoardProps, BoardState> {
 	};
 
 	onPanResponderRelease = () => {
-		const { movingMode } = this.state;
 		this.x = null;
 		this.y = null;
+		this.drop();
+	};
 
-		if (movingMode) {
-			this.rotate(0);
-			setTimeout(this.endMoving, 100);
-		} else if (this.scrolling) {
-			this.unsubscribeFromMovingMode();
-		}
+	// Any finger lift drops a lifted card, even when the board never took the touch
+	// (lifted and released without moving), so a card can't stay floating.
+	drop = () => {
+		if (!this.state.movingMode || this.dropping) return;
+		this.dropping = true;
+		this.rotate(0);
+		this.props.setTimeout(() => {
+			this.endMoving();
+			this.dropping = false;
+		}, 100);
 	};
 
 	rotate = (toValue: number) => {
@@ -310,90 +322,67 @@ class Board extends React.Component<BoardProps, BoardState> {
 		}).start();
 	};
 
-	cancelMovingSubscription = () => {
-		const { clearTimeout } = this.props;
+	// Called by the card's long press, so the finger is still down when the card lifts.
+	onLift = (columnId: number, item: any, dy: number) => {
+		const { boardPositionY, movingMode } = this.state;
+		const { boardRepository } = this.props;
 
-		if (this.movingSubscription) {
-			clearTimeout(this.movingSubscription);
-		}
-	};
-
-	unsubscribeFromMovingMode = () => {
-		this.cancelMovingSubscription();
-	};
-
-	onPressIn = (columnId: number, item: any, dy: number) => {
-		const { boardPositionY } = this.state;
-		const { boardRepository, setTimeout } = this.props;
-
-		if (item.isLocked()) {
+		if (
+			movingMode ||
+			this.dropping ||
+			!item ||
+			item.isLocked() ||
+			!item.layout()
+		) {
 			return;
 		}
+		const lastColumn = boardRepository.columns().length - 1;
+		const columnIndex = this.carousel ? this.carousel.currentIndex : 0;
 
-		if (!item || (item.isLocked() && this.scrolling)) {
-			this.unsubscribeFromMovingMode();
-			return;
+		let x: number;
+
+		if (columnIndex === 0) {
+			x = 16;
+		} else if (columnIndex > 0 && columnIndex < lastColumn) {
+			x = (deviceWidth - 0.78 * deviceWidth + 16) / 2;
+		} else if (columnIndex === lastColumn) {
+			x = deviceWidth - 0.78 * deviceWidth;
+		} else {
+			x = 16; // fallback
 		}
-		this.movingSubscription = setTimeout(() => {
-			if (!item || !item.layout()) {
-				return;
-			}
-			const lastColumn = boardRepository.columns().length - 1;
-			const columnIndex = this.carousel ? this.carousel.currentIndex : 0;
 
-			let x: number;
-
-			if (columnIndex === 0) {
-				x = 16;
-			} else if (columnIndex > 0 && columnIndex < lastColumn) {
-				x = (deviceWidth - 0.78 * deviceWidth + 16) / 2;
-			} else if (columnIndex === lastColumn) {
-				x = deviceWidth - 0.78 * deviceWidth;
-			} else {
-				x = 16; // fallback
-			}
-			const { y } = item.layout();
-
-			if (columnId - 1 === columnIndex) {
-				boardRepository.hide(columnId, item);
-				this.setState({
-					movingMode: true,
-					draggedItem: item,
-					srcColumnId: item.columnId(),
-					startingX: x,
-					startingY:
-						dy - boardPositionY - STATUSBAR_HEIGHT - (ios ? 0 : 0),
-				});
-				this.rotate(MAX_DEG);
-			}
-		}, 200);
+		if (columnId - 1 === columnIndex) {
+			boardRepository.hide(columnId, item);
+			this.moved = false;
+			this.setState({
+				movingMode: true,
+				draggedItem: item,
+				srcColumnId: item.columnId(),
+				startingX: x,
+				startingY:
+					dy - boardPositionY - STATUSBAR_HEIGHT - (ios ? 0 : 0),
+			});
+			this.rotate(MAX_DEG);
+		}
 	};
 
 	onPress = (columnId: number, item: any) => {
 		const { open } = this.props;
-		const { movingMode } = this.state;
 
 		if (item.isLocked()) {
 			return;
 		}
 
+		// Read movingMode when tapped, not when the row rendered; drops are handled by drop().
 		return () => {
-			this.unsubscribeFromMovingMode();
-
-			if (item.isLocked()) {
+			if (item.isLocked() || this.state.movingMode) {
 				return;
 			}
 
-			if (!movingMode) {
-				const columnIndex = this.carousel
-					? this.carousel.currentIndex
-					: 0;
+			const columnIndex = this.carousel ? this.carousel.currentIndex : 0;
 
-				if (columnId - 1 === columnIndex) {
-					open(item.row());
-				}
-			} else {
-				this.endMoving();
+			if (columnId - 1 === columnIndex) {
+				open(item.row());
 			}
 		};
 	};
@@ -465,7 +454,10 @@ class Board extends React.Component<BoardProps, BoardState> {
 		const { boardBackground, boardRepository, data } = this.props;
 
 		return (
-			<BoardWrapper {...this.panResponder.panHandlers}>
+			<BoardWrapper
+				{...this.panResponder.panHandlers}
+				onTouchEnd={this.drop}
+				onTouchCancel={this.drop}>
 				<BoardWrapper
 					onLayout={(evt: LayoutChangeEvent) =>
 						this.setBoardPositionY(evt.nativeEvent.layout.y)
@@ -478,7 +470,6 @@ class Board extends React.Component<BoardProps, BoardState> {
 						{...({
 							data: boardRepository.columns(),
 							onScrollEndDrag: this.onScrollEnd,
-							onScroll: this.cancelMovingSubscription,
 							scrollEnabled: !movingMode,
 							renderItem: (item: any) => (
 								<Column
@@ -488,7 +479,7 @@ class Board extends React.Component<BoardProps, BoardState> {
 										column: item.item,
 										movingMode: movingMode,
 										boardRepository: boardRepository,
-										onPressIn: this.onPressIn,
+										onLift: this.onLift,
 										onPress: this.onPress,
 										renderWrapperRow: this.renderWrapperRow,
 										showDeleteItem:
@@ -496,8 +487,6 @@ class Board extends React.Component<BoardProps, BoardState> {
 										onScrollingStarted:
 											this.onScrollingStarted,
 										onScrollingEnded: this.onScrollingEnded,
-										unsubscribeFromMovingMode:
-											this.cancelMovingSubscription,
 										oneColumn:
 											boardRepository.columns().length ===
 											1,
@@ -528,7 +517,6 @@ class Board extends React.Component<BoardProps, BoardState> {
 
 	static propTypes = {
 		boardBackground: string.isRequired,
-		clearTimeout: func.isRequired,
 		onDragEnd: func.isRequired,
 		open: func.isRequired,
 		requestAnimationFrame: func.isRequired,
@@ -543,5 +531,5 @@ class Board extends React.Component<BoardProps, BoardState> {
 
 // react-timeout injects these three props
 export default ReactTimeout(Board) as unknown as React.ComponentClass<
-	Omit<BoardProps, 'clearTimeout' | 'requestAnimationFrame' | 'setTimeout'>
+	Omit<BoardProps, 'requestAnimationFrame' | 'setTimeout'>
 >;

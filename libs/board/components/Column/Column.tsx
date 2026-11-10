@@ -79,11 +79,11 @@ interface ColumnProps {
 	movingMode: boolean;
 	oneColumn?: boolean;
 	onPress: (columnId: string | number, item: BoardItem) => void;
-	onPressIn: (columnId: string | number, item: BoardItem, y: number) => void;
+	onLift: (columnId: string | number, item: BoardItem, y: number) => void;
 	onScrollingEnded: () => void;
 	onScrollingStarted: () => void;
 	renderWrapperRow: (props: {
-		onPressIn: (y: number) => void;
+		onLift: (y: number) => void;
 		onPress: void;
 		hidden: boolean;
 		item: BoardItem;
@@ -93,7 +93,6 @@ interface ColumnProps {
 		showDeleteItem?: boolean;
 	}) => React.ReactNode;
 	boardRepository: BoardRepository;
-	unsubscribeFromMovingMode: () => void;
 	onFlagClicked?: (newFlag: string, item: BoardItem) => void;
 	onDeleteItem?: (item: BoardItem) => void;
 	onEditItem?: (item: BoardItem) => void;
@@ -127,9 +126,9 @@ class Column extends React.Component<ColumnProps, ColumnState> {
 		);
 	}
 
-	onPressIn = (item: BoardItem, y: number): void => {
-		const { column, onPressIn } = this.props;
-		onPressIn(column.id(), item, y);
+	onLift = (item: BoardItem, y: number): void => {
+		const { column, onLift } = this.props;
+		onLift(column.id(), item, y);
 	};
 
 	onPress = (item: BoardItem): void => {
@@ -173,7 +172,7 @@ class Column extends React.Component<ColumnProps, ColumnState> {
 			showDeleteItem,
 		} = this.props;
 		const props = {
-			onPressIn: (y: number) => this.onPressIn(item, y),
+			onLift: (y: number) => this.onLift(item, y),
 			onPress: this.onPress(item),
 			hidden: item.isHidden(),
 			item,
@@ -194,14 +193,8 @@ class Column extends React.Component<ColumnProps, ColumnState> {
 	};
 
 	handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>): void => {
-		const {
-			column,
-			onScrollingStarted,
-			boardRepository,
-			unsubscribeFromMovingMode,
-		} = this.props;
+		const { column, onScrollingStarted, boardRepository } = this.props;
 
-		unsubscribeFromMovingMode();
 		onScrollingStarted();
 
 		const col = boardRepository.column(column.id());
@@ -444,12 +437,11 @@ Column.propTypes = {
 	movingMode: bool.isRequired,
 	oneColumn: bool,
 	onPress: func.isRequired,
-	onPressIn: func.isRequired,
+	onLift: func.isRequired,
 	onScrollingEnded: func.isRequired,
 	onScrollingStarted: func.isRequired,
 	renderWrapperRow: func.isRequired,
 	boardRepository: object,
-	unsubscribeFromMovingMode: func.isRequired,
 	onFlagClicked: func,
 	onDeleteItem: func,
 	onEditItem: func,
