@@ -9,7 +9,7 @@ import Card from '../Card/Card';
 import Carousel from '../Carousel/Carousel';
 import { BoardWrapper } from './Board.styled';
 import { boardLog } from '../../../../utils/boardLog';
-import { getView, rememberColumn } from '../lib/viewMemory';
+import { getView, onShowColumn, rememberColumn, rememberOffset } from '../lib/viewMemory';
 import { setDragging } from '../lib/dragState';
 
 const MAX_RANGE = 100;
@@ -20,6 +20,9 @@ const LIFT_DELAY_MS = 350;
 const EDGE = 40;
 // How far back from the edge the finger has to come before another switch can happen.
 const EDGE_REARM = 60;
+// Auto-scroll: how close to the top or bottom of a column (pt), and the top speed (pt per frame).
+const SCROLL_ZONE = 80;
+const SCROLL_MAX = 14;
 
 type DragPoint = { absoluteX: number; absoluteY: number };
 
@@ -114,6 +117,7 @@ interface CarouselRef {
 	currentIndex: number;
 	snapToPrev: () => void;
 	snapToNext: () => void;
+	snapToItem: (index: number) => void;
 }
 
 class Board extends React.Component<BoardProps, BoardState> {
@@ -131,6 +135,12 @@ class Board extends React.Component<BoardProps, BoardState> {
 	private lastUpdateAt = 0;
 	private lastIndex: number | undefined;
 	private lastColumn = 0;
+	// Auto-scroll while a card is held near the top or bottom of its column.
+	private listBounds: { top: number; bottom: number } | null = null;
+	private listScroll = 0;
+	private listColumn = 0;
+	private scrollSpeed = 0;
+	private scrollFrame: any = 0;
 	private liftInfo: any = null;
 	// The drag lives on the instance, not in React state, so a finger-up that arrives in the
 	// same JS batch as the lift still sees the lifted card.
@@ -158,8 +168,13 @@ class Board extends React.Component<BoardProps, BoardState> {
 		};
 	}
 
+	private stopShowColumn: (() => void) | null = null;
+
 	componentDidMount() {
 		Dimensions.addEventListener('change', this.onOrientationChange);
+		this.stopShowColumn = onShowColumn((key, col) => {
+			if (key === this.props.viewKey && col !== this.columnIndex()) this.carousel?.snapToItem(col);
+		});
 		const { boardRepository } = this.props;
 		boardLog('board.mount', {
 			columns: boardRepository
@@ -170,6 +185,8 @@ class Board extends React.Component<BoardProps, BoardState> {
 	}
 
 	componentWillUnmount() {
+		this.stopAutoScroll();
+		this.stopShowColumn?.();
 		// A board torn down mid-drag would explain a card that vanishes or never lands.
 		boardLog('board.unmount', { dragging: this.lifted });
 		if (this.lifted) setDragging(false);
@@ -256,6 +273,7 @@ class Board extends React.Component<BoardProps, BoardState> {
 		const l = item.layout();
 		this.lifted = true;
 		setDragging(true);
+		this.measureList();
 		this.dragItem = item;
 		this.srcColumnId = item.columnId();
 		this.srcIndex = item.index();
@@ -343,31 +361,10 @@ class Board extends React.Component<BoardProps, BoardState> {
 			if (columnId !== this.lastColumn) {
 				boardLog('drag.columnChanged', { from: this.lastColumn, to: columnId });
 				this.lastColumn = columnId;
+				this.measureList();
 			}
-			const columnAtPosition = boardRepository.move(
-				draggedItem,
-				absoluteX,
-				absoluteY,
-				columnId
-			);
-			if (columnAtPosition) {
-				const { scrolling, offset } = boardRepository.scrollingPosition(
-					columnAtPosition,
-					absoluteX,
-					absoluteY,
-					columnId
-				);
-				if (this.shouldScroll(scrolling, offset, columnAtPosition)) {
-					boardLog('drag.autoscroll', { offset, col: columnId, y: round(absoluteY) });
-					this.scroll(columnAtPosition, draggedItem, offset);
-				}
-			}
-			if (draggedItem.columnId() !== this.srcColumnId) this.crossed = true;
-			const index = draggedItem.index();
-			if (index !== this.lastIndex) {
-				boardLog('drag.reorder', { from: this.lastIndex, to: index, col: draggedItem.columnId() });
-				this.lastIndex = index;
-			}
+			this.moveCard(absoluteX, absoluteY);
+			this.updateAutoScroll(absoluteY);
 		} catch (error: any) {
 			console.log('onDragMove', error);
 			boardLog('drag.error', { where: 'move', message: String(error?.message || error) });
@@ -379,6 +376,7 @@ class Board extends React.Component<BoardProps, BoardState> {
 		this.x = null;
 		this.y = null;
 		boardLog('gesture.finalize', { canceled, lifted: this.lifted });
+		this.stopAutoScroll();
 		if (!this.lifted) return;
 		this.rotate(0);
 		try {
@@ -390,16 +388,79 @@ class Board extends React.Component<BoardProps, BoardState> {
 		}
 	};
 
-	shouldScroll = (
-		scrolling: boolean,
-		offset: number,
-		column: any
-	): boolean => {
-		const placeToScroll =
-			(offset < 0 && column.scrollOffset() > 0) ||
-			(offset > 0 && column.scrollOffset() < column.contentHeight());
+	// Reorder the lifted card for the finger's position, and note any change for the log.
+	moveCard = (absoluteX: number, absoluteY: number) => {
+		const draggedItem = this.dragItem;
+		if (!draggedItem) return;
+		this.props.boardRepository.move(draggedItem, absoluteX, absoluteY, this.columnIndex());
+		if (draggedItem.columnId() !== this.srcColumnId) this.crossed = true;
+		const index = draggedItem.index();
+		if (index !== this.lastIndex) {
+			boardLog('drag.reorder', { from: this.lastIndex, to: index, col: draggedItem.columnId() });
+			this.lastIndex = index;
+		}
+	};
 
-		return scrolling && offset !== 0 && placeToScroll;
+	// Where the column on screen shows its cards, and how far it's scrolled, for auto-scroll.
+	measureList = () => {
+		this.listColumn = this.columnIndex() + 1;
+		const column = this.props.boardRepository.column(this.listColumn);
+		this.listBounds = null;
+		this.listScroll = column?.scrollOffset?.() || 0;
+		const list: any = column?.listView?.();
+		list?.getNativeScrollRef?.()?.measureInWindow?.((x: number, y: number, w: number, h: number) => {
+			if (h > 0) this.listBounds = { top: y, bottom: y + h };
+		});
+	};
+
+	// Holding a card near the top or bottom of the column scrolls it; deeper into the zone is faster.
+	updateAutoScroll = (absoluteY: number) => {
+		const b = this.listBounds;
+		let speed = 0;
+		if (b) {
+			if (absoluteY < b.top + SCROLL_ZONE) {
+				speed = -SCROLL_MAX * Math.min(1, (b.top + SCROLL_ZONE - absoluteY) / SCROLL_ZONE);
+			} else if (absoluteY > b.bottom - SCROLL_ZONE) {
+				speed = SCROLL_MAX * Math.min(1, (absoluteY - (b.bottom - SCROLL_ZONE)) / SCROLL_ZONE);
+			}
+		}
+		if (speed && !this.scrollSpeed) boardLog('drag.autoscroll', { dir: speed < 0 ? 'up' : 'down', y: round(absoluteY) });
+		this.scrollSpeed = speed;
+		if (speed && !this.scrollFrame) this.scrollFrame = requestAnimationFrame(this.autoScrollStep);
+	};
+
+	autoScrollStep = () => {
+		this.scrollFrame = 0;
+		const b = this.listBounds;
+		if (!this.lifted || !this.scrollSpeed || !b) return;
+		const { boardRepository } = this.props;
+		const columnId = this.listColumn;
+		// The carousel switched columns mid-scroll: stop; the next finger move measures the new column.
+		if (columnId !== this.columnIndex() + 1) return;
+		const column = boardRepository.column(columnId);
+		const list: any = column?.listView?.();
+		if (!list) return;
+		const max = Math.max(0, (column.contentHeight?.() || 0) - (b.bottom - b.top));
+		const to = Math.max(0, Math.min(max, this.listScroll + this.scrollSpeed));
+		const delta = to - this.listScroll;
+		if (delta === 0) return; // reached the end
+		list.scrollToOffset({ offset: to, animated: false });
+		this.listScroll = to;
+		boardRepository.setScrollOffset(columnId, to);
+		rememberOffset(this.props.viewKey, columnId, to);
+		// Card positions are screen coordinates and the list just moved under them.
+		(boardRepository.items(columnId) || []).forEach((item: any) => {
+			const l = item.layout();
+			if (l) item.setLayout({ ...l, y: l.y - delta });
+		});
+		if (this.x !== null && this.y !== null) this.moveCard(this.x, this.y);
+		this.scrollFrame = requestAnimationFrame(this.autoScrollStep);
+	};
+
+	stopAutoScroll = () => {
+		this.scrollSpeed = 0;
+		if (this.scrollFrame) cancelAnimationFrame(this.scrollFrame);
+		this.scrollFrame = 0;
 	};
 
 	onScrollingStarted = () => {
@@ -408,32 +469,6 @@ class Board extends React.Component<BoardProps, BoardState> {
 
 	onScrollingEnded = () => {
 		this.scrolling = false;
-	};
-
-	scroll = (column: any, draggedItem: any, anOffset: number) => {
-		const { requestAnimationFrame, boardRepository } = this.props;
-
-		if (!this.scrolling) {
-			this.onScrollingStarted();
-			const scrollOffset = column.scrollOffset() + 80 * anOffset;
-			boardRepository.setScrollOffset(column.id(), scrollOffset);
-
-			column.listView().scrollToOffset({ offset: scrollOffset });
-		}
-
-		if (this.x !== null && this.y !== null) {
-			boardRepository.move(draggedItem, this.x, this.y, this.columnIndex());
-			const { scrolling, offset } = boardRepository.scrollingPosition(
-				column,
-				this.x,
-				this.y
-			);
-			if (this.shouldScroll(scrolling, offset, column)) {
-				requestAnimationFrame(() => {
-					this.scroll(column, draggedItem, offset);
-				});
-			}
-		}
 	};
 
 	endMoving = () => {

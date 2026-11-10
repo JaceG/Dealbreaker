@@ -19,3 +19,18 @@ export const rememberColumn = (key: string | undefined, col: number) => {
 export const rememberOffset = (key: string | undefined, columnId: string | number, y: number) => {
 	if (key) view(key).offsets[String(columnId)] = Math.max(0, y);
 };
+
+// Ask a mounted board to show a column now (e.g. the one a card went back to after Cancel).
+const columnRequests = new Set<(key: string, col: number) => void>();
+
+export const showColumn = (key: string, col: number) => {
+	rememberColumn(key, col);
+	columnRequests.forEach((listener) => listener(key, col));
+};
+
+export const onShowColumn = (listener: (key: string, col: number) => void) => {
+	columnRequests.add(listener);
+	return () => {
+		columnRequests.delete(listener);
+	};
+};

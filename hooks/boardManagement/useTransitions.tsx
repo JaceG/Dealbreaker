@@ -4,7 +4,7 @@ import { addFlagHistory } from "../../utils/mongodb";
 import { PendingTransition } from "../../models/boardManagementModel";
 import { FlagItem } from "../../models";
 import { boardLog } from "../../utils/boardLog";
-import { rememberColumn } from "../../libs/board/components/lib/viewMemory";
+import { showColumn } from "../../libs/board/components/lib/viewMemory";
 
 export const useTransitions = (
   dealbreaker: any,
@@ -202,16 +202,9 @@ export const useTransitions = (
     // Set the updated state
     setDealbreaker(updatedDealbreaker);
 
-    // Force a complete UI refresh to ensure changes are visible
-    boardLog('board.remount', { reason: 'after list order save' });
-    setIsRemount(true);
-    setTimeout(() => {
-      setIsRemount(false);
-      setList(null);
-      console.log("calling update");
-      updateBoard(true, updatedDealbreaker);
-      setRefreshKey(Date.now());
-    }, 300);
+    // Update the board in place; tearing it down and remounting it flashed a blank screen.
+    boardLog('board.updateInPlace', { reason: 'after list order save' });
+    updateBoard(true, updatedDealbreaker);
   };
 
   // Function to check if a flag change should trigger dealbreaker transition
@@ -425,23 +418,17 @@ export const useTransitions = (
     // Close the modal and reset the pending transition
     setTransitionReasonModalVisible(false);
     setPendingTransition(null);
-    // The card goes back to the column it came from, so reopen the board there.
+    // The card goes back to the column it came from, so show that column.
     if (pendingTransition) {
-      rememberColumn(
+      showColumn(
         pendingTransition.profileId,
         pendingTransition.prevCardType === "dealbreaker" ? 1 : 0
       );
     }
 
-    // Force a UI refresh to revert to the previous state
-    boardLog('board.remount', { reason: 'transition popup cancelled' });
-    setIsRemount(true);
-    setTimeout(() => {
-      setIsRemount(false);
-      setList(null);
-      updateBoard();
-      setRefreshKey(Date.now());
-    }, 300);
+    // Redraw from the unchanged data, in place, so the card goes back without a blank screen.
+    boardLog('board.updateInPlace', { reason: 'transition popup cancelled' });
+    updateBoard(true);
   };
 
   return {

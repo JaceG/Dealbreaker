@@ -143,7 +143,13 @@ const BoardManagementModals = ({
 						? 'dealbreaker'
 						: pendingTransition?.prevStatus || 'white'
 				}
-				newStatus={pendingTransition?.newStatus || 'white'}
+				// Display only: a move into Dealbreakers keeps its flag color, which the popup would read as
+				// "no change" and ask for more context instead of a reason for the move.
+				newStatus={
+					pendingTransition?.type === 'flag-to-dealbreaker'
+						? 'dealbreaker'
+						: pendingTransition?.newStatus || 'white'
+				}
 				modalTitle={
 					pendingTransition?.type === 'flag-to-dealbreaker'
 						? 'Moving to Dealbreakers'

@@ -192,7 +192,7 @@ export const useBoardOperations = (
 		setList(new BoardRepository(newData));
 	};
 
-	// Columns register themselves when they mount, so a new board needs a remount (new key), not just new data.
+	// Columns re-register when handed a new board repository, so new data no longer needs a remount.
 	// Note counts arrive from the server a moment after launch and after each note; rebuilding then would
 	// tear the board down under a lifted card, so that rebuild waits for the drop.
 	const rebuildHeldRef = useRef(false);

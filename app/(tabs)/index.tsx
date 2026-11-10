@@ -209,7 +209,8 @@ export default function Lists() {
 					{!isRemount ? (
 						<Board
 							cardBorderRadius='10px'
-							key={`board-${currentProfileId}-${refreshKey}`}
+							// Only a person switch remounts the board; saves update it in place (no flash).
+							key={`board-${currentProfileId}`}
 							viewKey={currentProfileId}
 							boardRepository={list}
 							open={() => {}}

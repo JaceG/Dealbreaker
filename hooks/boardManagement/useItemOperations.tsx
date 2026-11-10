@@ -56,23 +56,9 @@ export const useItemOperations = (
 		// Show success message
 		showToast('success', `Item deleted from all profiles`);
 
-		// Force a complete UI refresh to ensure deleted item disappears
-		setList(null);
-		boardLog('board.remount', { reason: 'card deleted' });
-		setIsRemount(true);
-
-		// Give state update time to complete, then refresh the board
-		setTimeout(() => {
-			updateBoardRef.current();
-
-			setIsRemount(false);
-			setRefreshKey(Date.now());
-
-			// Force a navigation update to ensure state is current everywhere
-			// if (navigation && navigation.setParams) {
-			// 	navigation.setParams({ forceRefresh: Date.now() });
-			// }
-		}, 300);
+		// Refresh the board in place once the state update lands (no blank screen, no remount).
+		boardLog('board.updateInPlace', { reason: 'card deleted' });
+		setTimeout(() => updateBoardRef.current(), 0);
 	};
 
 	const handleEditItem = (item: any) => {

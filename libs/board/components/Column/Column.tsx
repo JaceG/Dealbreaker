@@ -143,6 +143,7 @@ class Column extends React.Component<ColumnProps, ColumnState> {
 		boardRepository.addListener(column.id(), 'reload', () => this.forceUpdate());
 		if (this.listRef) boardRepository.setListView(column.id(), this.listRef);
 		if (this.columnRef) boardRepository.setColumnRef(column.id(), this.columnRef);
+		if (this.columnRef) boardRepository.updateColumnWithLayout(column.id());
 		boardRepository.setScrollOffset(column.id(), this.currentOffset);
 		if (this.contentHeight) boardRepository.setContentHeight(column.id(), this.contentHeight);
 	}

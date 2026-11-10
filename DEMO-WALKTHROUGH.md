@@ -11,6 +11,16 @@ Written 2026-11-08. The demo data lives in your account (jace.galloway@gmail.com
 
 Since update 2 (below) the app doesn't save the board until it has loaded the server's copy, so a phone's old saved board can no longer overwrite the server. Before that, launching could do exactly that, which is why the first version of these steps said to log out first. If the demo ever gets wiped, `node scripts/demo-seed/seed-demo.js` in the backend writes it again (section 8).
 
+### Phone test for no flash, auto-scroll and the move popup (published 2026-11-09)
+
+1. Drag a card and drop it: no blank flash; the board stays where it was.
+2. Drag a card across columns, then Cancel: no flash, and the board slides back to the card's column.
+3. In a long column, hold a lifted card near the bottom (or top) edge: the column scrolls; let go where you want it.
+4. Drag a Flags card into Dealbreakers: the popup shows "<COLOR> -> DEALBREAKER" and asks "Why are you making this change?".
+
+Tune if needed: auto-scroll starts within 80 pt of the edge, up to 14 pt per frame (SCROLL_ZONE / SCROLL_MAX in Board.tsx).
+Still flashes: switching to another person (loads a different board). The redraw-flash item in the open list is done for saves.
+
 ### Phone test for lifts that didn't take (published 2026-11-09)
 
 From Jace's log: (1) a right swipe on Flags left the carousel on column -1, so every hold found no cards until relaunch;
@@ -177,7 +187,7 @@ Ordered by impact. Everything is from reading the code. I didn't run the app, so
 - **Next native build** (needs a version bump and `eas build`, so ask first): video and audio playback, a real chart library (react-native-svg plus a chart package, for pie and line charts and touch tooltips), pinch-to-zoom on the timeline (react-native-reanimated), and removing the unused packages.
 - **Small gaps:** an expired login retries the board load every 15 s until logout; two history entries saved within milliseconds of a sync could collide; closing the app within about a minute of deleting a person can leave their history on the server; a deleted person's photos stay in S3; Main's people bar hides while Main has no cards.
 - **Onboarding:** on hold until this round is tested.
-- **Board redraw flash (later, per Jace 2026-11-09):** the whole board blanks for a moment and redraws after some changes. Seen in the simulator after Cancel on the "Moving to Dealbreakers" popup (about half a second of white screen), and the board also rebuilds after each drag save. Likely cause: the board is rebuilt from scratch (`updateBoard(true)` plus a new `refreshKey`) instead of updating in place.
+- **Board redraw flash (done for saves 2026-11-09; a person switch still redraws):** the whole board blanks for a moment and redraws after some changes. Seen in the simulator after Cancel on the "Moving to Dealbreakers" popup (about half a second of white screen), and the board also rebuilds after each drag save. Likely cause: the board is rebuilt from scratch (`updateBoard(true)` plus a new `refreshKey`) instead of updating in place.
 
 ## 7. Questions (answered 2026-11-08)
 
