@@ -3,15 +3,15 @@ import {
 	StyleSheet,
 	Text,
 	View,
-	TextInput,
 	ScrollView,
 	useWindowDimensions,
 } from 'react-native';
 import RadioGroup from 'react-native-radio-buttons-group';
 import AppButton from '../../../components/AppButton';
+import AppInput from '../../../components/AppInput';
 import useCreateFlag from '../../../hooks/useCreateFlag';
 
-import { colors } from '../../../libs/board/constants';
+import { colors, typeScale } from '../../../libs/board/constants';
 // Types from app/_layout.tsx
 export interface FlagItem {
 	id: string;
@@ -52,12 +52,11 @@ const CreateFlags: React.FC<{}> = () => {
 			<View style={styles.horizontalRow}>
 				<View style={styles.flexRow}>
 					<Text style={styles.text}>Flag Name:</Text>
-					<TextInput
+					<AppInput
 						value={title}
 						onChangeText={handleTitleChange}
-						style={styles.textInput}
+						style={styles.fullWidth}
 						placeholder='Enter Name'
-						placeholderTextColor={colors.muted}
 					/>
 					{error.title ? (
 						<Text style={styles.errorText}>{error.title}</Text>
@@ -77,13 +76,12 @@ const CreateFlags: React.FC<{}> = () => {
 
 			<View style={styles.row}>
 				<Text style={styles.text}>Description:</Text>
-				<TextInput
+				<AppInput
 					value={description}
 					onChangeText={handleDescriptionChange}
-					style={{ ...styles.textInput, ...styles.description }}
+					style={styles.fullWidth}
 					multiline={true}
 					placeholder='Enter Description'
-					placeholderTextColor={colors.muted}
 				/>
 				{error.description ? (
 					<Text style={styles.errorText}>{error.description}</Text>
@@ -143,22 +141,12 @@ const styles = StyleSheet.create({
 		alignItems: 'flex-end',
 		marginBottom: 10,
 	},
-	textInput: {
-		padding: 13,
-		borderWidth: 1,
-		borderColor: colors.outline,
-		borderRadius: 5,
+	fullWidth: {
 		width: '100%',
 	},
 	text: {
-		fontSize: 20,
-		marginBottom: 10,
-		fontWeight: 'bold',
-		color: colors.ink,
-	},
-	description: {
-		height: 70,
-		textAlignVertical: 'top',
+		...typeScale.label,
+		marginBottom: 6,
 		color: colors.ink,
 	},
 	radioButtonStyle: {
@@ -168,8 +156,8 @@ const styles = StyleSheet.create({
 		paddingTop: 10,
 	},
 	errorText: {
-		color: colors.ink,
-		fontSize: 16,
+		...typeScale.label,
+		color: colors.danger,
 		marginTop: 3,
 		marginBottom: 3,
 	},

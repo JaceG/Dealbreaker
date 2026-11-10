@@ -6,7 +6,7 @@ import FlagDot from '../../../components/FlagDot';
 import { CHART, Legend, StackedColumns, StackedRows, Timeline } from '../../../components/Charts';
 import { FlagsOverTime } from '../../../components/Charts/FlagsOverTime';
 import StoreContext from '../../../store';
-import { colors } from '../../../libs/board/constants';
+import { colors, typeScale } from '../../../libs/board/constants';
 import { getMyHistory } from '../../../utils/api';
 import { Board, HistoryRow, isNote, overallStats, personStats, typeChanged } from '../../../utils/stats';
 
@@ -374,7 +374,7 @@ const styles = StyleSheet.create({
 		borderColor: colors.ink,
 	},
 	chipOn: { backgroundColor: colors.ink },
-	chipText: { fontSize: 16, color: colors.ink, fontWeight: 'bold' },
+	chipText: { ...typeScale.label, color: colors.ink },
 	chipTextOn: { color: colors.onFill },
 	center: {
 		flex: 1,
@@ -386,13 +386,12 @@ const styles = StyleSheet.create({
 	body: { padding: 15, paddingBottom: 40 },
 	section: { marginBottom: 25 },
 	sectionTitle: {
-		fontSize: 20,
-		fontWeight: 'bold',
+		...typeScale.heading,
 		color: colors.ink,
 		marginBottom: 8,
 	},
-	hint: { fontSize: 14, color: colors.ink, marginBottom: 8 },
-	muted: { fontSize: 14, color: colors.ink, textAlign: 'center' },
+	hint: { ...typeScale.body, color: colors.ink, marginBottom: 8 },
+	muted: { ...typeScale.body, color: colors.ink, textAlign: 'center' },
 	line: {
 		flexDirection: 'row',
 		justifyContent: 'space-between',
@@ -402,21 +401,21 @@ const styles = StyleSheet.create({
 		borderBottomWidth: 1,
 		borderBottomColor: colors.hairline,
 	},
-	lineLabel: { fontSize: 16, color: colors.ink, flexShrink: 1 },
-	lineValue: { fontSize: 16, fontWeight: 'bold', color: colors.ink },
+	lineLabel: { ...typeScale.body, color: colors.ink, flexShrink: 1 },
+	lineValue: { ...typeScale.emphasis, color: colors.ink },
 	counts: { flexDirection: 'row', gap: 10 },
 	count: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-	countText: { fontSize: 16, fontWeight: 'bold' },
+	countText: { ...typeScale.emphasis },
 	ending: {
 		paddingVertical: 8,
 		borderBottomWidth: 1,
 		borderBottomColor: colors.hairline,
 		gap: 4,
 	},
-	endingName: { fontSize: 16, fontWeight: 'bold' },
+	endingName: { ...typeScale.emphasis },
 	endingCard: { flexDirection: 'row', alignItems: 'center', gap: 8 },
 	latest: { flexDirection: 'row', gap: 10, paddingVertical: 6 },
-	latestDate: { width: 56, fontSize: 14, color: colors.ink },
+	latestDate: { ...typeScale.label, width: 56, color: colors.ink },
 });
 
 export default Stats;

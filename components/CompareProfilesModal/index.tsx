@@ -5,7 +5,7 @@ import FlagDot from '../FlagDot';
 import { profileCounts } from '../PeopleOverview';
 import StoreContext from '../../store';
 import { showToast } from '../../utils/functions';
-import { colors } from '../../libs/board/constants';
+import { colors, typeScale } from '../../libs/board/constants';
 import { DealbreakerState, FlagItem, Profile } from '../../models/dataModels';
 
 const COLUMN = 64;
@@ -125,11 +125,11 @@ const CompareProfilesModal = ({
 					))}
 					{rows.length === 0 ? <Text style={styles.empty}>No flags yet for these people.</Text> : null}
 				</ScrollView>
-				<TouchableOpacity onPress={() => setShowAll(!showAll)}>
-					<Text style={styles.showAll}>
-						{showAll ? 'Show flagged cards only' : `Show all ${cards.length} cards`}
-					</Text>
-				</TouchableOpacity>
+				<AppButton
+					title={showAll ? 'Show flagged cards only' : `Show all ${cards.length} cards`}
+					variant='link'
+					onPress={() => setShowAll(!showAll)}
+				/>
 				<AppButton title='Close' onPress={onClose} variant='secondary' />
 			</View>
 		</Modal>
@@ -145,8 +145,7 @@ const styles = StyleSheet.create({
 		backgroundColor: colors.surface,
 	},
 	title: {
-		fontSize: 20,
-		fontWeight: 'bold',
+		...typeScale.heading,
 		textAlign: 'center',
 		marginBottom: 10,
 	},
@@ -166,7 +165,7 @@ const styles = StyleSheet.create({
 		backgroundColor: colors.ink,
 	},
 	chipText: {
-		fontSize: 14,
+		...typeScale.label,
 		color: colors.ink,
 	},
 	chipTextOn: {
@@ -179,7 +178,7 @@ const styles = StyleSheet.create({
 		marginTop: 10,
 	},
 	legendText: {
-		fontSize: 14,
+		...typeScale.label,
 		color: colors.muted,
 		marginRight: 5,
 	},
@@ -192,8 +191,7 @@ const styles = StyleSheet.create({
 	},
 	name: {
 		width: COLUMN,
-		fontSize: 14,
-		fontWeight: 'bold',
+		...typeScale.label,
 		textAlign: 'center',
 	},
 	list: {
@@ -205,7 +203,7 @@ const styles = StyleSheet.create({
 		borderBottomColor: colors.hairline,
 	},
 	cardTitle: {
-		fontSize: 16,
+		...typeScale.body,
 		marginBottom: 5,
 	},
 	dots: {
@@ -216,14 +214,8 @@ const styles = StyleSheet.create({
 		alignItems: 'center',
 	},
 	empty: {
-		fontSize: 14,
+		...typeScale.body,
 		color: colors.muted,
-		paddingVertical: 10,
-	},
-	showAll: {
-		fontSize: 14,
-		color: colors.ink,
-		textAlign: 'center',
 		paddingVertical: 10,
 	},
 });

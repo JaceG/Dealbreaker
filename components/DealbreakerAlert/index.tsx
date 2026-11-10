@@ -9,7 +9,7 @@ import {
 import AppButton from '../AppButton';
 import { DealbreakerAlertProps } from '../../models/modalModels';
 
-import { colors } from '../../libs/board/constants';
+import { colors, typeScale } from '../../libs/board/constants';
 const DealbreakerAlert = ({
 	visible,
 	onClose,
@@ -130,15 +130,14 @@ const styles = StyleSheet.create({
 		marginBottom: 10,
 	},
 	modalTitle: {
-		fontSize: 22,
-		fontWeight: 'bold',
+		...typeScale.heading,
 		marginBottom: 15,
 		color: colors.danger,
 	},
 	modalText: {
+		...typeScale.body,
 		marginBottom: 20,
 		textAlign: 'center',
-		fontSize: 16,
 		lineHeight: 24,
 	},
 	itemName: {

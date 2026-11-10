@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { FlatList, Modal, Platform, SafeAreaView, Share, StyleSheet, Text, View } from 'react-native';
 import AppButton from '../AppButton';
 import CloseButton from '../CloseButton';
-import { colors } from '../../libs/board/constants';
+import { colors, typeScale } from '../../libs/board/constants';
 import {
 	boardLogEvents,
 	boardLogStatus,
@@ -75,8 +75,8 @@ const styles = StyleSheet.create({
 		paddingHorizontal: 16,
 		paddingTop: 8,
 	},
-	title: { fontSize: 20, fontWeight: 'bold', color: colors.ink },
-	status: { paddingHorizontal: 16, paddingVertical: 8, fontSize: 14, color: colors.ink },
+	title: { ...typeScale.heading, color: colors.ink },
+	status: { ...typeScale.body, paddingHorizontal: 16, paddingVertical: 8, color: colors.ink },
 	buttons: { flexDirection: 'row', gap: 12, paddingHorizontal: 16, paddingBottom: 8 },
 	button: { flex: 1 },
 	line: {

@@ -11,7 +11,7 @@ import {
 import Feather from '@expo/vector-icons/Feather';
 import { bool, func, number, object, string } from 'prop-types';
 import { FLAG_DOT_COLORS } from '../../../../components/FlagDot';
-import { colors } from '../../constants';
+import { colors, typeScale } from '../../constants';
 import { Flag, chipStyles } from '../Icons/Flag';
 import {
 	CardContainer,
@@ -66,7 +66,7 @@ const PeopleCounts = ({ counts }: PeopleCountsProps) => {
 							backgroundColor: p.color,
 						}}
 					/>
-					<Text style={{ color: colors.ink, fontSize: 13, fontWeight: '600' }}>{p.n}</Text>
+					<Text style={{ color: colors.ink, ...typeScale.label }}>{p.n}</Text>
 				</View>
 			))}
 		</View>
@@ -78,7 +78,7 @@ const Card: React.FC<CardProps> = ({
 	cardContent,
 	cardIconColor = colors.muted,
 	cardNameTextColor = colors.ink,
-	cardNameFontSize = 17,
+	cardNameFontSize = typeScale.emphasis.fontSize,
 	cardNameFontFamily = '',
 	hidden = false,
 	item,
@@ -120,6 +120,7 @@ const Card: React.FC<CardProps> = ({
 			alignItems: 'center',
 			justifyContent: 'center',
 		},
+		// A count badge keeps its own size, smaller than the scale, to fit its 18pt circle.
 		badgeText: {
 			fontSize: 11,
 			fontWeight: 'bold',
@@ -176,7 +177,7 @@ const Card: React.FC<CardProps> = ({
 										fontSize: cardNameFontSize,
 										fontFamily: cardNameFontFamily,
 										color: cardNameTextColor,
-										fontWeight: '600',
+										fontWeight: typeScale.emphasis.fontWeight,
 									}}>
 									{item ? item.row().name : ''}
 								</Paragraph>
@@ -189,7 +190,7 @@ const Card: React.FC<CardProps> = ({
 								<Paragraph
 									numberOfLines={2}
 									style={{
-										fontSize: 15,
+										...typeScale.body,
 										fontFamily: cardNameFontFamily,
 										color: colors.muted,
 										marginTop: 4,

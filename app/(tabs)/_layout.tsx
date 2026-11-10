@@ -1,7 +1,8 @@
 import { router, Tabs } from 'expo-router';
 import { FontAwesome } from '@expo/vector-icons';
 import Feather from '@expo/vector-icons/Feather';
-import { Alert, Button, useWindowDimensions } from 'react-native';
+import { Alert, View, useWindowDimensions } from 'react-native';
+import AppButton from '../../components/AppButton';
 import { useAuth } from '../../context/Auth';
 import SwitchProfileModal from '../../components/SwitchProfileModal';
 import { colors } from '../../libs/board/constants';
@@ -64,7 +65,13 @@ const Layout = () => {
 						),
 						headerRight: () =>
 							user?.role == 'guest' ? (
-								<Button title='Register' onPress={() => router.push('/register')} />
+								<View style={{ marginRight: 12 }}>
+									<AppButton
+										title='Register'
+										variant='link'
+										onPress={() => router.push('/register')}
+									/>
+								</View>
 							) : null,
 					}}
 				/>

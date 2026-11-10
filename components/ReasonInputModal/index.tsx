@@ -3,7 +3,6 @@ import {
 	Modal,
 	View,
 	StyleSheet,
-	TextInput,
 	Text,
 	TouchableOpacity,
 	Image,
@@ -18,8 +17,9 @@ import Feather from '@expo/vector-icons/Feather';
 import { showToast, uploadToS3 } from '../../utils';
 import { imageUtils } from '../../utils/functions';
 import AppButton from '../AppButton';
+import AppInput from '../AppInput';
 import { SimpleAttachment } from '../../models';
-import { colors } from '../../libs/board/constants';
+import { colors, typeScale } from '../../libs/board/constants';
 import AudioAttachment from '../MediaPlayer/AudioAttachment';
 import VideoPlayerModal from '../MediaPlayer/VideoPlayerModal';
 import VoiceMemoRecorder from '../MediaPlayer/VoiceMemoRecorder';
@@ -398,8 +398,7 @@ const ReasonInputModal = ({
 								? 'Why do you want to add more context?'
 								: 'Why are you making this change?'}
 						</Text>
-						<TextInput
-							style={styles.input}
+						<AppInput
 							multiline
 							numberOfLines={4}
 							placeholder='Enter reason...'
@@ -425,23 +424,20 @@ const ReasonInputModal = ({
 									onCancel={() => setRecording(false)}
 								/>
 							) : (
-								<View style={styles.mediaButtonsRow}>
-									<TouchableOpacity
-										style={styles.mediaButton}
-										accessibilityRole='button'
+								<View style={styles.mediaButtons}>
+									<AppButton
+										title='Photo/Video'
 										accessibilityLabel='Add photo or video'
-										onPress={pickMedia}>
-										<Feather name='image' size={20} color={colors.onFill} />
-										<Text style={styles.mediaButtonText}>PHOTO/VIDEO</Text>
-									</TouchableOpacity>
-									<TouchableOpacity
-										style={[styles.mediaButton, styles.recordButton]}
-										accessibilityRole='button'
+										icon={<Feather name='image' size={20} color={colors.onFill} />}
+										onPress={pickMedia}
+									/>
+									<AppButton
+										title='Voice memo'
 										accessibilityLabel='Record voice memo'
-										onPress={startVoiceMemo}>
-										<Feather name='mic' size={20} color={colors.onFill} />
-										<Text style={styles.mediaButtonText}>VOICE MEMO</Text>
-									</TouchableOpacity>
+										variant='destructive'
+										icon={<Feather name='mic' size={20} color={colors.onFill} />}
+										onPress={startVoiceMemo}
+									/>
 								</View>
 							)}
 
@@ -490,7 +486,7 @@ const ReasonInputModal = ({
 													if (audio.url === attachment.url) audio.stop();
 													removeAttachment(index);
 												}}>
-												<Text style={styles.removeAttachmentText}>✕</Text>
+												<Feather name='x' size={14} color={colors.onFill} />
 											</TouchableOpacity>
 										</View>
 									))}
@@ -572,8 +568,7 @@ const styles = StyleSheet.create({
 		borderBottomColor: colors.hairline,
 	},
 	title: {
-		fontSize: 18,
-		fontWeight: 'bold',
+		...typeScale.heading,
 		textAlign: 'center',
 	},
 	body: {
@@ -581,8 +576,7 @@ const styles = StyleSheet.create({
 		maxHeight: 500, // Ensure scrollable content fits
 	},
 	flagTitle: {
-		fontSize: 16,
-		fontWeight: 'bold',
+		...typeScale.emphasis,
 		marginBottom: 10,
 		textAlign: 'center',
 	},
@@ -601,24 +595,15 @@ const styles = StyleSheet.create({
 		borderColor: colors.outline,
 	},
 	statusText: {
-		fontWeight: 'bold',
+		...typeScale.label,
 	},
 	arrow: {
-		fontSize: 20,
+		...typeScale.body,
 		marginHorizontal: 10,
 	},
 	label: {
-		fontSize: 14,
+		...typeScale.label,
 		marginBottom: 8,
-	},
-	input: {
-		borderWidth: 1,
-		borderColor: colors.outline,
-		borderRadius: 5,
-		paddingHorizontal: 10,
-		paddingVertical: 8,
-		minHeight: 80,
-		textAlignVertical: 'top',
 	},
 	footer: {
 		flexDirection: 'row',
@@ -648,50 +633,23 @@ const styles = StyleSheet.create({
 		marginBottom: 8,
 	},
 	attachmentSectionTitle: {
-		fontSize: 18,
-		fontWeight: 'bold',
+		...typeScale.emphasis,
 		marginRight: 6,
 		color: colors.ink,
 	},
 	optionalText: {
-		fontSize: 12,
+		...typeScale.label,
 		color: colors.muted,
 		fontStyle: 'italic',
 	},
 	attachmentHelperText: {
-		fontSize: 14,
+		...typeScale.body,
 		color: colors.muted,
 		marginBottom: 12,
 	},
-	mediaButtonsRow: {
-		flexDirection: 'row',
-		justifyContent: 'space-between',
+	mediaButtons: {
+		gap: 10,
 		marginBottom: 15,
-	},
-	mediaButton: {
-		flex: 1,
-		backgroundColor: colors.ink,
-		padding: 12,
-		borderRadius: 8,
-		flexDirection: 'row',
-		alignItems: 'center',
-		justifyContent: 'center',
-		shadowColor: colors.ink,
-		shadowOffset: { width: 0, height: 2 },
-		shadowOpacity: 0.2,
-		shadowRadius: 3,
-		elevation: 4,
-		margin: 4,
-		minHeight: 48,
-		gap: 6,
-	},
-	recordButton: {
-		backgroundColor: colors.danger,
-	},
-	mediaButtonText: {
-		color: colors.onFill,
-		fontWeight: 'bold',
-		fontSize: 12,
 	},
 	attachmentPreviewContainer: {
 		flexDirection: 'row',
@@ -729,11 +687,6 @@ const styles = StyleSheet.create({
 		shadowRadius: 1,
 		elevation: 2,
 	},
-	removeAttachmentText: {
-		color: colors.onFill,
-		fontWeight: 'bold',
-		fontSize: 12,
-	},
 	noAttachmentsContainer: {
 		borderWidth: 1,
 		borderColor: colors.hairline,
@@ -745,9 +698,9 @@ const styles = StyleSheet.create({
 		backgroundColor: colors.paper,
 	},
 	noAttachmentsText: {
+		...typeScale.body,
 		color: colors.muted,
 		textAlign: 'center',
-		fontSize: 14,
 	},
 	videoTile: {
 		width: '100%',
@@ -758,9 +711,8 @@ const styles = StyleSheet.create({
 		justifyContent: 'center',
 	},
 	videoLabel: {
+		...typeScale.label,
 		color: colors.onFill,
-		fontSize: 10,
-		fontWeight: 'bold',
 		marginTop: 4,
 	},
 	audioTile: {

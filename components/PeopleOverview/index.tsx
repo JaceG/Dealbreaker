@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import AppButton from '../AppButton';
-import { colors } from '../../libs/board/constants';
+import { colors, typeScale } from '../../libs/board/constants';
 import { DealbreakerState, Profile } from '../../models/dataModels';
 
 type Props = {
@@ -73,11 +73,11 @@ const PeopleOverview = ({ dealbreaker, profiles, onOpenProfile, onCompare }: Pro
 				<View style={styles.list}>
 					{active.map(renderPerson)}
 					{ended.length ? (
-						<TouchableOpacity onPress={() => setShowEnded(!showEnded)}>
-							<Text style={styles.footer}>
-								{showEnded ? 'Hide ended' : `Show ended (${ended.length})`}
-							</Text>
-						</TouchableOpacity>
+						<AppButton
+							title={showEnded ? 'Hide ended' : `Show ended (${ended.length})`}
+							variant='link'
+							onPress={() => setShowEnded(!showEnded)}
+						/>
 					) : null}
 					{showEnded ? ended.map(renderPerson) : null}
 				</View>
@@ -108,8 +108,7 @@ const styles = StyleSheet.create({
 		paddingVertical: 5,
 	},
 	headerText: {
-		fontSize: 16,
-		fontWeight: 'bold',
+		...typeScale.emphasis,
 	},
 	list: {
 		marginTop: 5,
@@ -123,7 +122,7 @@ const styles = StyleSheet.create({
 		gap: 5,
 	},
 	name: {
-		fontSize: 16,
+		...typeScale.emphasis,
 	},
 	ended: {
 		color: colors.muted,
@@ -137,13 +136,8 @@ const styles = StyleSheet.create({
 		borderColor: colors.outline,
 	},
 	counts: {
-		fontSize: 14,
+		...typeScale.label,
 		color: colors.muted,
-	},
-	footer: {
-		fontSize: 14,
-		color: colors.ink,
-		paddingVertical: 10,
 	},
 });
 

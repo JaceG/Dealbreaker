@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import AppButton from '../AppButton';
 import FlagDot from '../FlagDot';
-import { colors } from '../../libs/board/constants';
+import { colors, typeScale } from '../../libs/board/constants';
 import { FlagItem, ProfileData } from '../../models/dataModels';
 
 type Props = {
@@ -78,9 +78,11 @@ const ProfileOverview = ({
 			</View>
 
 			{colorFilter ? (
-				<TouchableOpacity onPress={() => onFilterChange(null)}>
-					<Text style={styles.filterNote}>Showing {colorFilter} flags only · Clear</Text>
-				</TouchableOpacity>
+				<AppButton
+					title={`Showing ${colorFilter} flags only · Clear`}
+					variant='link'
+					onPress={() => onFilterChange(null)}
+				/>
 			) : null}
 
 			{expanded ? (
@@ -140,21 +142,15 @@ const styles = StyleSheet.create({
 		borderColor: colors.ink,
 	},
 	countText: {
-		fontSize: 16,
-		fontWeight: 'bold',
+		...typeScale.emphasis,
 	},
 	dealbreakerCount: {
-		fontSize: 14,
+		...typeScale.body,
 		color: colors.muted,
 		flex: 1,
 	},
 	chevron: {
 		padding: 5,
-	},
-	filterNote: {
-		fontSize: 14,
-		color: colors.ink,
-		paddingVertical: 5,
 	},
 	list: {
 		marginTop: 5,
@@ -171,10 +167,10 @@ const styles = StyleSheet.create({
 	},
 	rowTitle: {
 		flex: 1,
-		fontSize: 16,
+		...typeScale.body,
 	},
 	footer: {
-		fontSize: 14,
+		...typeScale.label,
 		color: colors.muted,
 		paddingVertical: 5,
 	},

@@ -6,7 +6,8 @@ import {
 } from 'react-native';
 import { Board } from '../../libs/board/components';
 import AppButton from '../../components/AppButton';
-import { colors } from '../../libs/board/constants';
+import { colors, typeScale } from '../../libs/board/constants';
+import Feather from '@expo/vector-icons/Feather';
 import { router } from 'expo-router';
 import useBoardManagement from '../../hooks/useBoardManagement';
 import BoardManagementModals from '../../components/BoardManagementModals';
@@ -177,11 +178,11 @@ export default function Lists() {
 									{currentProfileId !== 'main' && (
 										<TouchableOpacity
 											style={styles.editProfileButton}
-											onPress={handleEditProfile}>
-											<Text
-												style={styles.editProfileText}>
-												✏️
-											</Text>
+											onPress={handleEditProfile}
+											accessibilityRole='button'
+											accessibilityLabel='Edit person'
+											hitSlop={12}>
+											<Feather name='edit-2' size={18} color={colors.muted} />
 										</TouchableOpacity>
 									)}
 								</View>
@@ -356,8 +357,7 @@ const styles = StyleSheet.create({
 		justifyContent: 'center',
 	},
 	noDealbreakerText: {
-		fontSize: 20,
-		fontWeight: 'bold',
+		...typeScale.heading,
 	},
 	profileButtonContainer: {
 		marginTop: 10,
@@ -389,22 +389,17 @@ const styles = StyleSheet.create({
 		alignItems: 'center',
 	},
 	profileLabel: {
-		fontSize: 16,
-		fontWeight: 'bold',
+		...typeScale.emphasis,
 	},
 	profileText: {
-		fontSize: 16,
-		fontWeight: 'bold',
+		...typeScale.emphasis,
 	},
 	editProfileButton: {
-		marginLeft: 5,
+		marginLeft: 8,
 	},
 	endedTag: {
-		fontSize: 16,
+		...typeScale.body,
 		color: colors.muted,
-	},
-	editProfileText: {
-		fontSize: 16,
 	},
 	emptyView: {
 		height: 80,

@@ -7,7 +7,7 @@ import {
 	FlatListProps,
 } from 'react-native';
 import { bool, func, object, number, string } from 'prop-types';
-import { colors, deviceWidth, ios } from '../../constants';
+import { colors, deviceWidth, ios, typeScale } from '../../constants';
 import EmptyColumn from '../EmptyColumn/EmptyColumn';
 import { getView, rememberOffset } from '../lib/viewMemory';
 import {
@@ -364,6 +364,7 @@ class Column extends React.Component<ColumnProps, ColumnState> {
 					<Paragraph
 						style={{
 							fontSize: columnNameFontSize,
+							fontWeight: typeScale.heading.fontWeight,
 							fontFamily: columnNameFontFamily,
 							color: columnNameTextColor,
 						}}>
@@ -402,7 +403,7 @@ class Column extends React.Component<ColumnProps, ColumnState> {
 							emptyText='No items'
 							emptyTextColor={colors.muted}
 							emptyTextFontFamily=''
-							emptyTextFontSize={16}
+							emptyTextFontSize={typeScale.body.fontSize}
 							marginTop={columnHeight / 3}
 							{...this.props}
 						/>
@@ -453,13 +454,13 @@ Column.defaultProps = {
 	badgeWidth: 30,
 	badgeTextColor: colors.onFill,
 	badgeTextFontFamily: '',
-	badgeTextFontSize: 14,
+	badgeTextFontSize: 14, // a count badge keeps its own size
 	columnBackgroundColor: colors.paper,
 	columnBorderRadius: 6,
 	columnHeight: 620,
 	columnNameTextColor: colors.ink,
 	columnNameFontFamily: '',
-	columnNameFontSize: 18,
+	columnNameFontSize: typeScale.heading.fontSize,
 	isWithCountBadge: true,
 	oneColumn: false,
 };

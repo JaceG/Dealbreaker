@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
 	View,
 	Text,
-	TextInput,
+	Image,
 	TouchableOpacity,
 	StyleSheet,
 	ActivityIndicator,
@@ -16,9 +16,10 @@ import * as AppleAuthentication from 'expo-apple-authentication';
 // Uncomment these imports
 import * as WebBrowser from 'expo-web-browser';
 import { router } from 'expo-router';
-import { colors } from '../../libs/board/constants';
+import { colors, typeScale } from '../../libs/board/constants';
 import useRegister from '../../hooks/useRegister';
 import AppButton from '../../components/AppButton';
+import AppInput from '../../components/AppInput';
 import {
 	GoogleSignin,
 	statusCodes,
@@ -165,14 +166,19 @@ const Auth: React.FC<AuthProps> = () => {
 				contentContainerStyle={styles.scrollContainer}
 				automaticallyAdjustKeyboardInsets>
 				<View style={styles.formContainer}>
+					<Image
+						source={require('../../assets/icon.png')}
+						style={styles.mark}
+						accessibilityIgnoresInvertColors
+					/>
 					<TouchableOpacity
 						onPress={handleTitlePress}
 						activeOpacity={0.8}>
 						<Text style={styles.title}>Register</Text>
 					</TouchableOpacity>
 
-					<TextInput
-						style={styles.input}
+					<AppInput
+						style={styles.field}
 						placeholder='Name'
 						value={name}
 						onChangeText={setName}
@@ -180,8 +186,8 @@ const Auth: React.FC<AuthProps> = () => {
 						editable={!busy}
 					/>
 
-					<TextInput
-						style={styles.input}
+					<AppInput
+						style={styles.field}
 						placeholder='Email'
 						value={email}
 						onChangeText={setEmail}
@@ -190,8 +196,8 @@ const Auth: React.FC<AuthProps> = () => {
 						editable={!busy}
 					/>
 
-					<TextInput
-						style={styles.input}
+					<AppInput
+						style={styles.field}
 						placeholder='Password'
 						value={password}
 						onChangeText={setPassword}
@@ -211,28 +217,16 @@ const Auth: React.FC<AuthProps> = () => {
 							loading={isLoading}
 						/>
 					</View>
-					<TouchableOpacity
-						style={[
-							styles.googleButton,
-							busy ? styles.buttonDisabled : null,
-						]}
-						onPress={promptGoogleSignIn}
-						disabled={busy}>
-						{signingInWith === 'google' ? (
-							<ActivityIndicator color={colors.ink} />
-						) : (
-							<View style={styles.googleButtonContent}>
-								<AntDesign
-									name='google'
-									size={20}
-									color={colors.ink}
-								/>
-								<Text style={styles.googleButtonText}>
-									Continue with Google
-								</Text>
-							</View>
-						)}
-					</TouchableOpacity>
+					<View style={styles.button}>
+						<AppButton
+							title='Continue with Google'
+							variant='secondary'
+							icon={<AntDesign name='google' size={20} color={colors.ink} />}
+							onPress={promptGoogleSignIn}
+							disabled={busy}
+							loading={signingInWith === 'google'}
+						/>
+					</View>
 
 					{signingInWith === 'apple' ? (
 						<View
@@ -241,7 +235,7 @@ const Auth: React.FC<AuthProps> = () => {
 								styles.appleButtonBusy,
 								styles.buttonDisabled,
 							]}>
-							<ActivityIndicator color={colors.onFill} />
+							<ActivityIndicator color={colors.ink} />
 						</View>
 					) : isAppleAvailable ? (
 						<AppleAuthentication.AppleAuthenticationButton
@@ -251,9 +245,9 @@ const Auth: React.FC<AuthProps> = () => {
 							}
 							buttonStyle={
 								AppleAuthentication
-									.AppleAuthenticationButtonStyle.BLACK
+									.AppleAuthenticationButtonStyle.WHITE_OUTLINE
 							}
-							cornerRadius={10}
+							cornerRadius={8}
 							style={[
 								styles.appleButton,
 								busy ? styles.buttonDisabled : null,
@@ -262,25 +256,21 @@ const Auth: React.FC<AuthProps> = () => {
 						/>
 					) : (
 						Platform.OS === 'ios' && (
-							<Text
-								style={{
-									textAlign: 'center',
-									color: colors.muted,
-									marginBottom: 15,
-								}}>
+							<Text style={styles.note}>
 								Apple Sign-In not available on this
 								device/platform
 							</Text>
 						)
 					)}
-					<TouchableOpacity
-						style={styles.switchButton}
-						onPress={() => router.replace('/login')}
-						disabled={busy}>
-						<Text style={styles.switchButtonText}>
-							Already have an account? Sign In
-						</Text>
-					</TouchableOpacity>
+					<View style={styles.switchRow}>
+						<Text style={styles.switchText}>Already have an account?</Text>
+						<AppButton
+							title='Sign in'
+							variant='link'
+							onPress={() => router.replace('/login')}
+							disabled={busy}
+						/>
+					</View>
 				</View>
 			</ScrollView>
 		</KeyboardAvoidingView>
@@ -299,89 +289,62 @@ const styles = StyleSheet.create({
 	formContainer: {
 		padding: 20,
 	},
+	mark: {
+		width: 64,
+		height: 64,
+		borderRadius: 15,
+		alignSelf: 'center',
+		marginBottom: 16,
+	},
 	title: {
-		fontSize: 24,
-		fontWeight: 'bold',
-		marginBottom: 20,
+		...typeScale.title,
+		marginBottom: 22,
 		textAlign: 'center',
 		color: colors.ink,
 	},
-	input: {
-		backgroundColor: colors.surface,
-		padding: 15,
-		borderRadius: 10,
-		marginBottom: 15,
-		borderWidth: 1,
-		borderColor: colors.outline,
+	field: {
+		marginBottom: 12,
 	},
 	button: {
-		marginBottom: 15,
+		marginBottom: 12,
 	},
 	buttonDisabled: {
-		opacity: 0.7,
+		opacity: 0.5,
 	},
-	googleButton: {
-		backgroundColor: colors.surface,
-		padding: 15,
-		borderRadius: 10,
-		alignItems: 'center',
-		marginBottom: 15,
-		borderWidth: 1,
-		borderColor: colors.hairline,
-		shadowColor: colors.ink,
-		shadowOffset: {
-			width: 0,
-			height: 2,
-		},
-		shadowOpacity: 0.1,
-		shadowRadius: 3.84,
-		elevation: 5,
-	},
-	googleButtonContent: {
+	switchRow: {
 		flexDirection: 'row',
 		alignItems: 'center',
 		justifyContent: 'center',
 	},
-	googleButtonText: {
+	switchText: {
+		...typeScale.body,
 		color: colors.ink,
-		fontSize: 16,
-		fontWeight: '500',
-		marginLeft: 10,
-	},
-	appleButton: {
-		width: '100%',
-		height: 44,
-		marginBottom: 15,
-	},
-	// Matches the black Apple button while its sign-in runs.
-	appleButtonBusy: {
-		backgroundColor: colors.ink,
-		borderRadius: 10,
-		justifyContent: 'center',
-	},
-	testUserButton: {
-		backgroundColor: colors.ink,
-		padding: 15,
-		borderRadius: 10,
-		alignItems: 'center',
-		marginBottom: 15,
-	},
-	testUserButtonText: {
-		color: colors.onFill,
-		fontSize: 16,
-		fontWeight: '500',
-	},
-	switchButton: {
-		alignItems: 'center',
-	},
-	switchButtonText: {
-		color: colors.ink,
-		fontSize: 14,
 	},
 	errorText: {
+		...typeScale.body,
 		color: colors.danger,
 		textAlign: 'center',
-		marginBottom: 15,
+		marginBottom: 12,
+	},
+	note: {
+		...typeScale.label,
+		color: colors.muted,
+		textAlign: 'center',
+		marginBottom: 12,
+	},
+	// Apple draws its own button and fixes its outline at 1pt; height and corners match the shared button.
+	appleButton: {
+		width: '100%',
+		height: 48,
+		marginBottom: 12,
+	},
+	// Matches the white Apple button while its sign-in runs.
+	appleButtonBusy: {
+		backgroundColor: colors.surface,
+		borderWidth: 1,
+		borderColor: colors.ink,
+		borderRadius: 8,
+		justifyContent: 'center',
 	},
 });
 

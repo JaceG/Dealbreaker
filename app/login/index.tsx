@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
 	View,
 	Text,
-	TextInput,
+	Image,
 	TouchableOpacity,
 	StyleSheet,
 	ActivityIndicator,
@@ -15,9 +15,10 @@ import { AntDesign, MaterialCommunityIcons } from '@expo/vector-icons';
 // Uncomment these imports
 import * as WebBrowser from 'expo-web-browser';
 import { router } from 'expo-router';
-import { colors } from '../../libs/board/constants';
+import { colors, typeScale } from '../../libs/board/constants';
 import useLogin from '../../hooks/useLogin';
 import AppButton from '../../components/AppButton';
+import AppInput from '../../components/AppInput';
 import { User, useAuth } from '../../context/Auth';
 import {
 	GoogleSignin,
@@ -187,17 +188,22 @@ const Auth: React.FC<AuthProps> = () => {
 				contentContainerStyle={styles.scrollContainer}
 				automaticallyAdjustKeyboardInsets>
 				<View style={styles.formContainer}>
+					<Image
+						source={require('../../assets/icon.png')}
+						style={styles.mark}
+						accessibilityIgnoresInvertColors
+					/>
 					<TouchableOpacity
 						onPress={handleTitlePress}
 						activeOpacity={0.8}>
 						<Text style={styles.title}>
-							{isLogin ? 'Welcome Back!' : 'Create Account'}
+							{isLogin ? 'Welcome back' : 'Create Account'}
 						</Text>
 					</TouchableOpacity>
 
 					{!isLogin && (
-						<TextInput
-							style={styles.input}
+						<AppInput
+							style={styles.field}
 							placeholder='Name'
 							value={name}
 							onChangeText={setName}
@@ -206,8 +212,8 @@ const Auth: React.FC<AuthProps> = () => {
 						/>
 					)}
 
-					<TextInput
-						style={styles.input}
+					<AppInput
+						style={styles.field}
 						placeholder='Email'
 						value={email}
 						onChangeText={setEmail}
@@ -216,8 +222,8 @@ const Auth: React.FC<AuthProps> = () => {
 						editable={!busy}
 					/>
 
-					<TextInput
-						style={styles.input}
+					<AppInput
+						style={styles.field}
 						placeholder='Password'
 						value={password}
 						onChangeText={setPassword}
@@ -231,7 +237,7 @@ const Auth: React.FC<AuthProps> = () => {
 
 					<View style={styles.button}>
 						<AppButton
-							title={isLogin ? 'Login' : 'Register'}
+							title={isLogin ? 'Log in' : 'Register'}
 							onPress={() => handleSubmit(false)}
 							disabled={busy}
 							loading={isLoading || signingInWith === 'user'}
@@ -239,53 +245,34 @@ const Auth: React.FC<AuthProps> = () => {
 					</View>
 
 					{faceIdReady && (
-						<TouchableOpacity
-							style={[
-								styles.googleButton,
-								busy ? styles.buttonDisabled : null,
-							]}
-							onPress={faceIdLogin}
-							disabled={busy}
-							accessibilityLabel='Sign in with Face ID'>
-							{signingInWith === 'faceid' ? (
-								<ActivityIndicator color={colors.ink} />
-							) : (
-								<View style={styles.googleButtonContent}>
+						<View style={styles.button}>
+							<AppButton
+								title='Sign in with Face ID'
+								variant='secondary'
+								icon={
 									<MaterialCommunityIcons
 										name='face-recognition'
 										size={20}
 										color={colors.ink}
 									/>
-									<Text style={styles.googleButtonText}>
-										Sign in with Face ID
-									</Text>
-								</View>
-							)}
-						</TouchableOpacity>
+								}
+								onPress={faceIdLogin}
+								disabled={busy}
+								loading={signingInWith === 'faceid'}
+							/>
+						</View>
 					)}
 
-					<TouchableOpacity
-						style={[
-							styles.googleButton,
-							busy ? styles.buttonDisabled : null,
-						]}
-						onPress={promptGoogleSignIn}
-						disabled={busy}>
-						{signingInWith === 'google' ? (
-							<ActivityIndicator color={colors.ink} />
-						) : (
-							<View style={styles.googleButtonContent}>
-								<AntDesign
-									name='google'
-									size={20}
-									color={colors.ink}
-								/>
-								<Text style={styles.googleButtonText}>
-									Continue with Google
-								</Text>
-							</View>
-						)}
-					</TouchableOpacity>
+					<View style={styles.button}>
+						<AppButton
+							title='Continue with Google'
+							variant='secondary'
+							icon={<AntDesign name='google' size={20} color={colors.ink} />}
+							onPress={promptGoogleSignIn}
+							disabled={busy}
+							loading={signingInWith === 'google'}
+						/>
+					</View>
 
 					{signingInWith === 'apple' ? (
 						<View
@@ -294,7 +281,7 @@ const Auth: React.FC<AuthProps> = () => {
 								styles.appleButtonBusy,
 								styles.buttonDisabled,
 							]}>
-							<ActivityIndicator color={colors.onFill} />
+							<ActivityIndicator color={colors.ink} />
 						</View>
 					) : isAppleAvailable ? (
 						<AppleAuthentication.AppleAuthenticationButton
@@ -304,9 +291,9 @@ const Auth: React.FC<AuthProps> = () => {
 							}
 							buttonStyle={
 								AppleAuthentication
-									.AppleAuthenticationButtonStyle.BLACK
+									.AppleAuthenticationButtonStyle.WHITE_OUTLINE
 							}
-							cornerRadius={10}
+							cornerRadius={8}
 							style={[
 								styles.appleButton,
 								busy ? styles.buttonDisabled : null,
@@ -314,12 +301,7 @@ const Auth: React.FC<AuthProps> = () => {
 							onPress={() => !busy && promptAppleSignIn()}
 						/>
 					) : (
-						<Text
-							style={{
-								textAlign: 'center',
-								color: colors.muted,
-								marginBottom: 15,
-							}}>
+						<Text style={styles.note}>
 							Apple Sign-In not available on this device/platform
 						</Text>
 					)}
@@ -336,23 +318,22 @@ const Auth: React.FC<AuthProps> = () => {
               <Text style={styles.testUserButtonText}>Create Test User</Text>
             </TouchableOpacity>
           )} */}
-					<View style={styles.button2}>
+					<AppButton
+						title='Try it without an account'
+						variant='link'
+						onPress={() => handleSubmit(true)}
+						disabled={busy}
+						loading={isLoading || signingInWith === 'guest'}
+					/>
+					<View style={styles.switchRow}>
+						<Text style={styles.switchText}>Don't have an account?</Text>
 						<AppButton
-							title='Just Try It'
-							onPress={() => handleSubmit(true)}
-							variant='secondary'
+							title='Sign up'
+							variant='link'
+							onPress={() => router.push('/register')}
 							disabled={busy}
-							loading={isLoading || signingInWith === 'guest'}
 						/>
 					</View>
-					<TouchableOpacity
-						style={styles.switchButton}
-						onPress={() => router.push('/register')}
-						disabled={busy}>
-						<Text style={styles.switchButtonText}>
-							Don't have an account? Sign Up
-						</Text>
-					</TouchableOpacity>
 				</View>
 			</ScrollView>
 		</KeyboardAvoidingView>
@@ -371,81 +352,61 @@ const styles = StyleSheet.create({
 	formContainer: {
 		padding: 20,
 	},
+	mark: {
+		width: 64,
+		height: 64,
+		borderRadius: 15,
+		alignSelf: 'center',
+		marginBottom: 16,
+	},
 	title: {
-		fontSize: 24,
-		fontWeight: 'bold',
-		marginBottom: 20,
+		...typeScale.title,
+		marginBottom: 22,
 		textAlign: 'center',
 		color: colors.ink,
 	},
-	input: {
-		backgroundColor: colors.surface,
-		padding: 15,
-		borderRadius: 10,
-		marginBottom: 15,
-		borderWidth: 1,
-		borderColor: colors.outline,
+	field: {
+		marginBottom: 12,
 	},
 	button: {
-		marginBottom: 15,
-	},
-	button2: {
-		width: '75%',
-		alignSelf: 'center',
-		marginBottom: 15,
+		marginBottom: 12,
 	},
 	buttonDisabled: {
-		opacity: 0.7,
+		opacity: 0.5,
 	},
-	googleButton: {
-		backgroundColor: colors.surface,
-		padding: 15,
-		borderRadius: 10,
-		alignItems: 'center',
-		marginBottom: 15,
-		borderWidth: 1,
-		borderColor: colors.hairline,
-		shadowColor: colors.ink,
-		shadowOffset: {
-			width: 0,
-			height: 2,
-		},
-		shadowOpacity: 0.1,
-		shadowRadius: 3.84,
-		elevation: 5,
-	},
-	googleButtonContent: {
+	switchRow: {
 		flexDirection: 'row',
 		alignItems: 'center',
 		justifyContent: 'center',
 	},
-	googleButtonText: {
+	switchText: {
+		...typeScale.body,
 		color: colors.ink,
-		fontSize: 16,
-		fontWeight: '500',
-		marginLeft: 10,
-	},
-	switchButton: {
-		alignItems: 'center',
-	},
-	switchButtonText: {
-		color: colors.ink,
-		fontSize: 14,
 	},
 	errorText: {
+		...typeScale.body,
 		color: colors.danger,
 		textAlign: 'center',
-		marginBottom: 15,
+		marginBottom: 12,
 	},
+	note: {
+		...typeScale.label,
+		color: colors.muted,
+		textAlign: 'center',
+		marginBottom: 12,
+	},
+	// Apple draws its own button and fixes its outline at 1pt; height and corners match the shared button.
 	appleButton: {
 		width: '100%',
-		height: 44,
-		marginBottom: 15,
+		height: 48,
+		marginBottom: 12,
 	},
-	// Matches the black Apple button while its sign-in runs.
+	// Matches the white Apple button while its sign-in runs.
 	appleButtonBusy: {
-		backgroundColor: colors.ink,
-		borderRadius: 10,
+		backgroundColor: colors.surface,
+		borderWidth: 1,
+		borderColor: colors.ink,
+		borderRadius: 8,
 		justifyContent: 'center',
 	},
 });

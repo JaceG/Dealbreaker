@@ -1,6 +1,6 @@
 import { Pressable, StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
-import { colors } from '../../libs/board/constants';
+import { colors, typeScale } from '../../libs/board/constants';
 import { imageUtils } from '../../utils/functions';
 import type { AttachmentAudio } from './useAttachmentAudio';
 
@@ -63,8 +63,7 @@ const styles = StyleSheet.create({
 		justifyContent: 'center',
 	},
 	time: {
-		fontSize: 13,
-		fontWeight: 'bold',
+		...typeScale.label,
 		color: colors.ink,
 	},
 });

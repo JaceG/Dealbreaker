@@ -13,7 +13,7 @@ import AppButton from '../AppButton';
 import StoreContext from '../../store';
 import { SwitchProfileModalProps } from '../../models/modalModels';
 
-import { colors } from '../../libs/board/constants';
+import { colors, typeScale } from '../../libs/board/constants';
 const SwitchProfileModal = memo<SwitchProfileModalProps>(
 	({ visible, onClose }) => {
 		// Move all context usage to the top level of the component
@@ -258,20 +258,11 @@ const styles = StyleSheet.create({
 	icon: {
 		marginRight: 5,
 	},
-	label: {
-		position: 'absolute',
-		backgroundColor: colors.surface,
-		left: 22,
-		top: 8,
-		zIndex: 999,
-		paddingHorizontal: 8,
-		fontSize: 14,
-	},
 	placeholderStyle: {
-		fontSize: 16,
+		...typeScale.body,
 	},
 	selectedTextStyle: {
-		fontSize: 16,
+		...typeScale.body,
 	},
 	iconStyle: {
 		width: 20,
@@ -279,7 +270,7 @@ const styles = StyleSheet.create({
 	},
 	inputSearchStyle: {
 		height: 40,
-		fontSize: 16,
+		...typeScale.body,
 	},
 	modalContainer: {
 		flex: 1,
@@ -322,8 +313,7 @@ const styles = StyleSheet.create({
 		width: '100%',
 	},
 	modalTitle: {
-		fontSize: 20,
-		fontWeight: 'bold',
+		...typeScale.heading,
 	},
 });
 

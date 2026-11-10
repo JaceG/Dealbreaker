@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef } from 'react';
 import { AccessibilityInfo, Alert, StyleSheet, Text, View } from 'react-native';
 import { RecordingPresets, setAudioModeAsync, useAudioRecorder, useAudioRecorderState } from 'expo-audio';
 import * as FileSystem from 'expo-file-system/legacy';
-import { colors } from '../../libs/board/constants';
+import { colors, typeScale } from '../../libs/board/constants';
 import { imageUtils } from '../../utils/functions';
 import AppButton from '../AppButton';
 
@@ -116,8 +116,7 @@ const styles = StyleSheet.create({
 		marginBottom: 15,
 	},
 	timer: {
-		fontSize: 20,
-		fontWeight: 'bold',
+		...typeScale.heading,
 		color: colors.danger,
 		textAlign: 'center',
 		marginBottom: 10,

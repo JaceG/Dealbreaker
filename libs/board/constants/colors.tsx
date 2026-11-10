@@ -5,8 +5,8 @@ const colors = {
 	surface: '#FFFFFF', // cards, inputs, popups
 	ink: '#1F1A1C', // text, primary buttons, shadows
 	muted: '#6B6165', // secondary text and icons
-	hairline: '#EAE3E0', // dividers and card edges
-	outline: '#8F8589', // edges that must be seen: inputs, white flags (3.5:1 on white)
+	hairline: '#EAE3E0', // dividers, card edges and text fields (Jace chose it for fields over outline)
+	outline: '#8F8589', // edges that must be seen: white flags, bars (3.5:1 on white)
 	blush: '#F7E6E2', // soft tint: notices, selected and empty states
 	onFill: '#FFFFFF', // text and icons on an ink, danger or flag fill
 	danger: '#DC2626', // destructive actions and errors (4.5:1 as text on paper)

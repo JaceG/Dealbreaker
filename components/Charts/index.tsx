@@ -1,7 +1,7 @@
 // Small charts drawn with plain views, so they ship as an over-the-air update (no chart library, no native build).
 // shortcut: no axes, gridlines or touch tooltips; move to react-native-svg + a chart library with the next native build.
 import { StyleSheet, Text, View } from 'react-native';
-import { colors } from '../../libs/board/constants';
+import { colors, typeScale } from '../../libs/board/constants';
 
 export { Timeline } from './Timeline';
 
@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
 		borderWidth: 1,
 		borderColor: colors.outline,
 	},
-	legendText: { fontSize: 14, color: colors.ink },
+	legendText: { ...typeScale.label, color: colors.ink },
 	columns: { flexDirection: 'row', alignItems: 'flex-end' },
 	column: { flex: 1, alignItems: 'center' },
 	columnTotal: { fontSize: 12, color: colors.ink, height: 16 },
@@ -140,7 +140,7 @@ const styles = StyleSheet.create({
 		gap: 8,
 		paddingVertical: 5,
 	},
-	rowLabel: { fontSize: 14, color: colors.ink },
+	rowLabel: { ...typeScale.label, color: colors.ink },
 	rowTrack: { flex: 1, height: 18, overflow: 'hidden' },
 	rowBar: {
 		height: '100%',
@@ -151,9 +151,8 @@ const styles = StyleSheet.create({
 		overflow: 'hidden',
 	},
 	rowTotal: {
+		...typeScale.label,
 		minWidth: 24,
-		fontSize: 14,
-		fontWeight: 'bold',
 		textAlign: 'right',
 	},
 	muted: { color: colors.ink, fontStyle: 'italic' },

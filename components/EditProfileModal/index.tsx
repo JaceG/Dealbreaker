@@ -4,17 +4,17 @@ import {
 	View,
 	StyleSheet,
 	ScrollView,
-	TextInput,
 	Text,
 	Alert,
 	useWindowDimensions,
 } from 'react-native';
 import AppButton from '../AppButton';
+import AppInput from '../AppInput';
 import { EditProfileModalProps } from '../../models/modalModels';
 import StoreContext from '../../store';
 import { showToast } from '../../utils/functions';
 
-import { colors } from '../../libs/board/constants';
+import { colors, typeScale } from '../../libs/board/constants';
 const EditProfileModal = ({
 	visible,
 	onClose,
@@ -152,8 +152,7 @@ const EditProfileModal = ({
 
 					<View style={styles.inputContainer}>
 						<Text style={styles.inputLabel}>Name:</Text>
-						<TextInput
-							style={styles.nameInput}
+						<AppInput
 							value={name}
 							onChangeText={handleNameChange}
 							placeholder='Enter profile name'
@@ -234,8 +233,7 @@ const styles = StyleSheet.create({
 		elevation: 5,
 	},
 	modalTitle: {
-		fontSize: 20,
-		fontWeight: 'bold',
+		...typeScale.heading,
 		marginBottom: 15,
 		textAlign: 'center',
 	},
@@ -243,16 +241,8 @@ const styles = StyleSheet.create({
 		marginBottom: 15,
 	},
 	inputLabel: {
-		fontSize: 16,
-		fontWeight: 'bold',
-		marginBottom: 5,
-	},
-	nameInput: {
-		borderWidth: 1,
-		borderColor: colors.outline,
-		borderRadius: 5,
-		padding: 10,
-		fontSize: 16,
+		...typeScale.label,
+		marginBottom: 6,
 	},
 	buttonContainer: {
 		flexDirection: 'row',
@@ -270,8 +260,8 @@ const styles = StyleSheet.create({
 		flex: 1,
 	},
 	errorText: {
+		...typeScale.label,
 		color: colors.danger,
-		fontSize: 14,
 		marginTop: 5,
 	},
 });

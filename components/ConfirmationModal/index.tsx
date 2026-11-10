@@ -9,7 +9,7 @@ import {
 import { ConfirmationModalProps } from '../../models/modalModels';
 import AppButton from '../AppButton';
 
-import { colors } from '../../libs/board/constants';
+import { colors, typeScale } from '../../libs/board/constants';
 const ConfirmationModal = ({
 	visible,
 	onClose,
@@ -101,15 +101,14 @@ const styles = StyleSheet.create({
 		width: '60%',
 	},
 	modalTitle: {
-		fontSize: 20,
-		fontWeight: 'bold',
+		...typeScale.heading,
 		marginBottom: 10,
 		textAlign: 'center',
 	},
 	modalText: {
 		marginBottom: 20,
 		textAlign: 'center',
-		fontSize: 16,
+		...typeScale.body,
 	},
 	buttonContainer: {
 		flexDirection: 'row',

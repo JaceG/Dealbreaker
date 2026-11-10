@@ -1,6 +1,6 @@
 import React from 'react';
 import { number, string } from 'prop-types';
-import { colors } from '../../constants';
+import { colors, typeScale } from '../../constants';
 import { Empty } from '../Icons';
 import { EmptyWrapper, Paragraph } from './EmptyColumn.styled';
 
@@ -18,7 +18,7 @@ const EmptyColumn: React.FC<EmptyColumnProps> = ({
 	emptyText = 'No items',
 	emptyTextColor = colors.muted,
 	emptyTextFontFamily = '',
-	emptyTextFontSize = 16,
+	emptyTextFontSize = typeScale.body.fontSize,
 	marginTop,
 }) => (
 	<EmptyWrapper style={{ marginTop }}>

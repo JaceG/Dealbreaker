@@ -2,13 +2,13 @@ import {
 	StyleSheet,
 	Text,
 	View,
-	TextInput,
 	useWindowDimensions,
 } from 'react-native';
 import AppButton from '../../../components/AppButton';
+import AppInput from '../../../components/AppInput';
 import useCreateProfile from '../../../hooks/useCreateProfile';
 
-import { colors } from '../../../libs/board/constants';
+import { colors, typeScale } from '../../../libs/board/constants';
 // Type definitions
 export interface Profile {
 	id: string;
@@ -41,12 +41,11 @@ export default function CreateUsers({ navigation }: CreateUsersProps) {
 			style={isPortrait ? styles.container : styles.horizontalContainer}>
 			<View style={styles.row}>
 				<Text style={styles.text}>Name:</Text>
-				<TextInput
+				<AppInput
 					value={name}
 					onChangeText={handleNameChange}
-					style={styles.textInput}
+					style={styles.fullWidth}
 					placeholder='Enter Name'
-					placeholderTextColor={colors.muted}
 				/>
 				{error.name ? (
 					<Text style={styles.errorText}>{error.name}</Text>
@@ -88,23 +87,12 @@ const styles = StyleSheet.create({
 		alignItems: 'flex-start' as const,
 		marginBottom: 10,
 	},
-	textInput: {
-		padding: 13,
-		borderWidth: 1,
-		borderColor: colors.outline,
-		borderRadius: 5,
+	fullWidth: {
 		width: '100%',
-		color: colors.ink,
 	},
 	text: {
-		fontSize: 20,
-		marginBottom: 10,
-		fontWeight: 'bold' as const,
-		color: colors.ink,
-	},
-	description: {
-		height: 120,
-		textAlignVertical: 'top' as const,
+		...typeScale.label,
+		marginBottom: 6,
 		color: colors.ink,
 	},
 	radioButtonStyle: {
@@ -112,8 +100,8 @@ const styles = StyleSheet.create({
 		justifyContent: 'space-between' as const,
 	},
 	errorText: {
-		color: colors.ink,
-		fontSize: 16,
+		...typeScale.label,
+		color: colors.danger,
 		marginTop: 3,
 		marginBottom: 3,
 	},

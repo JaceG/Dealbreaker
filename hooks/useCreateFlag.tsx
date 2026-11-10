@@ -10,7 +10,7 @@ import {
 } from '../app/(tabs)/create-flag';
 import * as SecureStore from 'expo-secure-store';
 
-import { colors } from '../libs/board/constants';
+import { colors, typeScale } from '../libs/board/constants';
 const useCreateFlag = () => {
 	const { addItemToAllProfiles, isValidNoCardItems } =
 		useContext<any>(StoreContext);
@@ -21,14 +21,14 @@ const useCreateFlag = () => {
 				label: 'Flag',
 				value: 'flag',
 				color: colors.ink,
-				labelStyle: { color: colors.ink, fontSize: 20 },
+				labelStyle: { color: colors.ink, ...typeScale.emphasis },
 			},
 			{
 				id: '2',
 				label: 'Dealbreaker',
 				value: 'dealbreaker',
 				color: colors.dealbreaker,
-				labelStyle: { color: colors.dealbreaker, fontSize: 20 },
+				labelStyle: { color: colors.dealbreaker, ...typeScale.emphasis },
 			},
 		],
 		[]

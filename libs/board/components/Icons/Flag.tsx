@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Alert, Pressable, StyleSheet, Text } from 'react-native';
 import FlagIcon from '../../../../components/FlagIcon';
-import { colors } from '../../constants';
+import { colors, typeScale } from '../../constants';
 
 const name = (c: string) => c[0].toUpperCase() + c.slice(1);
 
@@ -18,7 +18,7 @@ export const chipStyles = StyleSheet.create({
 		borderWidth: 1,
 		borderColor: colors.hairline,
 	},
-	text: { fontSize: 13, fontWeight: '500', color: colors.ink },
+	text: { ...typeScale.label, color: colors.ink },
 });
 
 export const Flag = ({ onFlagClicked, item }: any) => {

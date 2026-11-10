@@ -9,7 +9,7 @@ import { useAnimatedReaction } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 import CloseButton from '../CloseButton';
 import { Legend } from './index';
-import { colors } from '../../libs/board/constants';
+import { colors, typeScale } from '../../libs/board/constants';
 import { flagsOverTime } from '../../utils/stats';
 import type { TimelinePerson } from './Timeline';
 
@@ -218,9 +218,9 @@ const styles = StyleSheet.create({
 	},
 	segmentButton: { minHeight: 44, paddingHorizontal: 14, justifyContent: 'center' },
 	segmentOn: { backgroundColor: colors.ink },
-	segmentText: { fontSize: 16, fontWeight: 'bold', color: colors.ink },
+	segmentText: { ...typeScale.label, color: colors.ink },
 	segmentTextOn: { color: colors.onFill },
-	hint: { fontSize: 14, color: colors.ink, marginBottom: 8 },
+	hint: { ...typeScale.body, color: colors.ink, marginBottom: 8 },
 	detail: {
 		marginTop: 12,
 		padding: 12,
@@ -231,10 +231,10 @@ const styles = StyleSheet.create({
 		gap: 6,
 	},
 	detailHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-	detailTitle: { fontSize: 16, fontWeight: 'bold', color: colors.ink },
+	detailTitle: { ...typeScale.emphasis, color: colors.ink },
 	detailItem: { flexDirection: 'row', alignItems: 'center', gap: 8 },
 	swatch: { width: 14, height: 14, borderRadius: 3 },
-	detailName: { flex: 1, fontSize: 15, color: colors.ink },
-	detailCount: { fontSize: 15, fontWeight: 'bold', color: colors.ink },
+	detailName: { ...typeScale.body, flex: 1, color: colors.ink },
+	detailCount: { ...typeScale.emphasis, color: colors.ink },
 	ended: { color: colors.ink, fontStyle: 'italic' },
 });

@@ -6,7 +6,7 @@ import { AccessibilityInfo, Pressable, ScrollView, StyleSheet, Text, View } from
 import { GestureDetector, usePinchGesture } from 'react-native-gesture-handler';
 import Feather from '@expo/vector-icons/Feather';
 import CloseButton from '../CloseButton';
-import { colors } from '../../libs/board/constants';
+import { colors, typeScale } from '../../libs/board/constants';
 import type { TimelineEvent } from '../../utils/stats';
 
 export type TimelinePerson = {
@@ -393,19 +393,19 @@ const styles = StyleSheet.create({
 	segment: { flexDirection: 'row', borderWidth: 2, borderColor: colors.ink, borderRadius: 8, overflow: 'hidden' },
 	segmentButton: { minHeight: 44, paddingHorizontal: 14, justifyContent: 'center' },
 	segmentOn: { backgroundColor: colors.ink },
-	segmentText: { fontSize: 16, fontWeight: 'bold', color: colors.ink },
+	segmentText: { ...typeScale.label, color: colors.ink },
 	segmentTextOn: { color: colors.onFill },
 	zoom: { flexDirection: 'row', alignItems: 'center' },
 	zoomButton: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-	zoomText: { minWidth: 28, textAlign: 'center', fontSize: 16, fontWeight: 'bold', color: colors.ink },
+	zoomText: { ...typeScale.emphasis, minWidth: 28, textAlign: 'center', color: colors.ink },
 	disabled: { opacity: 0.35 },
-	hint: { fontSize: 14, color: colors.ink, marginBottom: 8 },
+	hint: { ...typeScale.body, color: colors.ink, marginBottom: 8 },
 	legend: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 10 },
 	legendItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
 	swatch: { width: 14, height: 14, borderWidth: 1, borderColor: colors.outline },
-	legendText: { fontSize: 14, color: colors.ink },
+	legendText: { ...typeScale.label, color: colors.ink },
 	chart: { flexDirection: 'row' },
-	name: { height: ROW, lineHeight: ROW, fontSize: 14, color: colors.ink },
+	name: { ...typeScale.label, height: ROW, lineHeight: ROW, color: colors.ink },
 	ended: { color: colors.ink, fontStyle: 'italic' },
 	track: { height: ROW },
 	line: { position: 'absolute', top: (ROW - 4) / 2, height: 4, borderRadius: 2 },
@@ -426,8 +426,8 @@ const styles = StyleSheet.create({
 	},
 	detailHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
 	detailItem: { gap: 2, paddingTop: 8, borderTopWidth: 1, borderTopColor: colors.hairline },
-	detailCard: { fontSize: 16, fontWeight: 'bold', color: colors.ink },
-	detailTitle: { fontSize: 16, fontWeight: 'bold', color: colors.ink },
-	detailMeta: { fontSize: 14, color: colors.ink },
-	detailReason: { fontSize: 15, color: colors.ink, fontStyle: 'italic' },
+	detailCard: { ...typeScale.emphasis, color: colors.ink },
+	detailTitle: { ...typeScale.emphasis, color: colors.ink },
+	detailMeta: { ...typeScale.label, color: colors.ink },
+	detailReason: { ...typeScale.body, color: colors.ink, fontStyle: 'italic' },
 });

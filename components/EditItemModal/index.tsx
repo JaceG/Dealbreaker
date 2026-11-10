@@ -4,15 +4,15 @@ import {
 	View,
 	StyleSheet,
 	ScrollView,
-	TextInput,
 	Text,
 	Alert,
 	useWindowDimensions,
 } from 'react-native';
 import AppButton from '../AppButton';
+import AppInput from '../AppInput';
 import { EditItemModalProps } from '../../models/modalModels';
 
-import { colors } from '../../libs/board/constants';
+import { colors, typeScale } from '../../libs/board/constants';
 const EditItemModal = ({
 	visible,
 	onClose,
@@ -135,8 +135,7 @@ const EditItemModal = ({
 
 					<View style={styles.inputContainer}>
 						<Text style={styles.inputLabel}>Title:</Text>
-						<TextInput
-							style={styles.titleInput}
+						<AppInput
 							value={title}
 							onChangeText={handleTitleChange}
 							placeholder='Enter title'
@@ -148,8 +147,7 @@ const EditItemModal = ({
 
 					<View style={styles.inputContainer}>
 						<Text style={styles.inputLabel}>Description:</Text>
-						<TextInput
-							style={styles.descriptionInput}
+						<AppInput
 							value={description}
 							onChangeText={handleDescriptionChange}
 							placeholder='Enter description'
@@ -229,8 +227,7 @@ const styles = StyleSheet.create({
 		elevation: 5,
 	},
 	modalTitle: {
-		fontSize: 20,
-		fontWeight: 'bold',
+		...typeScale.heading,
 		marginBottom: 15,
 		textAlign: 'center',
 	},
@@ -238,24 +235,8 @@ const styles = StyleSheet.create({
 		marginBottom: 10,
 	},
 	inputLabel: {
-		fontSize: 16,
-		fontWeight: 'bold',
-	},
-	titleInput: {
-		borderWidth: 1,
-		borderColor: colors.outline,
-		borderRadius: 5,
-		padding: 10,
-		fontSize: 16,
-	},
-	descriptionInput: {
-		borderWidth: 1,
-		borderColor: colors.outline,
-		borderRadius: 5,
-		padding: 10,
-		fontSize: 16,
-		height: 100,
-		textAlignVertical: 'top',
+		...typeScale.label,
+		marginBottom: 6,
 	},
 	buttonContainer: {
 		flexDirection: 'row',
@@ -273,8 +254,8 @@ const styles = StyleSheet.create({
 		flex: 1,
 	},
 	errorText: {
+		...typeScale.label,
 		color: colors.danger,
-		fontSize: 14,
 		marginTop: 5,
 	},
 });

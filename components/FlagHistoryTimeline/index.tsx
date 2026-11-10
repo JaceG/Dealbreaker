@@ -16,6 +16,7 @@ import { getCardHistoryAcrossProfiles } from '../../utils/api';
 import StoreContext from '../../store';
 import { showToast } from '../../utils';
 import { colors } from '../../libs/board/constants/colors';
+import { typeScale } from '../../libs/board/constants/typeScale';
 import { FlagHistoryTimelineProps } from '../../models/modalModels';
 import AppButton from '../AppButton';
 import CloseButton from '../CloseButton';
@@ -700,8 +701,7 @@ const styles = StyleSheet.create({
 		borderBottomColor: colors.hairline,
 	},
 	headerTitle: {
-		fontSize: 18,
-		fontWeight: 'bold',
+		...typeScale.heading,
 	},
 	// Title and description stack, so in landscape they don't squeeze the buttons
 	headerText: {
@@ -709,7 +709,7 @@ const styles = StyleSheet.create({
 		alignItems: 'center',
 	},
 	headerDescription: {
-		fontSize: 14,
+		...typeScale.body,
 		color: colors.muted,
 		textAlign: 'center',
 		marginTop: 4,
@@ -740,8 +740,8 @@ const styles = StyleSheet.create({
 		justifyContent: 'center',
 	},
 	loadingText: {
+		...typeScale.body,
 		marginTop: 10,
-		fontSize: 14,
 		color: colors.muted,
 	},
 	emptyContainer: {
@@ -750,7 +750,7 @@ const styles = StyleSheet.create({
 		justifyContent: 'center',
 	},
 	emptyText: {
-		fontSize: 14,
+		...typeScale.body,
 		color: colors.muted,
 	},
 	listContent: {
@@ -775,8 +775,7 @@ const styles = StyleSheet.create({
 		backgroundColor: colors.ink,
 	},
 	tabText: {
-		fontSize: 16,
-		fontWeight: '600',
+		...typeScale.label,
 		color: colors.ink,
 	},
 	tabTextSelected: {
@@ -786,8 +785,7 @@ const styles = StyleSheet.create({
 		marginTop: 12,
 	},
 	personName: {
-		fontSize: 15,
-		fontWeight: 'bold',
+		...typeScale.emphasis,
 		color: colors.ink,
 		marginBottom: 4,
 	},
@@ -840,7 +838,7 @@ const styles = StyleSheet.create({
 		marginBottom: 8,
 	},
 	timelineDate: {
-		fontSize: 12,
+		...typeScale.label,
 		color: colors.muted,
 	},
 	flagStatusRow: {
@@ -849,16 +847,12 @@ const styles = StyleSheet.create({
 		marginVertical: 8,
 	},
 	flagStatusLabel: {
-		fontWeight: 'bold',
+		...typeScale.label,
 		marginRight: 8,
 		color: colors.muted,
 	},
-	flagStatusText: {
-		fontWeight: 'bold',
-		fontSize: 16,
-	},
 	flagStatusArrow: {
-		fontSize: 16,
+		...typeScale.body,
 		color: colors.muted,
 		marginHorizontal: 4,
 	},
@@ -877,13 +871,12 @@ const styles = StyleSheet.create({
 		borderRadius: 4,
 	},
 	reasonTitle: {
-		fontWeight: 'bold',
-		fontSize: 14,
+		...typeScale.label,
 		marginBottom: 4,
 		color: colors.ink,
 	},
 	reasonText: {
-		fontSize: 14,
+		...typeScale.body,
 		color: colors.ink,
 	},
 	attachmentsContainer: {
@@ -893,8 +886,7 @@ const styles = StyleSheet.create({
 		padding: 10,
 	},
 	attachmentsTitle: {
-		fontWeight: 'bold',
-		fontSize: 14,
+		...typeScale.label,
 		marginBottom: 8,
 	},
 	attachmentsGrid: {
@@ -930,9 +922,8 @@ const styles = StyleSheet.create({
 		alignItems: 'center',
 	},
 	videoLabel: {
+		...typeScale.label,
 		color: colors.onFill,
-		fontSize: 10,
-		fontWeight: 'bold',
 	},
 	audioButton: {
 		flexDirection: 'row',
@@ -964,7 +955,7 @@ const styles = StyleSheet.create({
 		overflow: 'hidden',
 	},
 	genericAttachmentText: {
-		fontSize: 14,
+		...typeScale.body,
 		color: colors.muted,
 	},
 	debugContainer: {
@@ -976,12 +967,11 @@ const styles = StyleSheet.create({
 		borderRadius: 4,
 	},
 	debugTitle: {
-		fontWeight: 'bold',
-		fontSize: 14,
+		...typeScale.label,
 		marginBottom: 8,
 	},
 	debugText: {
-		fontSize: 12,
+		...typeScale.label,
 		color: colors.muted,
 	},
 	errorImagePlaceholder: {
@@ -993,12 +983,11 @@ const styles = StyleSheet.create({
 		padding: 10,
 	},
 	errorImageText: {
-		fontSize: 14,
-		fontWeight: 'bold',
+		...typeScale.label,
 		color: colors.muted,
 	},
 	errorImageSubtext: {
-		fontSize: 12,
+		...typeScale.label,
 		color: colors.muted,
 	},
 	imageContainer: {
@@ -1012,42 +1001,13 @@ const styles = StyleSheet.create({
 		borderRadius: 5,
 		marginRight: 8,
 	},
-	testButtonText: {
-		color: colors.onFill,
-		fontWeight: 'bold',
-		fontSize: 12,
-	},
 	disabledButton: {
 		backgroundColor: colors.outline,
-	},
-	cardTypeTransitionContainer: {
-		marginTop: 8,
-		backgroundColor: colors.blush,
-		padding: 8,
-		borderRadius: 4,
-	},
-	cardTypeTransitionLabel: {
-		fontWeight: 'bold',
-		fontSize: 14,
-		marginBottom: 4,
-	},
-	cardTypeTransitionDetails: {
-		flexDirection: 'row',
-		alignItems: 'center',
-	},
-	cardTypeTransitionText: {
-		fontSize: 14,
-		color: colors.ink,
 	},
 	flagContainer: {
 		flexDirection: 'column',
 		alignItems: 'center',
 		marginHorizontal: 8,
-	},
-	flagColorLabel: {
-		fontSize: 10,
-		color: colors.muted,
-		marginTop: 4,
 	},
 	whiteFlagBackground: {
 		backgroundColor: colors.ink,

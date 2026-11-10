@@ -3,7 +3,6 @@ import {
 	Text,
 	useWindowDimensions,
 	StyleSheet,
-	TextInput,
 	Modal,
 	Alert,
 	ScrollView,
@@ -18,8 +17,9 @@ import {
 	EXPO_PUBLIC_OAUTH_IOS_CLIENT_ID,
 	EXPO_PUBLIC_OAUTH_EXPO_CLIENT_ID,
 } from '@env';
-import { colors } from '../../../libs/board/constants';
+import { colors, typeScale } from '../../../libs/board/constants';
 import AppButton from '../../../components/AppButton';
+import AppInput from '../../../components/AppInput';
 import BoardLogModal from '../../../components/BoardLogModal';
 import { boardLogAllowed, diagnosticsActive, useAuth } from '../../../context/Auth';
 import { useState, useEffect, useCallback, useRef } from 'react';
@@ -303,12 +303,11 @@ export const UserInfo = () => {
 								{user?.name || 'No name found'}
 							</Text>
 						) : (
-							<TextInput
+							<AppInput
 								value={name}
 								onChangeText={handleNameChange}
 								style={styles.textInput}
 								placeholder='Enter Name'
-								placeholderTextColor={colors.muted}
 							/>
 						)}
 						<View style={styles.inlineButton}>
@@ -324,7 +323,7 @@ export const UserInfo = () => {
 				<View style={styles.seperator}></View>
 				{methods === null && (
 					<>
-						<Text style={styles.textMuted}>
+						<Text style={[styles.textMuted, styles.gapBelow]}>
 							Couldn't load your sign-in methods.
 						</Text>
 						<AppButton title='Try Again' onPress={retryLoadMethods} variant='secondary' />
@@ -363,35 +362,32 @@ export const UserInfo = () => {
 				{hasPassword && (
 					<View style={styles.row}>
 						<Text style={styles.text}>Current Password:</Text>
-						<TextInput
+						<AppInput
 							value={currentPassword}
 							onChangeText={setCurrentPassword}
 							style={styles.passwordTextInput}
 							placeholder='Enter Current Password'
-							placeholderTextColor={colors.muted}
 							secureTextEntry={true}
 						/>
 					</View>
 				)}
 				<View style={styles.row}>
 					<Text style={styles.text}>New Password:</Text>
-					<TextInput
+					<AppInput
 						value={newPassword}
 						onChangeText={setNewPassword}
 						style={styles.passwordTextInput}
 						placeholder='Enter New Password'
-						placeholderTextColor={colors.muted}
 						secureTextEntry={true}
 					/>
 				</View>
 				<View style={styles.row}>
 					<Text style={styles.text}>Confirm Password:</Text>
-					<TextInput
+					<AppInput
 						value={confirmPassword}
 						onChangeText={setConfirmPassword}
 						style={styles.passwordTextInput}
 						placeholder='Enter Confirm Password'
-						placeholderTextColor={colors.muted}
 						secureTextEntry={true}
 					/>
 				</View>
@@ -456,13 +452,12 @@ export const UserInfo = () => {
 							<Text style={styles.modalInstruction}>
 								Type "Delete my account" below to confirm:
 							</Text>
-							<TextInput
+							<AppInput
 								value={deleteConfirmationText}
 								onChangeText={setDeleteConfirmationText}
 								style={styles.confirmationInput}
 								placeholder='Type "Delete my account"'
 								autoCapitalize='none'
-								placeholderTextColor={colors.muted}
 							/>
 							<View style={styles.modalButtons}>
 								<View style={styles.modalButton}>
@@ -493,7 +488,7 @@ const styles = StyleSheet.create({
 		marginTop: 30,
 	},
 	diagnosticsNote: {
-		fontSize: 14,
+		...typeScale.body,
 		color: colors.ink,
 		marginBottom: 8,
 	},
@@ -524,7 +519,7 @@ const styles = StyleSheet.create({
 		flexDirection: 'row' as const,
 		width: '100%',
 		justifyContent: 'space-between' as const,
-		alignItems: 'flex-start' as const,
+		alignItems: 'center' as const,
 		marginBottom: 10,
 	},
 	inputContainer: {
@@ -534,12 +529,7 @@ const styles = StyleSheet.create({
 		width: '50%',
 	},
 	textInput: {
-		padding: 13,
-		borderWidth: 1,
-		borderColor: colors.outline,
-		borderRadius: 5,
 		flex: 1,
-		color: colors.ink,
 	},
 	methodStatus: {
 		flexDirection: 'row' as const,
@@ -549,64 +539,25 @@ const styles = StyleSheet.create({
 	inlineButton: {
 		marginLeft: 8,
 	},
+	gapBelow: {
+		marginBottom: 10,
+	},
 	passwordTextInput: {
-		padding: 13,
-		borderWidth: 1,
-		borderColor: colors.outline,
-		borderRadius: 5,
 		width: '50%',
-		color: colors.ink,
 	},
 	text: {
-		fontSize: 20,
-		marginBottom: 10,
-		fontWeight: 'bold' as const,
+		...typeScale.label,
 		color: colors.ink,
 	},
 	textHeader: {
-		fontSize: 20,
+		...typeScale.heading,
 		marginBottom: 10,
 		textAlign: 'center' as const,
-		fontWeight: 'bold' as const,
 		color: colors.ink,
 	},
 	textMuted: {
-		fontSize: 20,
-		marginBottom: 10,
-		fontWeight: 'normal' as const,
+		...typeScale.body,
 		color: colors.ink,
-	},
-	description: {
-		height: 120,
-		textAlignVertical: 'top' as const,
-		color: colors.ink,
-	},
-	radioButtonStyle: {
-		flexDirection: 'row' as const,
-		justifyContent: 'space-between' as const,
-	},
-	errorText: {
-		color: colors.ink,
-		fontSize: 16,
-		marginTop: 3,
-		marginBottom: 3,
-	},
-	button: {
-		backgroundColor: colors.ink,
-		paddingVertical: 15,
-		paddingHorizontal: 20,
-		borderRadius: 10,
-		alignItems: 'center' as const,
-		elevation: 3,
-		shadowColor: colors.ink,
-		shadowOffset: { width: 0, height: 2 },
-		shadowOpacity: 0.2,
-		shadowRadius: 2,
-	},
-	buttonText: {
-		color: colors.onFill,
-		fontSize: 18,
-		fontWeight: 'bold' as const,
 	},
 	passwordButtonContainer: {
 		width: '100%',
@@ -614,11 +565,10 @@ const styles = StyleSheet.create({
 		marginTop: 10,
 	},
 	dangerHeader: {
-		fontSize: 20,
+		...typeScale.heading,
 		marginBottom: 10,
 		marginTop: 30,
 		textAlign: 'center' as const,
-		fontWeight: 'bold' as const,
 		color: colors.danger,
 	},
 	deleteSection: {
@@ -630,7 +580,7 @@ const styles = StyleSheet.create({
 		marginBottom: 20,
 	},
 	deleteWarningText: {
-		fontSize: 14,
+		...typeScale.body,
 		color: colors.danger,
 		marginBottom: 15,
 		lineHeight: 20,
@@ -650,40 +600,31 @@ const styles = StyleSheet.create({
 		maxWidth: 400,
 	},
 	modalTitle: {
-		fontSize: 24,
-		fontWeight: 'bold' as const,
+		...typeScale.heading,
 		color: colors.danger,
 		textAlign: 'center' as const,
 		marginBottom: 15,
 	},
 	modalWarning: {
-		fontSize: 18,
+		...typeScale.emphasis,
 		color: colors.danger,
 		textAlign: 'center' as const,
 		marginBottom: 10,
-		fontWeight: 'bold' as const,
 	},
 	modalDescription: {
-		fontSize: 16,
+		...typeScale.body,
 		color: colors.ink,
 		textAlign: 'center' as const,
 		marginBottom: 20,
 		lineHeight: 22,
 	},
 	modalInstruction: {
-		fontSize: 16,
+		...typeScale.label,
 		color: colors.ink,
 		marginBottom: 10,
-		fontWeight: '600' as const,
 	},
 	confirmationInput: {
-		borderWidth: 1,
-		borderColor: colors.outline,
-		borderRadius: 5,
-		padding: 12,
-		fontSize: 16,
 		marginBottom: 20,
-		color: colors.ink,
 	},
 	modalButtons: {
 		flexDirection: 'row' as const,
