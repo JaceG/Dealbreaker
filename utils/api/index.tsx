@@ -562,3 +562,9 @@ export const getMyHistory = async (): Promise<import('../stats').HistoryRow[]> =
 	const response = await api.get('/flagHistory/mine');
 	return response.data || [];
 };
+
+// Upload a batch of board/gesture diagnostics (see utils/boardLog.ts). Throws on failure so the caller keeps the batch.
+export const postBoardLog = async (session: string, events: object[]): Promise<void> => {
+	// Longer than the default 10 s: the free server can take 20 to 45 s to wake up.
+	await api.post('/boardLog', { session, events }, { timeout: 45000 });
+};

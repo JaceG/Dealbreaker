@@ -1,27 +1,76 @@
 import React from 'react';
 import ReactTimeout from 'react-timeout';
-import {
-	Animated,
-	PanResponder,
-	StatusBar,
-	LayoutChangeEvent,
-	PanResponderInstance,
-	PanResponderGestureState,
-	NativeSyntheticEvent,
-	NativeTouchEvent,
-	Dimensions,
-} from 'react-native';
+import { Animated, Dimensions } from 'react-native';
+import { GestureDetector, GestureStateManager, usePanGesture } from 'react-native-gesture-handler';
 import { bool, func, object, string } from 'prop-types';
-import { colors, deviceWidth, ios, isX } from '../../constants';
+import { colors } from '../../constants';
 import Column from '../Column/Column';
 import Card from '../Card/Card';
 import Carousel from '../Carousel/Carousel';
 import { BoardWrapper } from './Board.styled';
+import { boardLog } from '../../../../utils/boardLog';
 
 const MAX_RANGE = 100;
 const MAX_DEG = 30;
-// const CARD_WIDTH = 0.85 * deviceWidth;
-const STATUSBAR_HEIGHT = ios ? (isX() ? 44 : 20) : StatusBar.currentHeight || 0;
+// Press and hold this long (finger still) to lift a card; moving sooner scrolls instead.
+const LIFT_DELAY_MS = 350;
+// Hold the card within this distance of the screen edge to switch columns.
+const EDGE = 40;
+// How far back from the edge the finger has to come before another switch can happen.
+const EDGE_REARM = 60;
+
+type DragPoint = { absoluteX: number; absoluteY: number };
+
+const round = (v: number) => Math.round(v);
+const box = (l: any) => l && { x: round(l.x), y: round(l.y), w: round(l.width), h: round(l.height) };
+const cardInfo = (item: any) => ({
+	id: item?.row?.()?.id,
+	title: item?.row?.()?.name,
+	col: item?.columnId?.(),
+	index: item?.index?.(),
+});
+const firstTouch = (e: any) => {
+	const t = e?.changedTouches?.[0] || e?.allTouches?.[0];
+	return { touches: e?.numberOfTouches, x: t && round(t.absoluteX), y: t && round(t.absoluteY) };
+};
+
+// The drag is a native gesture on the whole board, so the finger is never lost while the
+// board re-renders the cards under it, and onFinalize always runs when the finger lifts.
+const BoardDrag = ({
+	onBegin,
+	onStart,
+	onMove,
+	onEnd,
+	children,
+}: {
+	onBegin: (e: DragPoint) => void;
+	onStart: (e: DragPoint) => boolean;
+	onMove: (e: DragPoint) => void;
+	onEnd: (canceled: boolean) => void;
+	children: React.ReactNode;
+}) => {
+	const drag = usePanGesture({
+		disableReanimated: true,
+		activateAfterLongPress: LIFT_DELAY_MS,
+		onBegin: (e) => onBegin(e),
+		onActivate: (e) => {
+			// No card under the finger: end the gesture now. The hold has already cancelled any
+			// button press and the list's scroll for this touch; they work again on the next touch.
+			if (!onStart(e)) {
+				try {
+					GestureStateManager.fail(e.handlerTag);
+				} catch {}
+			}
+		},
+		onUpdate: (e) => onMove(e),
+		onFinalize: (e) => onEnd(e.canceled),
+		// Raw finger events, so the log shows every touch even when the drag never starts.
+		onTouchesDown: (e) => boardLog('touch.down', firstTouch(e)),
+		onTouchesUp: (e) => boardLog('touch.up', firstTouch(e)),
+		onTouchesCancel: (e) => boardLog('touch.cancel', firstTouch(e)),
+	});
+	return <GestureDetector gesture={drag}>{children}</GestureDetector>;
+};
 
 // Type definitions
 interface BoardProps {
@@ -43,11 +92,11 @@ interface BoardProps {
 }
 
 interface BoardState {
-	boardPositionY: number;
 	rotate: Animated.Value;
 	pan: Animated.ValueXY;
 	startingX: number;
 	startingY: number;
+	draggedWidth: number;
 	movingMode: boolean;
 	draggedItem?: any;
 	srcColumnId?: number;
@@ -64,132 +113,264 @@ interface CarouselRef {
 }
 
 class Board extends React.Component<BoardProps, BoardState> {
-	// Class property declarations
-	private varticalOffset: number = 0;
-	private panResponder: PanResponderInstance;
-	private val: { x: number; y: number } = { x: 0, y: 0 };
 	private x: number | null = null;
 	private y: number | null = null;
 	private scrolling: boolean = false;
 	private carousel: CarouselRef | null = null;
-	private dropping: boolean = false;
-	private moved: boolean = false;
-	private scrollViewRef: any = null;
+	private boardRef: any = null;
+	// Where the board sits on screen, so the lifted card can be drawn exactly over the original.
+	private boardOrigin = { x: 0, y: 0 };
+	private dragStart = { x: 0, y: 0 };
+	private edgeArmed = true;
+	// Diagnostics only (see utils/boardLog.ts).
+	private lastMoveLog = 0;
+	private lastUpdateAt = 0;
+	private lastIndex: number | undefined;
+	private lastColumn = 0;
+	private liftInfo: any = null;
+	// The drag lives on the instance, not in React state, so a finger-up that arrives in the
+	// same JS batch as the lift still sees the lifted card.
+	private lifted = false;
+	private dragItem: any = null;
+	private srcColumnId: number | undefined;
+	private srcIndex: number | undefined;
+	private crossed = false;
 
 	constructor(props: BoardProps) {
 		super(props);
 		const { width, height } = Dimensions.get('window');
 		const isHorizontal = width > height;
 		this.state = {
-			boardPositionY: 0,
 			rotate: new Animated.Value(0),
 			pan: new Animated.ValueXY(),
 			startingX: 0,
 			startingY: 0,
+			draggedWidth: 0,
 			movingMode: false,
 			isHorizontal,
 			deviceWidth: width,
 			deviceHeight: height,
 			cardWidth: 0.85 * width,
 		};
-
-		this.panResponder = PanResponder.create({
-			// Capture, so the board takes the finger from the card and list once a card is lifted.
-			onMoveShouldSetPanResponderCapture: () => this.state.movingMode,
-			onMoveShouldSetPanResponder: () => this.state.movingMode,
-			onPanResponderMove: this.onPanResponderMove,
-			onPanResponderRelease: this.onPanResponderRelease,
-			onPanResponderTerminate: this.onPanResponderRelease,
-		});
 	}
 
 	componentDidMount() {
 		Dimensions.addEventListener('change', this.onOrientationChange);
-		this.val = { x: 0, y: 0 };
-		// eslint-disable-next-line no-return-assign
-		this.state.pan.addListener(
-			(value: { x: number; y: number }) => (this.val = value)
-		);
+		const { boardRepository } = this.props;
+		boardLog('board.mount', {
+			columns: boardRepository
+				.columns()
+				.map((c: any) => (boardRepository.items(c.id()) || []).length),
+		});
 	}
+
+	componentWillUnmount() {
+		// A board torn down mid-drag would explain a card that vanishes or never lands.
+		boardLog('board.unmount', { dragging: this.lifted });
+	}
+
 	onOrientationChange = ({
 		window,
 	}: {
 		window: { width: number; height: number };
 	}) => {
 		const isHorizontal = window.width > window.height;
-		// CARD_WIDTH = isHorizontal ? 0.45 * deviceWidth : 0.85 * deviceWidth;
 		this.setState({
 			isHorizontal,
 			deviceWidth: window.width,
 			deviceHeight: window.height,
-			cardWidth: 0.85 * deviceWidth,
+			cardWidth: 0.85 * window.width,
 		});
 	};
 
-	componentWillUnmount() {
-		// Dimensions.removeEventListener('change', this.onOrientationChange);
-	}
+	measureBoard = () => {
+		this.boardRef?.measureInWindow((x: number, y: number) => {
+			if (x !== this.boardOrigin.x || y !== this.boardOrigin.y) {
+				boardLog('board.measured', { x: round(x), y: round(y) });
+			}
+			this.boardOrigin = { x, y };
+		});
+	};
 
-	onPanResponderMove = (
-		event: NativeSyntheticEvent<NativeTouchEvent>,
-		gesture: PanResponderGestureState
-	) => {
+	columnIndex = () => (this.carousel ? this.carousel.currentIndex : 0);
+
+	// The card under the finger in the column on screen. Card layouts are in screen coordinates.
+	itemAt = (absX: number, absY: number) => {
+		const { boardRepository } = this.props;
+		const items = boardRepository.items(this.columnIndex() + 1) || [];
+		return items.find((item: any) => {
+			const l = item.layout();
+			return (
+				l &&
+				item.row?.()?.id &&
+				!item.isLocked() &&
+				absX >= l.x &&
+				absX <= l.x + l.width &&
+				absY >= l.y &&
+				absY <= l.y + l.height
+			);
+		});
+	};
+
+	onDragBegin = ({ absoluteX, absoluteY }: DragPoint) => {
+		// Touch down: measure the board and this column's cards now, well before the hold delay
+		// ends, so a column reached by a swipe or a flick doesn't keep old card positions.
+		this.measureBoard();
+		this.props.boardRepository.updateLayoutAfterVisibilityChanged?.(this.columnIndex() + 1);
+		boardLog('gesture.begin', { x: round(absoluteX), y: round(absoluteY), col: this.columnIndex() });
+	};
+
+	onDragStart = ({ absoluteX, absoluteY }: DragPoint): boolean => {
+		const { boardRepository } = this.props;
+		const finger = { x: round(absoluteX), y: round(absoluteY) };
+		if (this.lifted) {
+			boardLog('drag.liftIgnored', { reason: 'already lifted', finger });
+			return false;
+		}
+		const item = this.itemAt(absoluteX, absoluteY);
+		if (!item) {
+			// Held still on the board but no card's recorded position contains the finger:
+			// either empty space, or the stored card positions are stale.
+			const items = boardRepository.items(this.columnIndex() + 1) || [];
+			boardLog('drag.noCard', {
+				finger,
+				col: this.columnIndex(),
+				board: this.boardOrigin,
+				cards: items
+					.filter((i: any) => i.row?.()?.id)
+					.slice(0, 20)
+					.map((i: any) => ({ id: i.row().id, locked: i.isLocked(), ...box(i.layout()) })),
+			});
+			return false;
+		}
+		const l = item.layout();
+		this.lifted = true;
+		this.dragItem = item;
+		this.srcColumnId = item.columnId();
+		this.srcIndex = item.index();
+		this.crossed = false;
+		this.liftInfo = { ...cardInfo(item) };
+		this.lastIndex = item.index();
+		this.lastColumn = this.columnIndex();
+		// 0: the first move after the lift isn't a gap, however long the finger was held still.
+		this.lastUpdateAt = 0;
+		boardLog('drag.lift', {
+			finger,
+			card: this.liftInfo,
+			cardBox: box(l),
+			board: this.boardOrigin,
+			col: this.columnIndex(),
+			columnScroll: round(boardRepository.column(item.columnId())?.scrollOffset?.() ?? -1),
+		});
+
+		boardRepository.hide(item.columnId(), item);
+		this.edgeArmed = true;
+		this.dragStart = { x: absoluteX, y: absoluteY };
+		this.x = absoluteX;
+		this.y = absoluteY;
+		this.state.pan.setValue({ x: 0, y: 0 });
+		this.setState({
+			movingMode: true,
+			draggedItem: item,
+			srcColumnId: item.columnId(),
+			startingX: l.x - this.boardOrigin.x,
+			startingY: l.y - this.boardOrigin.y,
+			draggedWidth: l.width,
+		});
+		this.rotate(MAX_DEG / 3);
+		return true;
+	};
+
+	onDragMove = ({ absoluteX, absoluteY }: DragPoint) => {
+		const { pan, deviceWidth } = this.state;
+		const { boardRepository } = this.props;
+		const draggedItem = this.dragItem;
+		if (!this.lifted || !draggedItem) return;
 		try {
-			const { draggedItem, pan, startingX, startingY } = this.state;
-			const { boardRepository } = this.props;
+			const now = Date.now();
+			if (this.lastUpdateAt && now - this.lastUpdateAt > 100) {
+				boardLog('drag.gap', { ms: now - this.lastUpdateAt });
+			}
+			this.lastUpdateAt = now;
+			const dx = absoluteX - this.dragStart.x;
+			const dy = absoluteY - this.dragStart.y;
+			if (now - this.lastMoveLog >= 50) {
+				this.lastMoveLog = now;
+				boardLog('drag.move', {
+					x: round(absoluteX),
+					y: round(absoluteY),
+					dx: round(dx),
+					dy: round(dy),
+					col: this.columnIndex(),
+				});
+			}
+			pan.setValue({ x: dx, y: dy });
+			this.x = absoluteX;
+			this.y = absoluteY;
 
-			if (draggedItem && this.state.movingMode) {
-				this.moved = true;
-				const { x0, y0 } = gesture;
-				this.x = x0 - startingX + gesture.dx;
-				this.y = y0 + gesture.dy;
-
-				Animated.event([null, { dx: pan.x, dy: pan.y }], {
-					useNativeDriver: false,
-				})(event, gesture);
-
-				if (
-					startingX + gesture.dx < -50 &&
-					gesture.vx < 0 &&
-					this.carousel
-				) {
+			// One switch per visit to an edge: the finger has to come back in before the next one.
+			if (this.carousel) {
+				if (this.edgeArmed && absoluteX < EDGE) {
+					this.edgeArmed = false;
+					boardLog('drag.edge', { dir: 'prev', x: round(absoluteX), col: this.columnIndex() });
 					this.carousel.snapToPrev();
-				}
-				if (
-					startingX + gesture.dx + this.state.cardWidth - 50 >
-						this.state.cardWidth &&
-					gesture.vx > 0 &&
-					this.carousel
-				) {
+				} else if (this.edgeArmed && absoluteX > deviceWidth - EDGE) {
+					this.edgeArmed = false;
+					boardLog('drag.edge', { dir: 'next', x: round(absoluteX), col: this.columnIndex() });
 					this.carousel.snapToNext();
-				}
-
-				// Only access carousel.currentIndex if carousel exists
-				const columnId = this.carousel ? this.carousel.currentIndex : 0;
-				const columnAtPosition = boardRepository.move(
-					draggedItem,
-					this.x,
-					this.y,
-					columnId
-				);
-				if (columnAtPosition) {
-					const { scrolling, offset } =
-						boardRepository.scrollingPosition(
-							columnAtPosition,
-							this.x,
-							this.y,
-							columnId
-						);
-					if (
-						this.shouldScroll(scrolling, offset, columnAtPosition)
-					) {
-						this.scroll(columnAtPosition, draggedItem, offset);
-					}
+				} else if (
+					!this.edgeArmed &&
+					absoluteX > EDGE_REARM &&
+					absoluteX < deviceWidth - EDGE_REARM
+				) {
+					this.edgeArmed = true;
+					boardLog('drag.edgeRearmed', { x: round(absoluteX) });
 				}
 			}
-		} catch (error) {
-			console.log('columnAtPosition', error);
+
+			const columnId = this.columnIndex();
+			if (columnId !== this.lastColumn) {
+				boardLog('drag.columnChanged', { from: this.lastColumn, to: columnId });
+				this.lastColumn = columnId;
+			}
+			const columnAtPosition = boardRepository.move(
+				draggedItem,
+				absoluteX,
+				absoluteY,
+				columnId
+			);
+			if (columnAtPosition) {
+				const { scrolling, offset } = boardRepository.scrollingPosition(
+					columnAtPosition,
+					absoluteX,
+					absoluteY,
+					columnId
+				);
+				if (this.shouldScroll(scrolling, offset, columnAtPosition)) {
+					boardLog('drag.autoscroll', { offset, col: columnId, y: round(absoluteY) });
+					this.scroll(columnAtPosition, draggedItem, offset);
+				}
+			}
+			if (draggedItem.columnId() !== this.srcColumnId) this.crossed = true;
+			const index = draggedItem.index();
+			if (index !== this.lastIndex) {
+				boardLog('drag.reorder', { from: this.lastIndex, to: index, col: draggedItem.columnId() });
+				this.lastIndex = index;
+			}
+		} catch (error: any) {
+			console.log('onDragMove', error);
+			boardLog('drag.error', { where: 'move', message: String(error?.message || error) });
 		}
+	};
+
+	// Runs whenever the gesture ends, however it ends (lifted, cancelled or failed).
+	onDragFinish = (canceled: boolean) => {
+		this.x = null;
+		this.y = null;
+		boardLog('gesture.finalize', { canceled, lifted: this.lifted });
+		if (!this.lifted) return;
+		this.rotate(0);
+		this.endMoving();
 	};
 
 	shouldScroll = (
@@ -224,7 +405,7 @@ class Board extends React.Component<BoardProps, BoardState> {
 		}
 
 		if (this.x !== null && this.y !== null) {
-			boardRepository.move(draggedItem, this.x, this.y);
+			boardRepository.move(draggedItem, this.x, this.y, this.columnIndex());
 			const { scrolling, offset } = boardRepository.scrollingPosition(
 				column,
 				this.x,
@@ -240,77 +421,49 @@ class Board extends React.Component<BoardProps, BoardState> {
 
 	endMoving = () => {
 		// Only a lifted card can be dropped, so a late call can't fire onDragEnd twice.
-		if (!this.state.movingMode) return;
+		if (!this.lifted) return;
+		this.lifted = false;
+		const draggedItem = this.dragItem;
+		const srcColumnId = this.srcColumnId;
+		this.dragItem = null;
+		const { pan } = this.state;
+		const { boardRepository, onDragEnd } = this.props;
+		this.setState({ movingMode: false, startingX: 0, startingY: 0 });
+		pan.setValue({ x: 0, y: 0 });
+		if (!draggedItem || !srcColumnId) return;
+
+		let destColumnId = srcColumnId;
 		try {
-			this.setState({ movingMode: false });
-			const { draggedItem, pan, srcColumnId } = this.state;
-			const { boardRepository, onDragEnd } = this.props;
-
-			if (!draggedItem || !srcColumnId) return;
-
 			boardRepository.show(draggedItem.columnId(), draggedItem);
 			boardRepository.notify(draggedItem.columnId(), 'reload');
-
-			const destColumnId = draggedItem.columnId();
-			pan.setValue({ x: 0, y: 0 });
-			this.setState({ startingX: 0, startingY: 0 });
-
-			// Lifted and released without moving: nothing to save.
-			if (!this.moved) {
-				return;
-			}
-
-			return (
-				onDragEnd &&
-				onDragEnd(
-					boardRepository.columns()[srcColumnId - 1],
-					boardRepository.columns()[destColumnId - 1],
-					draggedItem
-				)
-			);
-		} catch (error) {
-			const { draggedItem, srcColumnId } = this.state;
-			const { onDragEnd, boardRepository } = this.props;
-
-			if (!draggedItem || !srcColumnId) {
-				this.setState({
-					movingMode: false,
-					startingX: 0,
-					startingY: 0,
-				});
-				return;
-			}
-
-			const destColumnId = draggedItem.columnId();
-			this.setState({ movingMode: false, startingX: 0, startingY: 0 });
+			destColumnId = draggedItem.columnId();
+		} catch (error: any) {
 			console.log('endMoving', error);
-			return (
-				onDragEnd &&
-				onDragEnd(
-					boardRepository.columns()[srcColumnId - 1],
-					boardRepository.columns()[destColumnId - 1],
-					draggedItem
-				)
-			);
+			boardLog('drag.error', { where: 'drop', message: String(error?.message || error) });
 		}
-	};
 
-	onPanResponderRelease = () => {
-		this.x = null;
-		this.y = null;
-		this.drop();
-	};
+		// Save only when the card's place changed (or it visited the other column, whose stored
+		// positions the move shifted). A finger always drifts a little, so distance isn't the test.
+		const changed =
+			destColumnId !== srcColumnId ||
+			draggedItem.index() !== this.srcIndex ||
+			this.crossed;
+		boardLog('drag.drop', {
+			from: this.liftInfo,
+			to: { col: destColumnId, index: draggedItem.index() },
+			crossed: this.crossed,
+			save: changed,
+		});
+		if (!changed) return;
 
-	// Any finger lift drops a lifted card, even when the board never took the touch
-	// (lifted and released without moving), so a card can't stay floating.
-	drop = () => {
-		if (!this.state.movingMode || this.dropping) return;
-		this.dropping = true;
-		this.rotate(0);
-		this.props.setTimeout(() => {
-			this.endMoving();
-			this.dropping = false;
-		}, 100);
+		return (
+			onDragEnd &&
+			onDragEnd(
+				boardRepository.columns()[srcColumnId - 1],
+				boardRepository.columns()[destColumnId - 1],
+				draggedItem
+			)
+		);
 	};
 
 	rotate = (toValue: number) => {
@@ -322,50 +475,6 @@ class Board extends React.Component<BoardProps, BoardState> {
 		}).start();
 	};
 
-	// Called by the card's long press, so the finger is still down when the card lifts.
-	onLift = (columnId: number, item: any, dy: number) => {
-		const { boardPositionY, movingMode } = this.state;
-		const { boardRepository } = this.props;
-
-		if (
-			movingMode ||
-			this.dropping ||
-			!item ||
-			item.isLocked() ||
-			!item.layout()
-		) {
-			return;
-		}
-		const lastColumn = boardRepository.columns().length - 1;
-		const columnIndex = this.carousel ? this.carousel.currentIndex : 0;
-
-		let x: number;
-
-		if (columnIndex === 0) {
-			x = 16;
-		} else if (columnIndex > 0 && columnIndex < lastColumn) {
-			x = (deviceWidth - 0.78 * deviceWidth + 16) / 2;
-		} else if (columnIndex === lastColumn) {
-			x = deviceWidth - 0.78 * deviceWidth;
-		} else {
-			x = 16; // fallback
-		}
-
-		if (columnId - 1 === columnIndex) {
-			boardRepository.hide(columnId, item);
-			this.moved = false;
-			this.setState({
-				movingMode: true,
-				draggedItem: item,
-				srcColumnId: item.columnId(),
-				startingX: x,
-				startingY:
-					dy - boardPositionY - STATUSBAR_HEIGHT - (ios ? 0 : 0),
-			});
-			this.rotate(MAX_DEG);
-		}
-	};
-
 	onPress = (columnId: number, item: any) => {
 		const { open } = this.props;
 
@@ -373,9 +482,10 @@ class Board extends React.Component<BoardProps, BoardState> {
 			return;
 		}
 
-		// Read movingMode when tapped, not when the row rendered; drops are handled by drop().
+		// Read movingMode when tapped, not when the row rendered.
 		return () => {
-			if (item.isLocked() || this.state.movingMode) {
+			boardLog('card.tap', { ...cardInfo(item), whileLifted: this.lifted });
+			if (item.isLocked() || this.lifted) {
 				return;
 			}
 
@@ -389,6 +499,7 @@ class Board extends React.Component<BoardProps, BoardState> {
 
 	onScrollEnd = () => {
 		const { boardRepository } = this.props;
+		boardLog('carousel.scrollEnd', { col: this.columnIndex(), dragging: this.lifted });
 		boardRepository.updateColumnsLayoutAfterVisibilityChanged();
 	};
 
@@ -404,10 +515,7 @@ class Board extends React.Component<BoardProps, BoardState> {
 			zIndex,
 			top: startingY,
 			left: startingX,
-			width:
-				this.state.deviceWidth *
-					(this.state.isHorizontal ? 0.45 : 0.85) -
-				16,
+			width: this.state.draggedWidth,
 			transform: [
 				{ translateX: pan.x },
 				{ translateY: pan.y },
@@ -441,27 +549,21 @@ class Board extends React.Component<BoardProps, BoardState> {
 		/>
 	);
 
-	setScrollViewRef = (element: any) => {
-		this.scrollViewRef = element;
-	};
-
-	setBoardPositionY = (y: number) => {
-		this.setState({ boardPositionY: y });
-	};
-
 	render() {
 		const { movingMode } = this.state;
 		const { boardBackground, boardRepository, data } = this.props;
 
 		return (
-			<BoardWrapper
-				{...this.panResponder.panHandlers}
-				onTouchEnd={this.drop}
-				onTouchCancel={this.drop}>
+			<BoardDrag
+				onBegin={this.onDragBegin}
+				onStart={this.onDragStart}
+				onMove={this.onDragMove}
+				onEnd={this.onDragFinish}>
 				<BoardWrapper
-					onLayout={(evt: LayoutChangeEvent) =>
-						this.setBoardPositionY(evt.nativeEvent.layout.y)
-					}
+					ref={(r: any) => {
+						this.boardRef = r;
+					}}
+					onLayout={this.measureBoard}
 					style={{ backgroundColor: boardBackground }}>
 					<Carousel
 						ref={(c: CarouselRef | null) => {
@@ -479,7 +581,6 @@ class Board extends React.Component<BoardProps, BoardState> {
 										column: item.item,
 										movingMode: movingMode,
 										boardRepository: boardRepository,
-										onLift: this.onLift,
 										onPress: this.onPress,
 										renderWrapperRow: this.renderWrapperRow,
 										showDeleteItem:
@@ -507,7 +608,7 @@ class Board extends React.Component<BoardProps, BoardState> {
 
 					{this.movingTask()}
 				</BoardWrapper>
-			</BoardWrapper>
+			</BoardDrag>
 		);
 	}
 

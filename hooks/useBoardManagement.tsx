@@ -11,6 +11,7 @@ import { useModalStates } from './boardManagement/useModalStates';
 import { useBoardOperations } from './boardManagement/useBoardOperations';
 import { useItemOperations } from './boardManagement/useItemOperations';
 import { useTransitions } from './boardManagement/useTransitions';
+import { boardLog } from '../utils/boardLog';
 
 const useBoardManagement = () => {
 	let ScreenHeight = Dimensions.get('window').height - 150;
@@ -203,6 +204,7 @@ const useBoardManagement = () => {
 			return;
 		}
 
+		boardLog('board.remount', { reason: 'profile switch (useBoardManagement)' });
 		setIsRemount(true);
 		setTimeout(() => {
 			reloadBoard();
@@ -210,6 +212,7 @@ const useBoardManagement = () => {
 		}, 1000);
 	}, [currentProfileId]);
 	useEffect(() => {
+		boardLog('board.remount', { reason: 'first load (useBoardManagement)' });
 		setIsRemount(true);
 		setTimeout(() => {
 			reloadBoard();

@@ -20,6 +20,8 @@ import {
 } from '@env';
 import { colors } from '../../../libs/board/constants';
 import AppButton from '../../../components/AppButton';
+import BoardLogModal from '../../../components/BoardLogModal';
+import { boardLogEnabled } from '../../../utils/boardLog';
 import { useAuth } from '../../../context/Auth';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useFocusEffect } from 'expo-router';
@@ -68,6 +70,7 @@ export const UserInfo = () => {
 	const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 	const [deleteConfirmationText, setDeleteConfirmationText] = useState('');
 	const { logout, confirmLogout } = useAuthActions();
+	const [boardLogVisible, setBoardLogVisible] = useState(false);
 	// undefined while loading, null if loading failed
 	const [methods, setMethods] = useState<SignInMethods | null>();
 	const [isAppleAvailable, setIsAppleAvailable] = useState(false);
@@ -401,6 +404,16 @@ export const UserInfo = () => {
 						onPress={handleSave}
 					/>
 				</View>
+
+				{/* Testing aid, test builds only: board and drag events, also uploaded for review. */}
+				{boardLogEnabled ? (
+					<>
+						<View style={styles.logoutSection}>
+							<AppButton title='Board Log' onPress={() => setBoardLogVisible(true)} variant='secondary' />
+						</View>
+						<BoardLogModal visible={boardLogVisible} onClose={() => setBoardLogVisible(false)} />
+					</>
+				) : null}
 
 				<View style={styles.logoutSection}>
 					<AppButton title='Log Out' onPress={confirmLogout} variant='secondary' />

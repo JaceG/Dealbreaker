@@ -16,6 +16,7 @@ import CompareProfilesModal from '../../components/CompareProfilesModal';
 import StoreContext from '../../store';
 import { showToast } from '../../utils/functions';
 import { useContext, useState } from 'react';
+import { boardLog } from '../../utils/boardLog';
 
 export default function Lists() {
 	const {
@@ -218,6 +219,7 @@ export default function Lists() {
 
 								// Hidden cards would make the drop position wrong, so put the card back.
 								if (colorFilter) {
+									boardLog('drag.saveBlocked', { reason: 'color filter on', filter: colorFilter });
 									showToast('info', 'Clear the filter to move cards');
 									updateBoard(true);
 									setRefreshKey(Date.now());
@@ -235,6 +237,7 @@ export default function Lists() {
 										'Invalid draggedItem structure:',
 										draggedItem
 									);
+									boardLog('drag.saveBlocked', { reason: 'invalid dragged item' });
 									return;
 								}
 
@@ -274,9 +277,22 @@ export default function Lists() {
 											itemId: itemId,
 										}
 									);
+									boardLog('drag.saveBlocked', {
+										reason: 'missing index',
+										itemId,
+										newIndex: draggedItem.attributes.index,
+										oldIndex,
+									});
 									return;
 								}
 
+								boardLog('drag.save', {
+									profile: currentProfileId,
+									itemId,
+									oldIndex,
+									newIndex: draggedItem.attributes.index,
+									toColumn: isDealbreaker ? 'dealbreakers' : 'flags',
+								});
 								updateListOrder(
 									draggedItem.attributes.index,
 									oldIndex as number,

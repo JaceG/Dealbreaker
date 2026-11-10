@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { BoardRepository } from '../../libs/board/components';
 import { data } from '../../models/boardManagementModel';
+import { boardLog } from '../../utils/boardLog';
 
 export const useBoardOperations = (
 	dealbreaker: any,
@@ -72,6 +73,7 @@ export const useBoardOperations = (
 	};
 
 	const updateBoard = (force: boolean = false, forceData: any = null) => {
+		boardLog('board.update', { force, forceData: !!forceData, profile: currentProfileId });
 		// Skip if requested
 		if (!force && skipUpdateRef.current) {
 			skipUpdateRef.current = false;
@@ -215,6 +217,7 @@ export const useBoardOperations = (
 			return;
 		}
 
+		boardLog('board.remount', { reason: 'profile switch' });
 		setIsRemount(true);
 		setTimeout(() => {
 			reloadBoard();
@@ -223,6 +226,7 @@ export const useBoardOperations = (
 	}, [currentProfileId]);
 
 	useEffect(() => {
+		boardLog('board.remount', { reason: 'first load' });
 		setIsRemount(true);
 		setTimeout(() => {
 			reloadBoard();

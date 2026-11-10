@@ -79,11 +79,9 @@ interface ColumnProps {
 	movingMode: boolean;
 	oneColumn?: boolean;
 	onPress: (columnId: string | number, item: BoardItem) => void;
-	onLift: (columnId: string | number, item: BoardItem, y: number) => void;
 	onScrollingEnded: () => void;
 	onScrollingStarted: () => void;
 	renderWrapperRow: (props: {
-		onLift: (y: number) => void;
 		onPress: void;
 		hidden: boolean;
 		item: BoardItem;
@@ -126,11 +124,6 @@ class Column extends React.Component<ColumnProps, ColumnState> {
 		);
 	}
 
-	onLift = (item: BoardItem, y: number): void => {
-		const { column, onLift } = this.props;
-		onLift(column.id(), item, y);
-	};
-
 	onPress = (item: BoardItem): void => {
 		const { column, onPress } = this.props;
 
@@ -172,7 +165,6 @@ class Column extends React.Component<ColumnProps, ColumnState> {
 			showDeleteItem,
 		} = this.props;
 		const props = {
-			onLift: (y: number) => this.onLift(item, y),
 			onPress: this.onPress(item),
 			hidden: item.isHidden(),
 			item,
@@ -437,7 +429,6 @@ Column.propTypes = {
 	movingMode: bool.isRequired,
 	oneColumn: bool,
 	onPress: func.isRequired,
-	onLift: func.isRequired,
 	onScrollingEnded: func.isRequired,
 	onScrollingStarted: func.isRequired,
 	renderWrapperRow: func.isRequired,

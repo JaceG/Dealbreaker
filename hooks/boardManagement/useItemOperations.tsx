@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import { showToast } from '../../utils/functions';
 import { setList as saveToStorage } from '../../utils/storage';
+import { boardLog } from '../../utils/boardLog';
 
 export const useItemOperations = (
 	dealbreaker: any,
@@ -57,6 +58,7 @@ export const useItemOperations = (
 
 		// Force a complete UI refresh to ensure deleted item disappears
 		setList(null);
+		boardLog('board.remount', { reason: 'card deleted' });
 		setIsRemount(true);
 
 		// Give state update time to complete, then refresh the board

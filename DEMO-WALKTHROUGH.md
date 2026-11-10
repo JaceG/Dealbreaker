@@ -11,6 +11,19 @@ Written 2026-11-08. The demo data lives in your account (jace.galloway@gmail.com
 
 Since update 2 (below) the app doesn't save the board until it has loaded the server's copy, so a phone's old saved board can no longer overwrite the server. Before that, launching could do exactly that, which is why the first version of these steps said to log out first. If the demo ever gets wiped, `node scripts/demo-seed/seed-demo.js` in the backend writes it again (section 8).
 
+### Phone test for drag rewrite + board log (published 2026-11-09)
+
+The first drag update made things worse on the phone (card far below the finger, never landing, columns flipping). Reproduced in
+the simulator: the old touch code lost the finger-up after a column switch. The drag is now a native gesture on the whole board.
+
+1. Press and hold a card, drag it up or down, let go: it stays under your finger and lands where you let go.
+2. Drag a card to the screen edge: the columns switch once. Let go: it lands in that column.
+3. Hold a card and let go without moving: it goes back, nothing is saved.
+4. Scroll a column and swipe between columns: no card lifts.
+5. Settings > Board Log shows what the app recorded; it also uploads to the server for review. Test builds only.
+
+Known: dragging near the top or bottom of a long column doesn't scroll it (that auto-scroll never worked).
+
 ### Phone test for card dragging (published 2026-11-09, update group fedc14e8, app 8d4bfdc)
 
 1. Tap a card's title or description: it opens and doesn't lift.
@@ -143,6 +156,7 @@ Ordered by impact. Everything is from reading the code. I didn't run the app, so
 - **Next native build** (needs a version bump and `eas build`, so ask first): video and audio playback, a real chart library (react-native-svg plus a chart package, for pie and line charts and touch tooltips), pinch-to-zoom on the timeline (react-native-reanimated), and removing the unused packages.
 - **Small gaps:** an expired login retries the board load every 15 s until logout; two history entries saved within milliseconds of a sync could collide; closing the app within about a minute of deleting a person can leave their history on the server; a deleted person's photos stay in S3; Main's people bar hides while Main has no cards.
 - **Onboarding:** on hold until this round is tested.
+- **Board redraw flash (later, per Jace 2026-11-09):** the whole board blanks for a moment and redraws after some changes. Seen in the simulator after Cancel on the "Moving to Dealbreakers" popup (about half a second of white screen), and the board also rebuilds after each drag save. Likely cause: the board is rebuilt from scratch (`updateBoard(true)` plus a new `refreshKey`) instead of updating in place.
 
 ## 7. Questions (answered 2026-11-08)
 

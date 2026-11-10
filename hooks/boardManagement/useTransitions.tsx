@@ -3,6 +3,7 @@ import { showToast } from "../../utils/functions";
 import { addFlagHistory } from "../../utils/mongodb";
 import { PendingTransition } from "../../models/boardManagementModel";
 import { FlagItem } from "../../models";
+import { boardLog } from "../../utils/boardLog";
 
 export const useTransitions = (
   dealbreaker: any,
@@ -199,6 +200,7 @@ export const useTransitions = (
     setDealbreaker(updatedDealbreaker);
 
     // Force a complete UI refresh to ensure changes are visible
+    boardLog('board.remount', { reason: 'after list order save' });
     setIsRemount(true);
     setTimeout(() => {
       setIsRemount(false);
@@ -414,6 +416,7 @@ export const useTransitions = (
     setPendingTransition(null);
 
     // Force a UI refresh to revert to the previous state
+    boardLog('board.remount', { reason: 'transition popup cancelled' });
     setIsRemount(true);
     setTimeout(() => {
       setIsRemount(false);

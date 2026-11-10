@@ -7,7 +7,6 @@ import {
 	TouchableWithoutFeedback,
 	ViewStyle,
 	TextStyle,
-	GestureResponderEvent,
 } from 'react-native';
 import { bool, func, number, object, string } from 'prop-types';
 import { colors } from '../../constants';
@@ -30,7 +29,6 @@ interface CardProps {
 	item?: any;
 	isCardWithShadow: boolean;
 	onPress?: () => void;
-	onLift?: (pageY: number) => void;
 	style?: ViewStyle;
 	onFlagClicked?: (newFlag: string, item: any) => void;
 	onDeleteItem?: (item: any) => void;
@@ -38,7 +36,6 @@ interface CardProps {
 	showDeleteItem?: boolean;
 }
 
-const NEGATIVE_SPACE = 50;
 
 type PeopleCountsProps = { counts: { yellow: number; red: number; dealbreaker: number } };
 
@@ -88,7 +85,6 @@ const Card: React.FC<CardProps> = ({
 	item,
 	isCardWithShadow = true,
 	onPress,
-	onLift,
 	style,
 	onFlagClicked,
 	onDeleteItem,
@@ -152,18 +148,10 @@ const Card: React.FC<CardProps> = ({
 		}
 	};
 
-	// Press and hold to lift the card; a tap only opens it.
-	const handleLongPress = (evt: GestureResponderEvent) => {
-		if (onLift) {
-			onLift(evt.nativeEvent.pageY - NEGATIVE_SPACE);
-		}
-	};
-
 	return (
 		<TouchableWithoutFeedback
-			onLongPress={handleLongPress}
-			delayLongPress={350}
-			accessibilityHint={onLift ? 'Press and hold to move' : undefined}
+			// The board lifts a card on press and hold; a tap only opens it.
+			accessibilityHint={onPress ? 'Press and hold to move' : undefined}
 			onPress={handlePress}>
 			<Animated.View style={styles}>
 				{cardContent !== undefined ? (
@@ -314,7 +302,7 @@ Card.propTypes = {
 	item: object,
 	isCardWithShadow: bool.isRequired,
 	onPress: func,
-	onLift: func,
+
 	style: object,
 	onFlagClicked: func,
 	onDeleteItem: func,
