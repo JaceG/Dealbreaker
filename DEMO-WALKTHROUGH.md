@@ -11,6 +11,14 @@ Written 2026-11-08. The demo data lives in your account (jace.galloway@gmail.com
 
 Since update 2 (below) the app doesn't save the board until it has loaded the server's copy, so a phone's old saved board can no longer overwrite the server. Before that, launching could do exactly that, which is why the first version of these steps said to log out first. If the demo ever gets wiped, `node scripts/demo-seed/seed-demo.js` in the backend writes it again (section 8).
 
+### Phone test for card dragging (published 2026-11-09, update group fedc14e8, app 8d4bfdc)
+
+1. Tap a card's title or description: it opens and doesn't lift.
+2. Press and hold a card (about a third of a second) and drag it up or down the column, then let go: it lands there.
+3. Press and hold, then let go without moving: it drops back in place.
+4. Press and hold, drag to the screen edge to switch to the other column, and let go: it lands in that column.
+5. Scroll a column and swipe between columns: no card lifts.
+
 ### Phone test for update 2 (published 2026-11-08, update group 8e770ce5)
 
 1. **Sam:** tap the red count in the bar above the board, and the board should show only red cards. Drag a card: it goes back, with "Clear the filter to move cards". Tap the count again to clear.
@@ -176,7 +184,7 @@ Original questions:
 1. **Navigation.** Move Switch Profile and Logout out of the header, into a bottom bar on every board: **Main** (home) · **People** (the switcher, plus Create Profile) · **Create Flag** (on Main) · **Settings** (today's My Account, with Log Out at the bottom behind the new confirmation). The header would then show just the title. This is about a day of work and touches every screen, so I haven't started it.
 2. **A card's history across people.** In a card's history popup, add an **Everyone** tab listing that card's notes from all your people, newest first, each labeled with the person. It needs one more backend route (all your entries for one card). Small to medium.
 3. **Stats.** On Main: for each card, how many people it reached yellow, red or dealbreaker with; which cards were in play when a profile ended; how long yellow usually takes to turn red; how often you take a flag back down; and cards you flag on almost everyone, which can point at your own pattern rather than theirs. Per person: a flag timeline, days since the profile started, notes per month and the latest changes. This is the biggest item. I'd start with a plain list screen of Main's numbers before any charts.
-4. **Dragging cards** (cards lift on a tap, and are hard to drop): saved for later, as you said. It lives in the board library (`libs/board`). The likely fix is a long-press to lift, plus larger drop zones.
+4. ~~**Dragging cards**~~ Done 2026-11-09 (app 8d4bfdc): press and hold to lift; lifting your finger always drops the card. Was: cards lift on a tap, and are hard to drop. It lives in the board library (`libs/board`). The likely fix is a long-press to lift, plus larger drop zones.
 
 ## 10. Update 4 (published 2026-11-08: app b226a59, backend 9da5610)
 
