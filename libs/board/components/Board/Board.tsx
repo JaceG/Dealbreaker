@@ -9,6 +9,7 @@ import Card from '../Card/Card';
 import Carousel from '../Carousel/Carousel';
 import { BoardWrapper } from './Board.styled';
 import { boardLog } from '../../../../utils/boardLog';
+import { getView, rememberColumn } from '../lib/viewMemory';
 
 const MAX_RANGE = 100;
 const MAX_DEG = 30;
@@ -89,6 +90,8 @@ interface BoardProps {
 	onEditItem?: (item: any) => void;
 	data?: any;
 	showDeleteItem?: boolean;
+	// Which board this is (the person's id), so a rebuilt board reopens where the person was looking.
+	viewKey?: string;
 }
 
 interface BoardState {
@@ -161,6 +164,7 @@ class Board extends React.Component<BoardProps, BoardState> {
 			columns: boardRepository
 				.columns()
 				.map((c: any) => (boardRepository.items(c.id()) || []).length),
+			restore: getView(this.props.viewKey),
 		});
 	}
 
@@ -572,6 +576,9 @@ class Board extends React.Component<BoardProps, BoardState> {
 						{...({
 							data: boardRepository.columns(),
 							onScrollEndDrag: this.onScrollEnd,
+							// The carousel updates its column index before calling this.
+							onScroll: () => rememberColumn(this.props.viewKey, this.columnIndex()),
+							firstItem: getView(this.props.viewKey).col,
 							scrollEnabled: !movingMode,
 							renderItem: (item: any) => (
 								<Column

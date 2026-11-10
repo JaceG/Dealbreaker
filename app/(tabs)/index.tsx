@@ -210,6 +210,7 @@ export default function Lists() {
 						<Board
 							cardBorderRadius='10px'
 							key={`board-${currentProfileId}-${refreshKey}`}
+							viewKey={currentProfileId}
 							boardRepository={list}
 							open={() => {}}
 							showDeleteItem={currentProfileId === 'main'}

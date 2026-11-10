@@ -9,6 +9,7 @@ import {
 import { bool, func, object, number, string } from 'prop-types';
 import { colors, deviceWidth, ios } from '../../constants';
 import EmptyColumn from '../EmptyColumn/EmptyColumn';
+import { getView, rememberOffset } from '../lib/viewMemory';
 import {
 	ColumnWrapper,
 	ParagraphWrapper,
@@ -96,6 +97,7 @@ interface ColumnProps {
 	onEditItem?: (item: BoardItem) => void;
 	columnWidth?: number;
 	showDeleteItem?: boolean;
+	viewKey?: string;
 }
 
 interface ColumnState {}
@@ -107,6 +109,14 @@ const ONE_COLUMN_WIDTH = deviceWidth - PADDING;
 class Column extends React.Component<ColumnProps, ColumnState> {
 	private viewabilityConfig: FlatListProps<BoardItem>['viewabilityConfig'];
 	private scrollingDown: boolean = false;
+	// Scroll offset to put back after a rebuild, applied once the list's content has a size.
+	private restoreOffset: number;
+	private listHeight = 0;
+	private listRef: FlatList<BoardItem> | null = null;
+	private contentHeight = 0;
+	private columnRef: unknown = null;
+	private currentOffset = 0;
+	private ignoreNextScroll = false;
 
 	constructor(props: ColumnProps) {
 		super(props);
@@ -114,6 +124,7 @@ class Column extends React.Component<ColumnProps, ColumnState> {
 		this.viewabilityConfig = {
 			itemVisiblePercentThreshold: 50,
 		};
+		this.restoreOffset = getView(props.viewKey).offsets[String(props.column.id())] || 0;
 	}
 
 	componentDidMount() {
@@ -122,6 +133,18 @@ class Column extends React.Component<ColumnProps, ColumnState> {
 		boardRepository.addListener(column.id(), 'reload', () =>
 			this.forceUpdate()
 		);
+	}
+
+	// The screen sometimes hands a mounted board a new repository (board data object) without
+	// remounting it. Register with the new one too, or drags redraw against the old one.
+	componentDidUpdate(prevProps: ColumnProps) {
+		const { column, boardRepository } = this.props;
+		if (prevProps.boardRepository === boardRepository) return;
+		boardRepository.addListener(column.id(), 'reload', () => this.forceUpdate());
+		if (this.listRef) boardRepository.setListView(column.id(), this.listRef);
+		if (this.columnRef) boardRepository.setColumnRef(column.id(), this.columnRef);
+		boardRepository.setScrollOffset(column.id(), this.currentOffset);
+		if (this.contentHeight) boardRepository.setContentHeight(column.id(), this.contentHeight);
 	}
 
 	onPress = (item: BoardItem): void => {
@@ -143,6 +166,7 @@ class Column extends React.Component<ColumnProps, ColumnState> {
 
 	setColumnRef = (ref: unknown): void => {
 		const { column, boardRepository } = this.props;
+		this.columnRef = ref;
 		boardRepository.setColumnRef(column.id(), ref);
 	};
 
@@ -187,6 +211,11 @@ class Column extends React.Component<ColumnProps, ColumnState> {
 	handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>): void => {
 		const { column, onScrollingStarted, boardRepository } = this.props;
 
+		this.currentOffset = event.nativeEvent.contentOffset.y;
+		if (this.ignoreNextScroll) {
+			this.ignoreNextScroll = false;
+			return;
+		}
 		onScrollingStarted();
 
 		const col = boardRepository.column(column.id());
@@ -200,6 +229,7 @@ class Column extends React.Component<ColumnProps, ColumnState> {
 		const { column, onScrollingEnded, boardRepository } = this.props;
 
 		const currentOffset = event.nativeEvent.contentOffset.y;
+		rememberOffset(this.props.viewKey, column.id(), currentOffset);
 		const col = boardRepository.column(column.id());
 		const scrollingDownEnded =
 			this.scrollingDown && currentOffset >= col.scrollOffset();
@@ -232,11 +262,32 @@ class Column extends React.Component<ColumnProps, ColumnState> {
 		const { column, boardRepository } = this.props;
 
 		boardRepository.setContentHeight(column.id(), contentHeight);
+		this.contentHeight = contentHeight;
+		this.restoreScroll();
+	};
+
+	onListLayout = (event: { nativeEvent: { layout: { height: number } } }): void => {
+		this.listHeight = event.nativeEvent.layout.height;
+		this.restoreScroll();
+	};
+
+	// Needs both sizes to keep the offset inside the content; runs once.
+	restoreScroll = (): void => {
+		if (this.restoreOffset <= 0 || !this.listHeight || !this.contentHeight || !this.listRef) return;
+		const { column, boardRepository } = this.props;
+		const offset = Math.min(this.restoreOffset, Math.max(0, this.contentHeight - this.listHeight));
+		this.restoreOffset = 0;
+		this.currentOffset = offset;
+		// The jump fires onScroll but no scroll-end event, so don't let it mark the board as scrolling.
+		this.ignoreNextScroll = true;
+		this.listRef.scrollToOffset({ offset, animated: false });
+		boardRepository.setScrollOffset(column.id(), offset);
 	};
 
 	setListView = (ref: FlatList<BoardItem> | null): void => {
 		const { column, boardRepository } = this.props;
 
+		this.listRef = ref;
 		boardRepository.setListView(column.id(), ref);
 	};
 
@@ -377,8 +428,12 @@ class Column extends React.Component<ColumnProps, ColumnState> {
 						keyExtractor={this.keyExtractor}
 						scrollEnabled={!movingMode}
 						onContentSizeChange={this.onContentSizeChange}
+						onLayout={this.onListLayout}
 						showsVerticalScrollIndicator={false}
 						extraData={showDeleteItem}
+						// Restoring a deep scroll position needs every card laid out, or the first
+						// content height (10 cards) would cut the restore short.
+						initialNumToRender={this.restoreOffset > 0 ? 1000 : 10}
 					/>
 				)}
 			</ColumnWrapper>

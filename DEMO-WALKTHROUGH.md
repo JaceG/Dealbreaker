@@ -11,6 +11,19 @@ Written 2026-11-08. The demo data lives in your account (jace.galloway@gmail.com
 
 Since update 2 (below) the app doesn't save the board until it has loaded the server's copy, so a phone's old saved board can no longer overwrite the server. Before that, launching could do exactly that, which is why the first version of these steps said to log out first. If the demo ever gets wiped, `node scripts/demo-seed/seed-demo.js` in the backend writes it again (section 8).
 
+### Phone test for cross-column drops and keeping your place (published 2026-11-09)
+
+Jace's notes after the drag rewrite: cards dragged to the other column landed at the bottom, and the board redrew back on the
+starting column or at the top. Causes: the "Moving to..." popup dropped the drop position, and every rebuild reopened on Flags,
+scrolled to the top.
+
+1. Drag a card from Flags to the middle of Dealbreakers, Submit: it lands where you dropped it, and the board stays on Dealbreakers.
+2. Same from Dealbreakers into Flags.
+3. Drag across and press Cancel: the card goes back, and the board reopens on the column it went back to.
+4. Scroll down a long column, drag a card a little and drop it: the column stays scrolled where you were.
+
+Known: the "Moving to Dealbreakers" popup still asks "Why do you want to add more context?"; the redraw flash is still there.
+
 ### Phone test for drag rewrite + board log (published 2026-11-09)
 
 The first drag update made things worse on the phone (card far below the finger, never landing, columns flipping). Reproduced in

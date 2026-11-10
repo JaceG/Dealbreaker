@@ -38,4 +38,6 @@ export interface PendingTransition {
 	newCardType: 'dealbreaker' | 'flag';
 	newFlagColor: string;
 	isUndo?: boolean;
+	// Where a dragged card was dropped in its new column; without it the card goes to the end.
+	targetIndex?: number;
 }

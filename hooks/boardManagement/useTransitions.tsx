@@ -4,6 +4,7 @@ import { addFlagHistory } from "../../utils/mongodb";
 import { PendingTransition } from "../../models/boardManagementModel";
 import { FlagItem } from "../../models";
 import { boardLog } from "../../utils/boardLog";
+import { rememberColumn } from "../../libs/board/components/lib/viewMemory";
 
 export const useTransitions = (
   dealbreaker: any,
@@ -113,6 +114,7 @@ export const useTransitions = (
             prevCardType: "flag",
             newCardType: "dealbreaker",
             newFlagColor: "white",
+            targetIndex: newIndex,
           });
           setTransitionReasonModalVisible(true);
 
@@ -157,6 +159,7 @@ export const useTransitions = (
             prevCardType: "dealbreaker",
             newCardType: "flag",
             newFlagColor: newFlagColor,
+            targetIndex: newIndex,
           });
           setTransitionReasonModalVisible(true);
 
@@ -285,6 +288,14 @@ export const useTransitions = (
     setTimeout(() => setTransitionReasonModalVisible(true), 600);
   };
 
+  const insertAt = (list: any[], item: any, index?: number) => {
+    if (typeof index === "number" && index >= 0 && index <= list.length) {
+      list.splice(index, 0, item);
+    } else {
+      list.push(item);
+    }
+  };
+
   // Function to handle transition reason submission
   const handleTransitionReasonSubmit = (
     reason: string,
@@ -312,8 +323,8 @@ export const useTransitions = (
         // Remove from flags list
         updatedDealbreaker[currentProfileId].flag.splice(itemIndex, 1);
 
-        // Add to dealbreakers list
-        updatedDealbreaker[currentProfileId].dealbreaker.push(movedItem);
+        // Add to dealbreakers list where it was dropped (the end when there's no drop position)
+        insertAt(updatedDealbreaker[currentProfileId].dealbreaker, movedItem, pendingTransition.targetIndex);
       }
     } else if (pendingTransition.type === "dealbreaker-to-flag") {
       // Check if it's an undo operation
@@ -357,8 +368,8 @@ export const useTransitions = (
           // Remove from dealbreakers list
           updatedDealbreaker[currentProfileId].dealbreaker.splice(itemIndex, 1);
 
-          // Add to flags list
-          updatedDealbreaker[currentProfileId].flag.push(movedItem);
+          // Add to flags list where it was dropped (the end when there's no drop position)
+          insertAt(updatedDealbreaker[currentProfileId].flag, movedItem, pendingTransition.targetIndex);
         }
       }
     }
@@ -414,6 +425,13 @@ export const useTransitions = (
     // Close the modal and reset the pending transition
     setTransitionReasonModalVisible(false);
     setPendingTransition(null);
+    // The card goes back to the column it came from, so reopen the board there.
+    if (pendingTransition) {
+      rememberColumn(
+        pendingTransition.profileId,
+        pendingTransition.prevCardType === "dealbreaker" ? 1 : 0
+      );
+    }
 
     // Force a UI refresh to revert to the previous state
     boardLog('board.remount', { reason: 'transition popup cancelled' });

@@ -28,6 +28,8 @@ interface CarouselProps {
 	}) => React.ReactNode;
 	sliderWidth: number;
 	scrollEnabled?: boolean;
+	// Column to show first, e.g. the one the person was on before the board was rebuilt.
+	firstItem?: number;
 }
 
 interface CarouselState {}
@@ -74,11 +76,33 @@ class Carousel extends Component<CarouselProps, CarouselState> {
 		this.scrollEndOffset = 0;
 		this.scrollEndActive = 0;
 		this.onLayoutInitDone = false;
+		this.initPositions(props);
+		const first = props.firstItem ?? 0;
+		if (first > 0 && this.positions[first]) {
+			this.activeItem = first;
+			this.previousActiveItem = first;
+			this.itemToSnapTo = first;
+			// Same target as snapToItem, kept inside the content the way the scroll view keeps a snap:
+			// 8 pt padding, then each column plus its 8 pt gap.
+			const maxOffset = Math.max(
+				0,
+				8 + props.data.length * (props.itemWidth + 8) - props.sliderWidth
+			);
+			this.scrollOffsetRef = Math.min(
+				maxOffset,
+				Math.max(0, this.positions[first].start - (deviceWidth - props.itemWidth) / 2 + 8)
+			);
+			this.currentContentOffset = this.scrollOffsetRef;
+			this.initialContentOffset = { x: this.scrollOffsetRef, y: 0 };
+		}
 	}
+
+	// Built once, never changed: a contentOffset prop that changed on later renders would make
+	// iOS jump to it (and React freezes props, so it can't be edited in place either).
+	private initialContentOffset = { x: 0, y: 0 };
 
 	componentDidMount() {
 		this.mounted = true;
-		this.activeItem = 0;
 
 		this.initPositions(this.props);
 	}
@@ -431,6 +455,7 @@ class Carousel extends Component<CarouselProps, CarouselState> {
 		return (
 			<ScrollView
 				{...scrollViewProps}
+				contentOffset={this.initialContentOffset}
 				scrollEnabled={scrollEnabled && !oneColumn}>
 				{data.map((item: CarouselItem, index: number) =>
 					this.renderItem({ item, index })

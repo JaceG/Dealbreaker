@@ -135,6 +135,11 @@ class Mover {
 		item: BoardItem
 	): void => {
 		registry.move(fromColumnId, toColumnId, item);
+		// Close the gap the card left, so a card that comes back is numbered among the others.
+		boardRepository
+			.items(fromColumnId)
+			.filter((i: BoardItem) => Number(i.id()) !== -2)
+			.forEach((i: BoardItem, n: number) => i.setIndex(n));
 
 		boardRepository.notify(fromColumnId, 'reload');
 
