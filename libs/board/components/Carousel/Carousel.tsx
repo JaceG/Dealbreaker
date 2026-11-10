@@ -336,8 +336,11 @@ class Carousel extends Component<CarouselProps, CarouselState> {
 		}
 	};
 
-	snapToItem = (index: number): void => {
+	snapToItem = (requested: number): void => {
 		const { itemWidth } = this.props;
+		// A swipe past the first or last column asks for -1 or one past the end; stay on the edge column
+		// instead of recording a column that doesn't exist (which stopped cards from lifting).
+		const index = Math.max(0, Math.min(requested, Math.max(0, this.positions.length - 1)));
 		this.activeItem = index;
 
 		if (index !== this.previousActiveItem) {

@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { BoardRepository } from '../../libs/board/components';
 import { data } from '../../models/boardManagementModel';
 import { boardLog } from '../../utils/boardLog';
+import { isDragging, onDragIdle } from '../../libs/board/components/lib/dragState';
 
 export const useBoardOperations = (
 	dealbreaker: any,
@@ -192,11 +193,28 @@ export const useBoardOperations = (
 	};
 
 	// Columns register themselves when they mount, so a new board needs a remount (new key), not just new data.
+	// Note counts arrive from the server a moment after launch and after each note; rebuilding then would
+	// tear the board down under a lifted card, so that rebuild waits for the drop.
+	const rebuildHeldRef = useRef(false);
+	const [dragIdleTick, setDragIdleTick] = useState(0);
+	useEffect(() => onDragIdle(() => setDragIdleTick((n) => n + 1)), []);
 	useEffect(() => {
 		if (!dealbreaker?.[currentProfileId]) return;
+		if (isDragging()) {
+			rebuildHeldRef.current = true;
+			boardLog('board.rebuildHeld', { reason: 'note counts or filter changed during a drag' });
+			return;
+		}
 		updateBoard(true);
 		setRefreshKey(Date.now());
 	}, [colorFilter, historyCounts]);
+	useEffect(() => {
+		if (!rebuildHeldRef.current) return;
+		rebuildHeldRef.current = false;
+		boardLog('board.rebuildReleased', {});
+		updateBoard(true);
+		setRefreshKey(Date.now());
+	}, [dragIdleTick]);
 
 	// Effects for board management
 	useEffect(() => {

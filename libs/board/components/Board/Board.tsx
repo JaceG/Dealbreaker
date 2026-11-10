@@ -10,6 +10,7 @@ import Carousel from '../Carousel/Carousel';
 import { BoardWrapper } from './Board.styled';
 import { boardLog } from '../../../../utils/boardLog';
 import { getView, rememberColumn } from '../lib/viewMemory';
+import { setDragging } from '../lib/dragState';
 
 const MAX_RANGE = 100;
 const MAX_DEG = 30;
@@ -171,6 +172,7 @@ class Board extends React.Component<BoardProps, BoardState> {
 	componentWillUnmount() {
 		// A board torn down mid-drag would explain a card that vanishes or never lands.
 		boardLog('board.unmount', { dragging: this.lifted });
+		if (this.lifted) setDragging(false);
 	}
 
 	onOrientationChange = ({
@@ -196,7 +198,11 @@ class Board extends React.Component<BoardProps, BoardState> {
 		});
 	};
 
-	columnIndex = () => (this.carousel ? this.carousel.currentIndex : 0);
+	columnIndex = () => {
+		const last = Math.max(0, this.props.boardRepository.columns().length - 1);
+		const index = this.carousel ? this.carousel.currentIndex : 0;
+		return Math.max(0, Math.min(index, last));
+	};
 
 	// The card under the finger in the column on screen. Card layouts are in screen coordinates.
 	itemAt = (absX: number, absY: number) => {
@@ -249,6 +255,7 @@ class Board extends React.Component<BoardProps, BoardState> {
 		}
 		const l = item.layout();
 		this.lifted = true;
+		setDragging(true);
 		this.dragItem = item;
 		this.srcColumnId = item.columnId();
 		this.srcIndex = item.index();
@@ -374,7 +381,13 @@ class Board extends React.Component<BoardProps, BoardState> {
 		boardLog('gesture.finalize', { canceled, lifted: this.lifted });
 		if (!this.lifted) return;
 		this.rotate(0);
-		this.endMoving();
+		try {
+			this.endMoving();
+		} finally {
+			// After the drop's own save has started, so a rebuild held back during the drag uses the new
+			// order; in finally, so a failed save can't leave every later rebuild held back.
+			setDragging(false);
+		}
 	};
 
 	shouldScroll = (
@@ -493,9 +506,7 @@ class Board extends React.Component<BoardProps, BoardState> {
 				return;
 			}
 
-			const columnIndex = this.carousel ? this.carousel.currentIndex : 0;
-
-			if (columnId - 1 === columnIndex) {
+			if (columnId - 1 === this.columnIndex()) {
 				open(item.row());
 			}
 		};

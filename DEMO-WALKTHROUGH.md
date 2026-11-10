@@ -11,6 +11,14 @@ Written 2026-11-08. The demo data lives in your account (jace.galloway@gmail.com
 
 Since update 2 (below) the app doesn't save the board until it has loaded the server's copy, so a phone's old saved board can no longer overwrite the server. Before that, launching could do exactly that, which is why the first version of these steps said to log out first. If the demo ever gets wiped, `node scripts/demo-seed/seed-demo.js` in the backend writes it again (section 8).
 
+### Phone test for lifts that didn't take (published 2026-11-09)
+
+From Jace's log: (1) a right swipe on Flags left the carousel on column -1, so every hold found no cards until relaunch;
+(2) note counts arriving 1-3 s after launch rebuilt the board under a lifted card.
+
+1. On Flags, swipe right (toward nothing), then press and hold a card: it lifts.
+2. Right after opening the app, press and hold a card and drag it: it doesn't vanish; it lands where you drop it.
+
 ### Phone test for cross-column drops and keeping your place (published 2026-11-09)
 
 Jace's notes after the drag rewrite: cards dragged to the other column landed at the bottom, and the board redrew back on the
