@@ -6,7 +6,7 @@ about 15 idle minutes, so the first request can take 20 to 45 seconds.
 
 ## Showing Jace a change on his iPhone (EAS Update)
 
-His phone runs a release build that pulls over-the-air updates from the `preview` channel, runtime version `1.0.0`
+His phone runs a release build that pulls over-the-air updates from the `preview` channel, runtime version `1.1.0`
 (the `version` in app.json, because `runtimeVersion.policy` is `appVersion`).
 
 - JavaScript, styling and image changes can ship as an update:
