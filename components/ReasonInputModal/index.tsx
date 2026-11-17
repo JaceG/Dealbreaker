@@ -19,7 +19,7 @@ import { imageUtils } from '../../utils/functions';
 import AppButton from '../AppButton';
 import AppInput from '../AppInput';
 import { SimpleAttachment } from '../../models';
-import { colors, typeScale } from '../../libs/board/constants';
+import { colors, floatShadow, radius, typeScale } from '../../libs/board/constants';
 import AudioAttachment from '../MediaPlayer/AudioAttachment';
 import VideoPlayerModal from '../MediaPlayer/VideoPlayerModal';
 import VoiceMemoRecorder from '../MediaPlayer/VoiceMemoRecorder';
@@ -552,13 +552,8 @@ const styles = StyleSheet.create({
 	modalContent: {
 		width: '90%',
 		backgroundColor: colors.surface,
-		borderRadius: 10,
+		borderRadius: radius.card,
 		overflow: 'hidden',
-		elevation: 10,
-		shadowColor: colors.ink,
-		shadowOffset: { width: 0, height: 5 },
-		shadowOpacity: 0.5,
-		shadowRadius: 5,
 		maxHeight: '80%',
 	},
 	header: {
@@ -589,7 +584,7 @@ const styles = StyleSheet.create({
 	statusBadge: {
 		paddingHorizontal: 10,
 		paddingVertical: 5,
-		borderRadius: 5,
+		borderRadius: radius.pill,
 		// A white flag's badge is white on a white popup without it.
 		borderWidth: 1,
 		borderColor: colors.outline,
@@ -622,7 +617,7 @@ const styles = StyleSheet.create({
 		borderTopWidth: 1,
 		borderTopColor: colors.hairline,
 		paddingTop: 15,
-		borderRadius: 8,
+		borderRadius: radius.small,
 		backgroundColor: colors.paper,
 		padding: 15,
 		marginBottom: 20,
@@ -665,7 +660,7 @@ const styles = StyleSheet.create({
 	attachmentImage: {
 		width: '100%',
 		height: '100%',
-		borderRadius: 5,
+		borderRadius: radius.small,
 		borderWidth: 1,
 		borderColor: colors.hairline,
 		backgroundColor: colors.paper,
@@ -678,20 +673,16 @@ const styles = StyleSheet.create({
 		backgroundColor: colors.danger,
 		width: 24,
 		height: 24,
-		borderRadius: 12,
+		borderRadius: radius.pill,
 		justifyContent: 'center',
 		alignItems: 'center',
-		shadowColor: colors.ink,
-		shadowOffset: { width: 0, height: 1 },
-		shadowOpacity: 0.2,
-		shadowRadius: 1,
-		elevation: 2,
+		...floatShadow,
 	},
 	noAttachmentsContainer: {
 		borderWidth: 1,
 		borderColor: colors.hairline,
 		borderStyle: 'dashed',
-		borderRadius: 5,
+		borderRadius: radius.small,
 		padding: 15,
 		alignItems: 'center',
 		justifyContent: 'center',
@@ -705,7 +696,7 @@ const styles = StyleSheet.create({
 	videoTile: {
 		width: '100%',
 		height: '100%',
-		borderRadius: 5,
+		borderRadius: radius.small,
 		backgroundColor: colors.ink,
 		alignItems: 'center',
 		justifyContent: 'center',
@@ -720,7 +711,7 @@ const styles = StyleSheet.create({
 		height: '100%',
 		flexDirection: 'column',
 		justifyContent: 'center',
-		borderRadius: 5,
+		borderRadius: radius.small,
 		borderWidth: 1,
 		borderColor: colors.hairline,
 		backgroundColor: colors.paper,

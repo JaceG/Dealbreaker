@@ -17,6 +17,7 @@ import StoreContext from '../../store';
 import { showToast } from '../../utils';
 import { colors } from '../../libs/board/constants/colors';
 import { typeScale } from '../../libs/board/constants/typeScale';
+import { radius } from '../../libs/board/constants/shape';
 import { FlagHistoryTimelineProps } from '../../models/modalModels';
 import AppButton from '../AppButton';
 import CloseButton from '../CloseButton';
@@ -677,7 +678,7 @@ const styles = StyleSheet.create({
 	container: {
 		flex: 1,
 		backgroundColor: colors.surface,
-		borderRadius: 10,
+		borderRadius: radius.card,
 		overflow: 'hidden',
 		margin: 5,
 	},
@@ -761,7 +762,7 @@ const styles = StyleSheet.create({
 		margin: 12,
 		borderWidth: 2,
 		borderColor: colors.ink,
-		borderRadius: 8,
+		borderRadius: radius.small,
 		overflow: 'hidden',
 	},
 	tab: {
@@ -820,14 +821,10 @@ const styles = StyleSheet.create({
 		backgroundColor: colors.surface,
 		borderWidth: 1,
 		borderColor: colors.hairline,
-		borderRadius: 8,
+		borderRadius: radius.card,
 		paddingHorizontal: 10,
 		paddingVertical: 15,
 		width: '94.5%',
-		shadowRadius: 15,
-		shadowColor: colors.ink,
-		shadowOffset: { width: 0, height: 3 },
-		elevation: 6,
 		marginTop: 4,
 		marginBottom: 4,
 	},
@@ -868,7 +865,7 @@ const styles = StyleSheet.create({
 		marginTop: 8,
 		backgroundColor: colors.paper,
 		padding: 8,
-		borderRadius: 4,
+		borderRadius: radius.small,
 	},
 	reasonTitle: {
 		...typeScale.label,
@@ -882,7 +879,7 @@ const styles = StyleSheet.create({
 	attachmentsContainer: {
 		marginTop: 12,
 		backgroundColor: colors.paper,
-		borderRadius: 4,
+		borderRadius: radius.small,
 		padding: 10,
 	},
 	attachmentsTitle: {
@@ -898,7 +895,7 @@ const styles = StyleSheet.create({
 		marginBottom: 8,
 		width: 120,
 		height: 120,
-		borderRadius: 6,
+		borderRadius: radius.small,
 		overflow: 'hidden',
 		borderWidth: 1,
 		borderColor: colors.hairline,
@@ -907,7 +904,7 @@ const styles = StyleSheet.create({
 	thumbnailImage: {
 		width: '100%',
 		height: '100%',
-		borderRadius: 6,
+		borderRadius: radius.small,
 		borderWidth: 1,
 		borderColor: colors.hairline,
 		backgroundColor: colors.ink,
@@ -916,7 +913,7 @@ const styles = StyleSheet.create({
 		width: '100%',
 		height: '100%',
 		backgroundColor: colors.ink,
-		borderRadius: 6,
+		borderRadius: radius.small,
 		overflow: 'hidden',
 		justifyContent: 'center',
 		alignItems: 'center',
@@ -930,7 +927,7 @@ const styles = StyleSheet.create({
 		alignItems: 'center',
 		padding: 10,
 		backgroundColor: colors.blush,
-		borderRadius: 5,
+		borderRadius: radius.small,
 		borderWidth: 1,
 		borderColor: colors.hairline,
 		width: '100%',
@@ -943,15 +940,15 @@ const styles = StyleSheet.create({
 		backgroundColor: colors.scrim,
 		color: colors.onFill,
 		padding: 4,
-		borderBottomLeftRadius: 6,
-		borderBottomRightRadius: 6,
+		borderBottomLeftRadius: radius.small,
+		borderBottomRightRadius: radius.small,
 	},
 	genericAttachment: {
 		marginRight: 8,
 		marginBottom: 8,
 		padding: 10,
 		backgroundColor: colors.paper,
-		borderRadius: 6,
+		borderRadius: radius.small,
 		overflow: 'hidden',
 	},
 	genericAttachmentText: {
@@ -964,7 +961,7 @@ const styles = StyleSheet.create({
 		backgroundColor: colors.paper,
 		borderWidth: 1,
 		borderColor: colors.hairline,
-		borderRadius: 4,
+		borderRadius: radius.small,
 	},
 	debugTitle: {
 		...typeScale.label,
@@ -979,7 +976,7 @@ const styles = StyleSheet.create({
 		justifyContent: 'center',
 		alignItems: 'center',
 		backgroundColor: colors.paper,
-		borderRadius: 6,
+		borderRadius: radius.small,
 		padding: 10,
 	},
 	errorImageText: {
@@ -998,7 +995,7 @@ const styles = StyleSheet.create({
 	testButton: {
 		backgroundColor: colors.ink,
 		padding: 8,
-		borderRadius: 5,
+		borderRadius: radius.small,
 		marginRight: 8,
 	},
 	disabledButton: {
@@ -1011,7 +1008,7 @@ const styles = StyleSheet.create({
 	},
 	whiteFlagBackground: {
 		backgroundColor: colors.ink,
-		borderRadius: 4,
+		borderRadius: radius.small,
 		padding: 4,
 	},
 });

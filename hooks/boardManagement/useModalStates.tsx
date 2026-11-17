@@ -2,7 +2,6 @@ import { useState } from 'react';
 
 export const useModalStates = () => {
 	// Core modal visibility states
-	const [visible, setVisible] = useState<boolean>(false);
 	const [deleteModalVisible, setDeleteModalVisible] = useState(false);
 	const [editModalVisible, setEditModalVisible] = useState(false);
 	const [editProfileModalVisible, setEditProfileModalVisible] =
@@ -19,7 +18,6 @@ export const useModalStates = () => {
 
 	return {
 		// Modal visibility states
-		visible,
 		deleteModalVisible,
 		editModalVisible,
 		editProfileModalVisible,
@@ -27,7 +25,6 @@ export const useModalStates = () => {
 		transitionReasonModalVisible,
 
 		// Modal state setters
-		setVisible,
 		setDeleteModalVisible,
 		setEditModalVisible,
 		setEditProfileModalVisible,

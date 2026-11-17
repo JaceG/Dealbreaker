@@ -3,7 +3,7 @@ import { Modal, View, StyleSheet } from 'react-native';
 import FlagHistoryTimeline from '../FlagHistoryTimeline';
 import { FlagHistoryModalProps } from '../../models/modalModels';
 
-import { colors } from '../../libs/board/constants';
+import { colors, radius } from '../../libs/board/constants';
 const FlagHistoryModal = ({
 	visible,
 	onClose,
@@ -71,13 +71,8 @@ const styles = StyleSheet.create({
 		width: '90%',
 		height: '80%',
 		backgroundColor: colors.surface,
-		borderRadius: 10,
+		borderRadius: radius.card,
 		overflow: 'hidden',
-		elevation: 5,
-		shadowColor: colors.ink,
-		shadowOffset: { width: 0, height: 2 },
-		shadowOpacity: 0.25,
-		shadowRadius: 3.84,
 	},
 });
 

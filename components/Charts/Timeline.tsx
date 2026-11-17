@@ -6,7 +6,7 @@ import { AccessibilityInfo, Pressable, ScrollView, StyleSheet, Text, View } from
 import { GestureDetector, usePinchGesture } from 'react-native-gesture-handler';
 import Feather from '@expo/vector-icons/Feather';
 import CloseButton from '../CloseButton';
-import { colors, typeScale } from '../../libs/board/constants';
+import { colors, radius, typeScale } from '../../libs/board/constants';
 import type { TimelineEvent } from '../../utils/stats';
 
 export type TimelinePerson = {
@@ -390,7 +390,7 @@ export const Timeline = ({ from, to, people }: { from: number; to: number; peopl
 
 const styles = StyleSheet.create({
 	controls: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 8 },
-	segment: { flexDirection: 'row', borderWidth: 2, borderColor: colors.ink, borderRadius: 8, overflow: 'hidden' },
+	segment: { flexDirection: 'row', borderWidth: 2, borderColor: colors.ink, borderRadius: radius.small, overflow: 'hidden' },
 	segmentButton: { minHeight: 44, paddingHorizontal: 14, justifyContent: 'center' },
 	segmentOn: { backgroundColor: colors.ink },
 	segmentText: { ...typeScale.label, color: colors.ink },
@@ -418,7 +418,7 @@ const styles = StyleSheet.create({
 	detail: {
 		marginTop: 12,
 		padding: 12,
-		borderRadius: 8,
+		borderRadius: radius.small,
 		borderWidth: 1,
 		borderColor: colors.hairline,
 		backgroundColor: colors.paper,

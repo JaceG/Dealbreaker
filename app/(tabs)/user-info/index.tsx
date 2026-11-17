@@ -6,7 +6,10 @@ import {
 	Modal,
 	Alert,
 	ScrollView,
+	TouchableOpacity,
+	ActivityIndicator,
 } from 'react-native';
+import Feather from '@expo/vector-icons/Feather';
 import {
 	GoogleSignin,
 	statusCodes,
@@ -17,7 +20,7 @@ import {
 	EXPO_PUBLIC_OAUTH_IOS_CLIENT_ID,
 	EXPO_PUBLIC_OAUTH_EXPO_CLIENT_ID,
 } from '@env';
-import { colors, typeScale } from '../../../libs/board/constants';
+import { colors, radius, typeScale } from '../../../libs/board/constants';
 import AppButton from '../../../components/AppButton';
 import AppInput from '../../../components/AppInput';
 import BoardLogModal from '../../../components/BoardLogModal';
@@ -287,141 +290,151 @@ export const UserInfo = () => {
 			automaticallyAdjustKeyboardInsets>
 			<View
 				style={isPortrait ? styles.container : styles.horizontalContainer}>
-				<Text style={styles.textHeader}>Personal Info</Text>
-				<View style={styles.seperator}></View>
-				<View style={styles.row}>
-					<Text style={styles.text}>Email:</Text>
-					<Text style={styles.textMuted}>
-						{user?.email || 'No email found'}
-					</Text>
-				</View>
-				<View style={styles.row}>
-					<Text style={styles.text}>Name:</Text>
-					<View style={styles.inputContainer}>
-						{!isEditing ? (
-							<Text style={styles.textMuted}>
-								{user?.name || 'No name found'}
-							</Text>
-						) : (
-							<AppInput
-								value={name}
-								onChangeText={handleNameChange}
-								style={styles.textInput}
-								placeholder='Enter Name'
-							/>
-						)}
-						<View style={styles.inlineButton}>
-							<AppButton
-								title={isEditing ? 'Save' : 'Edit'}
-								onPress={handleEdit}
-								variant={isEditing ? 'primary' : 'secondary'}
-							/>
+				<Text style={styles.sectionLabel}>Personal Info</Text>
+				<View style={styles.card}>
+					<View style={styles.row}>
+						<Text style={styles.text}>Email:</Text>
+						<Text style={styles.textMuted}>
+							{user?.email || 'No email found'}
+						</Text>
+					</View>
+					<View style={[styles.row, styles.divider]}>
+						<Text style={styles.text}>Name:</Text>
+						<View style={styles.inputContainer}>
+							{!isEditing ? (
+								<Text style={styles.textMuted}>
+									{user?.name || 'No name found'}
+								</Text>
+							) : (
+								<AppInput
+									value={name}
+									onChangeText={handleNameChange}
+									style={styles.textInput}
+									placeholder='Enter Name'
+								/>
+							)}
+							<View style={styles.inlineButton}>
+								<AppButton
+									title={isEditing ? 'Save' : 'Edit'}
+									onPress={handleEdit}
+									variant={isEditing ? 'primary' : 'secondary'}
+								/>
+							</View>
 						</View>
 					</View>
 				</View>
-				<Text style={styles.textHeader}>Sign-in Methods</Text>
-				<View style={styles.seperator}></View>
-				{methods === null && (
-					<>
-						<Text style={[styles.textMuted, styles.gapBelow]}>
-							Couldn't load your sign-in methods.
-						</Text>
-						<AppButton title='Try Again' onPress={retryLoadMethods} variant='secondary' />
-					</>
-				)}
-				{methods &&
-					(['google', 'apple'] as const).map((type) => (
-						<View style={styles.row} key={type}>
-							<Text style={styles.text}>{PROVIDER_NAME[type]}:</Text>
-							<View style={styles.methodStatus}>
-								<Text style={styles.textMuted}>
-									{methods[type] ? 'Connected' : 'Not connected'}
-								</Text>
-								{methods[type] ? (
-									<AppButton
-										title='Disconnect'
-										onPress={() => handleDisconnect(type)}
-										variant='secondary'
-									/>
-								) : (
-									(type === 'google' || isAppleAvailable) && (
+				<Text style={styles.sectionLabel}>Sign-in Methods</Text>
+				<View style={styles.card}>
+					{methods === undefined && <ActivityIndicator style={styles.gapAround} color={colors.muted} />}
+					{methods === null && (
+						<View style={styles.retry}>
+							<Text style={[styles.textMuted, styles.gapAround]}>
+								Couldn't load your sign-in methods.
+							</Text>
+							<AppButton title='Try Again' onPress={retryLoadMethods} variant='secondary' />
+						</View>
+					)}
+					{methods &&
+						(['google', 'apple'] as const).map((type, i) => (
+							<View style={[styles.row, i > 0 && styles.divider]} key={type}>
+								<Text style={styles.text}>{PROVIDER_NAME[type]}:</Text>
+								<View style={styles.methodStatus}>
+									<Text style={styles.textMuted}>
+										{methods[type] ? 'Connected' : 'Not connected'}
+									</Text>
+									{methods[type] ? (
 										<AppButton
-											title='Connect'
-											onPress={() => handleConnect(type)}
+											title='Disconnect'
+											onPress={() => handleDisconnect(type)}
 											variant='secondary'
 										/>
-									)
-								)}
+									) : (
+										(type === 'google' || isAppleAvailable) && (
+											<AppButton
+												title='Connect'
+												onPress={() => handleConnect(type)}
+												variant='secondary'
+											/>
+										)
+									)}
+								</View>
 							</View>
-						</View>
-					))}
-				<Text style={styles.textHeader}>
+						))}
+				</View>
+				<Text style={styles.sectionLabel}>
 					{hasPassword ? 'Change Password' : 'Set Password'}
 				</Text>
-				<View style={styles.seperator}></View>
-				{hasPassword && (
-					<View style={styles.row}>
-						<Text style={styles.text}>Current Password:</Text>
+				<View style={styles.card}>
+					{hasPassword && (
+						<View style={styles.row}>
+							<Text style={styles.text}>Current Password:</Text>
+							<AppInput
+								value={currentPassword}
+								onChangeText={setCurrentPassword}
+								style={styles.passwordTextInput}
+								placeholder='Enter Current Password'
+								secureTextEntry={true}
+							/>
+						</View>
+					)}
+					<View style={[styles.row, hasPassword && styles.divider]}>
+						<Text style={styles.text}>New Password:</Text>
 						<AppInput
-							value={currentPassword}
-							onChangeText={setCurrentPassword}
+							value={newPassword}
+							onChangeText={setNewPassword}
 							style={styles.passwordTextInput}
-							placeholder='Enter Current Password'
+							placeholder='Enter New Password'
 							secureTextEntry={true}
 						/>
 					</View>
-				)}
-				<View style={styles.row}>
-					<Text style={styles.text}>New Password:</Text>
-					<AppInput
-						value={newPassword}
-						onChangeText={setNewPassword}
-						style={styles.passwordTextInput}
-						placeholder='Enter New Password'
-						secureTextEntry={true}
-					/>
-				</View>
-				<View style={styles.row}>
-					<Text style={styles.text}>Confirm Password:</Text>
-					<AppInput
-						value={confirmPassword}
-						onChangeText={setConfirmPassword}
-						style={styles.passwordTextInput}
-						placeholder='Enter Confirm Password'
-						secureTextEntry={true}
-					/>
-				</View>
-				<View style={styles.passwordButtonContainer}>
-					<AppButton
-						title={hasPassword ? 'Save New Password' : 'Save Password'}
-						onPress={handleSave}
-					/>
+					<View style={[styles.row, styles.divider]}>
+						<Text style={styles.text}>Confirm Password:</Text>
+						<AppInput
+							value={confirmPassword}
+							onChangeText={setConfirmPassword}
+							style={styles.passwordTextInput}
+							placeholder='Enter Confirm Password'
+							secureTextEntry={true}
+						/>
+					</View>
+					<View style={styles.passwordButtonContainer}>
+						<AppButton
+							title={hasPassword ? 'Save New Password' : 'Save Password'}
+							onPress={handleSave}
+						/>
+					</View>
 				</View>
 
 				{/* Developer accounts, or support diagnostics: board and drag events, also uploaded for review. */}
 				{boardLogAllowed(user) ? (
 					<>
-						<View style={styles.logoutSection}>
+						<Text style={styles.sectionLabel}>Support</Text>
+						<View style={styles.card}>
 							{!user?.developer && diagnosticsActive(user) ? (
-								<Text style={styles.diagnosticsNote}>
+								<Text style={[styles.diagnosticsNote, styles.gapAround]}>
 									Diagnostics are on until{' '}
 									{new Date(user!.diagnosticsUntil).toLocaleDateString()}. What you do on the
 									board is shared with support so they can find the problem.
 								</Text>
 							) : null}
-							<AppButton title='Board Log' onPress={() => setBoardLogVisible(true)} variant='secondary' />
+							<TouchableOpacity
+								style={[styles.row, styles.navRow, !user?.developer && diagnosticsActive(user) && styles.divider]}
+								onPress={() => setBoardLogVisible(true)}
+								accessibilityRole='button'>
+								<Text style={styles.textMuted}>Board Log</Text>
+								<Feather name='chevron-right' size={20} color={colors.muted} />
+							</TouchableOpacity>
 						</View>
 						<BoardLogModal visible={boardLogVisible} onClose={() => setBoardLogVisible(false)} />
 					</>
 				) : null}
 
 				<View style={styles.logoutSection}>
-					<AppButton title='Log Out' onPress={confirmLogout} variant='secondary' />
+					<AppButton title='Log Out' onPress={confirmLogout} variant='link' />
 				</View>
 
-				<Text style={styles.dangerHeader}>Danger Zone</Text>
-				<View style={styles.seperator}></View>
-				<View style={styles.deleteSection}>
+				<Text style={[styles.sectionLabel, styles.dangerLabel]}>Danger Zone</Text>
+				<View style={[styles.card, styles.deleteSection]}>
 					<Text style={styles.deleteWarningText}>
 						⚠️ Warning: This action cannot be undone. Deleting your
 						account will permanently remove all your data, profiles, and
@@ -484,8 +497,36 @@ export const UserInfo = () => {
 };
 
 const styles = StyleSheet.create({
+	// Each section is a white card under a small left-aligned heading, rows split by hairlines.
+	sectionLabel: {
+		...typeScale.label,
+		color: colors.muted,
+		alignSelf: 'stretch' as const,
+		marginTop: 24,
+		marginBottom: 6,
+		marginLeft: 4,
+	},
+	card: {
+		width: '100%',
+		backgroundColor: colors.surface,
+		borderWidth: 1,
+		borderColor: colors.hairline,
+		borderRadius: radius.card,
+		paddingHorizontal: 12,
+	},
+	divider: {
+		borderTopWidth: 1,
+		borderTopColor: colors.hairline,
+	},
+	navRow: {
+		minHeight: 48,
+	},
+	dangerLabel: {
+		color: colors.danger,
+	},
 	logoutSection: {
-		marginTop: 30,
+		marginTop: 16,
+		width: '100%',
 	},
 	diagnosticsNote: {
 		...typeScale.body,
@@ -509,18 +550,18 @@ const styles = StyleSheet.create({
 		paddingTop: 10,
 		alignItems: 'center',
 	},
-	seperator: {
-		width: '100%',
-		height: 1,
-		backgroundColor: colors.hairline,
-		marginVertical: 10,
-	},
 	row: {
 		flexDirection: 'row' as const,
 		width: '100%',
 		justifyContent: 'space-between' as const,
 		alignItems: 'center' as const,
-		marginBottom: 10,
+		paddingVertical: 10,
+	},
+	gapAround: {
+		marginVertical: 10,
+	},
+	retry: {
+		paddingBottom: 12,
 	},
 	inputContainer: {
 		flexDirection: 'row' as const,
@@ -539,20 +580,11 @@ const styles = StyleSheet.create({
 	inlineButton: {
 		marginLeft: 8,
 	},
-	gapBelow: {
-		marginBottom: 10,
-	},
 	passwordTextInput: {
 		width: '50%',
 	},
 	text: {
 		...typeScale.label,
-		color: colors.ink,
-	},
-	textHeader: {
-		...typeScale.heading,
-		marginBottom: 10,
-		textAlign: 'center' as const,
 		color: colors.ink,
 	},
 	textMuted: {
@@ -561,22 +593,10 @@ const styles = StyleSheet.create({
 	},
 	passwordButtonContainer: {
 		width: '100%',
-		justifyContent: 'flex-end' as const,
-		marginTop: 10,
-	},
-	dangerHeader: {
-		...typeScale.heading,
-		marginBottom: 10,
-		marginTop: 30,
-		textAlign: 'center' as const,
-		color: colors.danger,
+		paddingBottom: 12,
 	},
 	deleteSection: {
-		backgroundColor: colors.blush,
-		padding: 15,
-		borderRadius: 8,
-		borderWidth: 1,
-		borderColor: colors.hairline,
+		paddingVertical: 12,
 		marginBottom: 20,
 	},
 	deleteWarningText: {
@@ -594,7 +614,7 @@ const styles = StyleSheet.create({
 	},
 	modalContent: {
 		backgroundColor: colors.surface,
-		borderRadius: 10,
+		borderRadius: radius.card,
 		padding: 20,
 		width: '100%',
 		maxWidth: 400,

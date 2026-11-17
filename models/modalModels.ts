@@ -164,8 +164,6 @@ export interface FlagHistoryTimelineProps {
 }
 export type BoardManagementModalsProps = {
 	// Modal visibility states
-	visible: boolean;
-	setVisible: (visible: boolean) => void;
 	deleteModalVisible: boolean;
 	setDeleteModalVisible: (visible: boolean) => void;
 	editModalVisible: boolean;

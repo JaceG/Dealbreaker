@@ -7,7 +7,7 @@ import {
 	FlatListProps,
 } from 'react-native';
 import { bool, func, object, number, string } from 'prop-types';
-import { colors, deviceWidth, ios, typeScale } from '../../constants';
+import { colors, deviceWidth, ios, radius, typeScale } from '../../constants';
 import EmptyColumn from '../EmptyColumn/EmptyColumn';
 import { getView, rememberOffset } from '../lib/viewMemory';
 import {
@@ -449,14 +449,14 @@ class Column extends React.Component<ColumnProps, ColumnState> {
 // @ts-ignore
 Column.defaultProps = {
 	badgeBackgroundColor: colors.ink,
-	badgeBorderRadius: 15,
+	badgeBorderRadius: radius.pill,
 	badgeHeight: 30,
 	badgeWidth: 30,
 	badgeTextColor: colors.onFill,
 	badgeTextFontFamily: '',
 	badgeTextFontSize: 14, // a count badge keeps its own size
 	columnBackgroundColor: colors.paper,
-	columnBorderRadius: 6,
+	columnBorderRadius: radius.card,
 	columnHeight: 620,
 	columnNameTextColor: colors.ink,
 	columnNameFontFamily: '',

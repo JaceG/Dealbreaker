@@ -9,26 +9,29 @@ import {
 	FlagItem,
 } from '../app/(tabs)/create-flag';
 import * as SecureStore from 'expo-secure-store';
+import { Text, View } from 'react-native';
+import FlagIcon from '../components/FlagIcon';
 
 import { colors, typeScale } from '../libs/board/constants';
 const useCreateFlag = () => {
 	const { addItemToAllProfiles, isValidNoCardItems } =
 		useContext<any>(StoreContext);
+	// Both radios are ink; each label carries its flag, so the choice reads by the flag's colour.
+	const option = (text: string, flag: string) => (
+		<View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginLeft: 10 }}>
+			<FlagIcon flag={flag} size={18} />
+			<Text style={{ color: colors.ink, ...typeScale.emphasis }}>{text}</Text>
+		</View>
+	);
 	const radioButtons: RadioButtonProps[] = useMemo(
 		() => [
-			{
-				id: '1',
-				label: 'Flag',
-				value: 'flag',
-				color: colors.ink,
-				labelStyle: { color: colors.ink, ...typeScale.emphasis },
-			},
+			{ id: '1', label: option('Flag', 'white'), accessibilityLabel: 'Flag', value: 'flag', color: colors.ink },
 			{
 				id: '2',
-				label: 'Dealbreaker',
+				label: option('Dealbreaker', 'dealbreaker'),
+				accessibilityLabel: 'Dealbreaker',
 				value: 'dealbreaker',
-				color: colors.dealbreaker,
-				labelStyle: { color: colors.dealbreaker, ...typeScale.emphasis },
+				color: colors.ink,
 			},
 		],
 		[]

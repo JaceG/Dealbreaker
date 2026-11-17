@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
-import { colors } from '../../libs/board/constants';
+import { colors, radius } from '../../libs/board/constants';
 
 // The app's one close (X) button: a 44pt target, the same icon everywhere. onDark is for photo viewers.
 const CloseButton = ({ onPress, onDark = false }: { onPress: () => void; onDark?: boolean }) => (
@@ -18,7 +18,7 @@ const styles = StyleSheet.create({
 	button: {
 		width: 44,
 		height: 44,
-		borderRadius: 22,
+		borderRadius: radius.pill,
 		alignItems: 'center',
 		justifyContent: 'center',
 	},

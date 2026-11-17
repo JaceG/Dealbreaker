@@ -5,7 +5,7 @@ import FlagDot from '../FlagDot';
 import { profileCounts } from '../PeopleOverview';
 import StoreContext from '../../store';
 import { showToast } from '../../utils/functions';
-import { colors, typeScale } from '../../libs/board/constants';
+import { colors, radius, typeScale } from '../../libs/board/constants';
 import { DealbreakerState, FlagItem, Profile } from '../../models/dataModels';
 
 const COLUMN = 64;
@@ -157,7 +157,7 @@ const styles = StyleSheet.create({
 	chip: {
 		paddingHorizontal: 10,
 		paddingVertical: 5,
-		borderRadius: 15,
+		borderRadius: radius.pill,
 		borderWidth: 1,
 		borderColor: colors.ink,
 	},

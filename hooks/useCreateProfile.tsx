@@ -1,7 +1,6 @@
 import { useContext, useEffect, useState } from 'react';
 import { showToast } from '../utils/functions';
 import StoreContext from '../store';
-import { router } from 'expo-router';
 import {
 	Profile,
 	ErrorState,
@@ -72,12 +71,9 @@ const useCreateProfile = () => {
 				console.log(
 					'Profile created successfully, attempting navigation...'
 				);
+				// The People sheet stays open and shows the new person in its list.
 				showToast('success', 'Profile created successfully');
 				setName('');
-
-				// Navigate back to tabs
-				console.log('Navigating back to tabs');
-				router.push('/(tabs)');
 			} else {
 				showToast('error', 'Failed to create profile');
 			}

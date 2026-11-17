@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import AppButton from '../AppButton';
 import FlagDot from '../FlagDot';
-import { colors, typeScale } from '../../libs/board/constants';
+import { colors, radius, typeScale } from '../../libs/board/constants';
 import { FlagItem, ProfileData } from '../../models/dataModels';
 
 type Props = {
@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
 		paddingVertical: 5,
 		borderWidth: 1,
 		borderColor: colors.hairline,
-		borderRadius: 10,
+		borderRadius: radius.card,
 	},
 	countRow: {
 		flexDirection: 'row',
@@ -134,7 +134,7 @@ const styles = StyleSheet.create({
 		gap: 5,
 		paddingHorizontal: 5,
 		paddingVertical: 5,
-		borderRadius: 5,
+		borderRadius: radius.pill,
 		borderWidth: 1,
 		borderColor: 'transparent',
 	},

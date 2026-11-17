@@ -12,7 +12,7 @@ import {
 import { ImagePreviewModalProps } from '../../models/modalModels';
 import CloseButton from '../CloseButton';
 
-import { colors, typeScale } from '../../libs/board/constants';
+import { colors, radius, typeScale } from '../../libs/board/constants';
 const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
 	visible,
 	imageUri,
@@ -129,7 +129,7 @@ const styles = StyleSheet.create({
 		position: 'absolute',
 		padding: 20,
 		backgroundColor: colors.scrim,
-		borderRadius: 10,
+		borderRadius: radius.small,
 	},
 	errorText: {
 		color: colors.onFill,

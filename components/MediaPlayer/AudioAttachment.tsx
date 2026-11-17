@@ -1,6 +1,6 @@
 import { Pressable, StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
-import { colors, typeScale } from '../../libs/board/constants';
+import { colors, radius, typeScale } from '../../libs/board/constants';
 import { imageUtils } from '../../utils/functions';
 import type { AttachmentAudio } from './useAttachmentAudio';
 
@@ -57,7 +57,7 @@ const styles = StyleSheet.create({
 	icon: {
 		width: 44,
 		height: 44,
-		borderRadius: 22,
+		borderRadius: radius.pill,
 		backgroundColor: colors.ink,
 		alignItems: 'center',
 		justifyContent: 'center',

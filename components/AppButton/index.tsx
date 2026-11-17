@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, typeScale } from '../../libs/board/constants';
+import { colors, radius, typeScale } from '../../libs/board/constants';
 
 // The app's one button. Every kind is at least 44pt tall and its text passes 4.5:1 contrast.
 // primary: the action the popup or page is for (Save, Submit, Create)
@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
 		minHeight: 48,
 		paddingHorizontal: 20,
 		paddingVertical: 10,
-		borderRadius: 8,
+		borderRadius: radius.small,
 		borderWidth: 2,
 		alignItems: 'center',
 		justifyContent: 'center',

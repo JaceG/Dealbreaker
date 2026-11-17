@@ -8,7 +8,7 @@ import { Board } from '../../libs/board/components';
 import AppButton from '../../components/AppButton';
 import { colors, typeScale } from '../../libs/board/constants';
 import Feather from '@expo/vector-icons/Feather';
-import { router } from 'expo-router';
+import { router, useNavigation } from 'expo-router';
 import useBoardManagement from '../../hooks/useBoardManagement';
 import BoardManagementModals from '../../components/BoardManagementModals';
 import ProfileOverview from '../../components/ProfileOverview';
@@ -16,7 +16,8 @@ import PeopleOverview from '../../components/PeopleOverview';
 import CompareProfilesModal from '../../components/CompareProfilesModal';
 import StoreContext from '../../store';
 import { showToast } from '../../utils/functions';
-import { useContext, useState } from 'react';
+import { useContext, useLayoutEffect, useState } from 'react';
+import { useAuth } from '../../context/Auth';
 import { boardLog } from '../../utils/boardLog';
 
 export default function Lists() {
@@ -32,7 +33,6 @@ export default function Lists() {
 		refreshKey,
 
 		// Modal Visibility States
-		visible,
 		deleteModalVisible,
 		editModalVisible,
 		editProfileModalVisible,
@@ -43,7 +43,6 @@ export default function Lists() {
 		transitionReasonModalVisible,
 
 		// Modal State Setters
-		setVisible,
 		setDeleteModalVisible,
 		setEditModalVisible,
 		setEditProfileModalVisible,
@@ -106,6 +105,34 @@ export default function Lists() {
 		setCurrentProfileId(profileId);
 	};
 
+	// The header is the board's one title line: whose board it is, and on a person's board the pencil to edit them.
+	const navigation = useNavigation();
+	const { user } = useAuth();
+	const isMain = currentProfileId === 'main';
+	const personName = profiles.find((p: any) => p.id === currentProfileId)?.name || 'Profile';
+	const ended = !!dealbreaker?.[currentProfileId]?.ended;
+	useLayoutEffect(() => {
+		navigation.setOptions({
+			headerTitle: isMain ? 'Main' : `${personName}${ended ? ' (ended)' : ''}`,
+			headerRight: () => (
+				<View style={styles.headerRight}>
+					{!isMain ? (
+						<TouchableOpacity
+							onPress={handleEditProfile}
+							accessibilityRole='button'
+							accessibilityLabel='Edit person'
+							hitSlop={12}>
+							<Feather name='edit-2' size={20} color={colors.muted} />
+						</TouchableOpacity>
+					) : null}
+					{user?.role == 'guest' ? (
+						<AppButton title='Register' variant='link' onPress={() => router.push('/register')} />
+					) : null}
+				</View>
+			),
+		});
+	}, [navigation, isMain, personName, ended, user?.role]); // handleEditProfile only checks for Main, which isMain covers
+
 	return (
 		<View style={styles.container}>
 			<CompareProfilesModal
@@ -114,8 +141,6 @@ export default function Lists() {
 				focusId={currentProfileId !== 'main' ? currentProfileId : undefined}
 			/>
 			<BoardManagementModals
-				visible={visible}
-				setVisible={setVisible}
 				deleteModalVisible={deleteModalVisible}
 				setDeleteModalVisible={setDeleteModalVisible}
 				itemToDelete={itemToDelete}
@@ -162,33 +187,6 @@ export default function Lists() {
 			(dealbreaker[currentProfileId]?.flag?.length > 0 ||
 				dealbreaker[currentProfileId]?.dealbreaker?.length > 0) ? (
 				<>
-					<View style={styles.profileButtonContainer}>
-						<View style={styles.innerProfileButtonContainer}>
-							<View style={styles.profileSwitchTextContainer}>
-								<Text style={styles.profileLabel}>
-									Profile:{' '}
-								</Text>
-								<View style={styles.profileNameContainer}>
-									<Text style={styles.profileText}>
-										{getCurrentProfileName()}
-									</Text>
-									{dealbreaker[currentProfileId]?.ended && (
-										<Text style={styles.endedTag}> (ended)</Text>
-									)}
-									{currentProfileId !== 'main' && (
-										<TouchableOpacity
-											style={styles.editProfileButton}
-											onPress={handleEditProfile}
-											accessibilityRole='button'
-											accessibilityLabel='Edit person'
-											hitSlop={12}>
-											<Feather name='edit-2' size={18} color={colors.muted} />
-										</TouchableOpacity>
-									)}
-								</View>
-							</View>
-						</View>
-					</View>
 					{currentProfileId === 'main' ? (
 						<PeopleOverview
 							dealbreaker={dealbreaker}
@@ -359,47 +357,11 @@ const styles = StyleSheet.create({
 	noDealbreakerText: {
 		...typeScale.heading,
 	},
-	profileButtonContainer: {
-		marginTop: 10,
-		alignSelf: 'center',
-		justifyContent: 'center',
-		alignItems: 'center',
-	},
-	innerProfileButtonContainer: {
-		width: '100%',
-		alignItems: 'center',
-		justifyContent: 'center',
-		gap: 5,
-	},
-	buttonRow: {
-		flexDirection: 'row',
-		justifyContent: 'center',
-		alignItems: 'center',
-		gap: 10,
-	},
-	profileSwitchTextContainer: {
+	headerRight: {
 		flexDirection: 'row',
 		alignItems: 'center',
-		justifyContent: 'center',
-		marginTop: 5,
-		marginBottom: 5,
-	},
-	profileNameContainer: {
-		flexDirection: 'row',
-		alignItems: 'center',
-	},
-	profileLabel: {
-		...typeScale.emphasis,
-	},
-	profileText: {
-		...typeScale.emphasis,
-	},
-	editProfileButton: {
-		marginLeft: 8,
-	},
-	endedTag: {
-		...typeScale.body,
-		color: colors.muted,
+		gap: 16,
+		marginRight: 16,
 	},
 	emptyView: {
 		height: 80,

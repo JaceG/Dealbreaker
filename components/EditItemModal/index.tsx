@@ -12,7 +12,7 @@ import AppButton from '../AppButton';
 import AppInput from '../AppInput';
 import { EditItemModalProps } from '../../models/modalModels';
 
-import { colors, typeScale } from '../../libs/board/constants';
+import { colors, radius, typeScale } from '../../libs/board/constants';
 const EditItemModal = ({
 	visible,
 	onClose,
@@ -200,31 +200,15 @@ const styles = StyleSheet.create({
 	modalView: {
 		width: '90%',
 		backgroundColor: colors.surface,
-		borderRadius: 10,
+		borderRadius: radius.card,
 		padding: 20,
-		shadowColor: colors.ink,
-		shadowOffset: {
-			width: 0,
-			height: 2,
-		},
-		shadowOpacity: 0.25,
-		shadowRadius: 4,
-		elevation: 5,
 	},
 	modalViewHorizontal: {
 		width: '80%',
 		height: '80%',
 		backgroundColor: colors.surface,
-		borderRadius: 10,
+		borderRadius: radius.card,
 		padding: 10,
-		shadowColor: colors.ink,
-		shadowOffset: {
-			width: 0,
-			height: 2,
-		},
-		shadowOpacity: 0.25,
-		shadowRadius: 4,
-		elevation: 5,
 	},
 	modalTitle: {
 		...typeScale.heading,

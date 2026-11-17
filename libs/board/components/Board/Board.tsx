@@ -3,7 +3,7 @@ import ReactTimeout from 'react-timeout';
 import { Animated, Dimensions } from 'react-native';
 import { GestureDetector, GestureStateManager, usePanGesture } from 'react-native-gesture-handler';
 import { bool, func, object, string } from 'prop-types';
-import { colors } from '../../constants';
+import { colors, floatShadow } from '../../constants';
 import Column from '../Column/Column';
 import Card from '../Card/Card';
 import Carousel from '../Carousel/Carousel';
@@ -566,6 +566,8 @@ class Board extends React.Component<BoardProps, BoardState> {
 			top: startingY,
 			left: startingX,
 			width: this.state.draggedWidth,
+			// The lifted card floats over the board; when not dragging it is hidden (opacity 0), shadow and all.
+			...floatShadow,
 			transform: [
 				{ translateX: pan.x },
 				{ translateY: pan.y },

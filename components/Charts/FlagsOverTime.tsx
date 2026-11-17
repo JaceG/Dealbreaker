@@ -9,7 +9,7 @@ import { useAnimatedReaction } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 import CloseButton from '../CloseButton';
 import { Legend } from './index';
-import { colors, typeScale } from '../../libs/board/constants';
+import { colors, radius, typeScale } from '../../libs/board/constants';
 import { flagsOverTime } from '../../utils/stats';
 import type { TimelinePerson } from './Timeline';
 
@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
 		alignSelf: 'flex-start',
 		borderWidth: 2,
 		borderColor: colors.ink,
-		borderRadius: 8,
+		borderRadius: radius.small,
 		overflow: 'hidden',
 		marginBottom: 8,
 	},
@@ -224,7 +224,7 @@ const styles = StyleSheet.create({
 	detail: {
 		marginTop: 12,
 		padding: 12,
-		borderRadius: 8,
+		borderRadius: radius.small,
 		borderWidth: 1,
 		borderColor: colors.hairline,
 		backgroundColor: colors.paper,

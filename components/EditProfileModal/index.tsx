@@ -14,7 +14,7 @@ import { EditProfileModalProps } from '../../models/modalModels';
 import StoreContext from '../../store';
 import { showToast } from '../../utils/functions';
 
-import { colors, typeScale } from '../../libs/board/constants';
+import { colors, radius, typeScale } from '../../libs/board/constants';
 const EditProfileModal = ({
 	visible,
 	onClose,
@@ -25,7 +25,7 @@ const EditProfileModal = ({
 }: EditProfileModalProps) => {
 	const [name, setName] = useState('');
 	const [error, setError] = useState('');
-	const { dealbreaker, setProfileEnded } = useContext(StoreContext) as any;
+	const { dealbreaker, setProfileEnded, deleteProfile } = useContext(StoreContext) as any;
 	const isEnded = !!dealbreaker?.[profileId]?.ended;
 
 	const handleToggleEnded = () => {
@@ -36,6 +36,27 @@ const EditProfileModal = ({
 		);
 		onClose();
 	};
+
+	// Deleting a person sits with the other edits to them (it used to be in the People switcher).
+	const handleDelete = () =>
+		Alert.alert(
+			'Delete Profile',
+			`Are you sure you want to delete the "${profileName}" profile? This action cannot be undone.`,
+			[
+				{ text: 'Cancel', style: 'cancel' },
+				{
+					text: 'Delete',
+					style: 'destructive',
+					onPress: () => {
+						onClose();
+						// deleteProfile refuses Main and moves you to Main if you were on this person's board.
+						if (deleteProfile(profileId)) {
+							Alert.alert('Success', `Profile "${profileName}" was deleted successfully.`);
+						}
+					},
+				},
+			]
+		);
 
 	// Initialize form values when the modal becomes visible or profileName changes
 	useEffect(() => {
@@ -188,6 +209,9 @@ const EditProfileModal = ({
 							/>
 						</View>
 					</View>
+					<View style={styles.deleteButton}>
+						<AppButton title='Delete Profile' onPress={handleDelete} variant='destructive' />
+					</View>
 				</View>
 			</ScrollView>
 		</Modal>
@@ -195,6 +219,9 @@ const EditProfileModal = ({
 };
 
 const styles = StyleSheet.create({
+	deleteButton: {
+		marginTop: 24,
+	},
 	backdrop: {
 		backgroundColor: colors.scrim,
 	},
@@ -207,30 +234,14 @@ const styles = StyleSheet.create({
 	modalView: {
 		width: '90%',
 		backgroundColor: colors.surface,
-		borderRadius: 10,
+		borderRadius: radius.card,
 		padding: 20,
-		shadowColor: colors.ink,
-		shadowOffset: {
-			width: 0,
-			height: 2,
-		},
-		shadowOpacity: 0.25,
-		shadowRadius: 4,
-		elevation: 5,
 	},
 	modalViewHorizontal: {
 		width: '70%',
 		backgroundColor: colors.surface,
-		borderRadius: 10,
+		borderRadius: radius.card,
 		padding: 20,
-		shadowColor: colors.ink,
-		shadowOffset: {
-			width: 0,
-			height: 2,
-		},
-		shadowOpacity: 0.25,
-		shadowRadius: 4,
-		elevation: 5,
 	},
 	modalTitle: {
 		...typeScale.heading,

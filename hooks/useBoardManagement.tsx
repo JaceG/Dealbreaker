@@ -80,8 +80,6 @@ const useBoardManagement = () => {
 
 	// Modal states hook
 	const {
-		visible,
-		setVisible,
 		deleteModalVisible,
 		setDeleteModalVisible,
 		editModalVisible,
@@ -360,7 +358,6 @@ const useBoardManagement = () => {
 		setRefreshKey,
 
 		// Modal Visibility States
-		visible,
 		deleteModalVisible,
 		editModalVisible,
 		editProfileModalVisible,
@@ -371,7 +368,6 @@ const useBoardManagement = () => {
 		transitionReasonModalVisible,
 
 		// Modal State Setters
-		setVisible,
 		setDeleteModalVisible,
 		setEditModalVisible,
 		setEditProfileModalVisible,

@@ -1,320 +1,142 @@
-import { Dropdown } from 'react-native-element-dropdown';
 import { router } from 'expo-router';
-import {
-	StyleSheet,
-	Modal,
-	View,
-	Text,
-	Alert,
-	useWindowDimensions,
-} from 'react-native';
-import { useState, useContext, useEffect, useCallback, memo } from 'react';
+import { Modal, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import Feather from '@expo/vector-icons/Feather';
+import { useContext, useState } from 'react';
+import Toast from 'react-native-toast-message';
 import AppButton from '../AppButton';
+import AppInput from '../AppInput';
+import CloseButton from '../CloseButton';
+import { PersonRow, rankPeople } from '../PeopleOverview';
 import StoreContext from '../../store';
+import useCreateProfile from '../../hooks/useCreateProfile';
 import { SwitchProfileModalProps } from '../../models/modalModels';
-
 import { colors, typeScale } from '../../libs/board/constants';
-const SwitchProfileModal = memo<SwitchProfileModalProps>(
-	({ visible, onClose }) => {
-		// Move all context usage to the top level of the component
-		const {
-			currentProfileId,
-			setCurrentProfileId,
-			profiles = [],
-			dealbreaker,
-			ensureProfileExists,
-			deleteProfile,
-		} = useContext(StoreContext) as any;
 
-		const [selectedId, setSelectedId] = useState<string | null>(null);
-		const [isFocus, setIsFocus] = useState(false);
-		const [data, setData] = useState<
-			Array<{ label: string; value: string }>
-		>([]);
+// Lives inside the sheet, so it starts empty each time the sheet opens (a hidden Modal unmounts its children).
+const AddPerson = () => {
+	const { name, error, handleSubmit, handleNameChange } = useCreateProfile();
+	return (
+		<>
+			<View style={styles.add}>
+				<AppInput
+					style={styles.addInput}
+					value={name}
+					onChangeText={handleNameChange}
+					placeholder="New person's name"
+					accessibilityLabel="New person's name"
+					returnKeyType='done'
+					onSubmitEditing={handleSubmit}
+				/>
+				<AppButton title='Add' onPress={handleSubmit} />
+			</View>
+			{error.name ? <Text style={styles.error}>{error.name}</Text> : null}
+		</>
+	);
+};
 
-		const { width, height } = useWindowDimensions();
-		const isPortrait = height >= width;
+// The People tab's sheet: Main, then everyone drawn as on Main's board list. Tap someone to open their board,
+// or add a person at the bottom. Deleting a person is in their Edit popup (the pencil on their board).
+const SwitchProfileModal = ({ visible, onClose }: SwitchProfileModalProps) => {
+	const {
+		currentProfileId,
+		setCurrentProfileId,
+		profiles = [],
+		dealbreaker = {},
+		ensureProfileExists,
+	} = useContext(StoreContext) as any;
+	const [showEnded, setShowEnded] = useState(false);
+	const people = rankPeople(dealbreaker, profiles);
+	const active = people.filter((p) => !p.ended);
+	const ended = people.filter((p) => p.ended);
 
-		// Update dropdown data and selected value when modal becomes visible
-		useEffect(() => {
-			if (visible) {
-				// Ensure profiles is an array before mapping
-				if (Array.isArray(profiles)) {
-					// Ended relationships go to the bottom of the list.
-					const isEnded = (id: string) => !!dealbreaker?.[id]?.ended;
-					setData(
-						[...profiles]
-							.sort((a, b) => Number(isEnded(a.id)) - Number(isEnded(b.id)))
-							.map((p) => ({
-								label: `${p.name || 'Unnamed'}${isEnded(p.id) ? ' (ended)' : ''}`,
-								value: p.id,
-							}))
-					);
-					setSelectedId(currentProfileId);
-				} else {
-					console.warn('Profiles is not an array:', profiles);
-					setData([]);
-				}
-			}
-		}, [profiles, dealbreaker, currentProfileId, visible]);
+	// The sheet opens from the bottom bar on any screen, so picking someone also shows their board.
+	const open = (id: string) => {
+		onClose();
+		if (id !== currentProfileId) {
+			ensureProfileExists(id);
+			setCurrentProfileId(id);
+		}
+		router.navigate('/');
+	};
+	const row = (p: (typeof people)[number]) => (
+		<PersonRow key={p.id} person={p} selected={p.id === currentProfileId} onPress={() => open(p.id)} />
+	);
 
-		// Check if a profile can be deleted (not main and not the only profile)
-		const canDeleteProfile = useCallback(
-			(profileId: string) => {
-				return (
-					profileId !== 'main' &&
-					Array.isArray(profiles) &&
-					profiles.length > 1
-				);
-			},
-			[profiles]
-		);
-
-		// Handle profile change with proper error handling
-		const handleProfileChange = useCallback(() => {
-			// The switcher opens from the bottom bar on any screen, so picking someone also shows their board.
-			if (!selectedId || selectedId === currentProfileId) {
-				onClose();
-				router.navigate('/');
-				return;
-			}
-
-			// Close modal first for better UX
-			onClose();
-
-			// Ensure profile exists before switching
-			ensureProfileExists(selectedId);
-
-			// Change the profile
-			setCurrentProfileId(selectedId);
-			router.navigate('/');
-		}, [
-			selectedId,
-			currentProfileId,
-			onClose,
-			ensureProfileExists,
-			setCurrentProfileId,
-		]);
-
-		// Handle profile deletion
-		const handleDeleteProfile = useCallback(() => {
-			// Extra protection - don't allow deleting main profile or if only one profile exists
-			if (!selectedId || !canDeleteProfile(selectedId)) {
-				console.log(
-					'Prevented attempt to delete profile - either main or only profile'
-				);
-				return;
-			}
-
-			// Find the profile name to display in the confirmation
-			const selectedProfile = profiles.find(
-				(p: { id: string; name: string }) => p.id === selectedId
-			);
-			if (!selectedProfile) return;
-
-			// Show confirmation alert
-			Alert.alert(
-				'Delete Profile',
-				`Are you sure you want to delete the "${selectedProfile.name}" profile? This action cannot be undone.`,
-				[
-					{
-						text: 'Cancel',
-						style: 'cancel',
-					},
-					{
-						text: 'Delete',
-						style: 'destructive',
-						onPress: () => {
-							// Final safety check before deletion
-							if (!canDeleteProfile(selectedId)) {
-								console.error(
-									'Attempted to delete protected profile - prevented'
-								);
-								return;
-							}
-
-							// Close modal first
-							onClose();
-
-							// Delete the profile
-							const success = deleteProfile(selectedId);
-
-							if (success) {
-								// Show success message
-								Alert.alert(
-									'Success',
-									`Profile "${selectedProfile.name}" was deleted successfully.`
-								);
-							}
-						},
-					},
-				]
-			);
-		}, [selectedId, profiles, canDeleteProfile, onClose, deleteProfile]);
-
-		const handleDropdownChange = useCallback(
-			(item: { label: string; value: string }) => {
-				setSelectedId(item.value);
-				setIsFocus(false);
-			},
-			[]
-		);
-
-		return (
-			<Modal
-				visible={visible}
-				animationType='slide'
-				supportedOrientations={[
-					'portrait',
-					'portrait-upside-down',
-					'landscape',
-					'landscape-left',
-					'landscape-right',
-				]}>
-				<View
-					style={
-						isPortrait
-							? styles.modalContainer
-							: styles.modalContainerHorizontal
-					}>
-					<View
-						style={
-							isPortrait
-								? styles.modalInnerContainer
-								: styles.modalInnerContainerHorizontal
-						}>
-						<Text style={styles.modalTitle}>People</Text>
-						<Dropdown
-							data={data}
-							style={[
-								styles.dropdown,
-								isFocus && { borderColor: colors.ink },
-							]}
-							placeholderStyle={styles.placeholderStyle}
-							selectedTextStyle={styles.selectedTextStyle}
-							inputSearchStyle={styles.inputSearchStyle}
-							iconStyle={styles.iconStyle}
-							search
-							maxHeight={300}
-							labelField='label'
-							valueField='value'
-							placeholder={!isFocus ? 'Select profile' : '...'}
-							searchPlaceholder='Search...'
-							value={selectedId}
-							onFocus={() => setIsFocus(true)}
-							onBlur={() => setIsFocus(false)}
-							onChange={handleDropdownChange}
-						/>
-						<View
-							style={
-								isPortrait
-									? styles.buttonContainer
-									: styles.buttonContainerHorizontal
-							}>
-							<AppButton
-								title='Select Profile'
-								onPress={handleProfileChange}
-							/>
-							<AppButton
-								title='New Person'
-								onPress={() => {
-									onClose();
-									router.navigate('/create-profile');
-								}}
-								variant='secondary'
-							/>
-							<AppButton
-								title='Close'
-								onPress={onClose}
-								variant='secondary'
-							/>
-							{selectedId && canDeleteProfile(selectedId) ? (
-								<AppButton
-									title='Delete Profile'
-									onPress={handleDeleteProfile}
-									variant='destructive'
-								/>
-							) : null}
-						</View>
-					</View>
+	return (
+		<Modal
+			visible={visible}
+			animationType='slide'
+			presentationStyle='pageSheet'
+			supportedOrientations={['portrait', 'portrait-upside-down', 'landscape', 'landscape-left', 'landscape-right']}
+			onRequestClose={onClose}>
+			<SafeAreaView style={styles.container}>
+				<View style={styles.header}>
+					<Text style={styles.title} accessibilityRole='header'>
+						People
+					</Text>
+					<CloseButton onPress={onClose} />
 				</View>
-			</Modal>
-		);
-	}
-);
+				<ScrollView
+					contentContainerStyle={styles.list}
+					keyboardShouldPersistTaps='handled'
+					automaticallyAdjustKeyboardInsets>
+					<TouchableOpacity
+						style={styles.mainRow}
+						onPress={() => open('main')}
+						accessibilityRole='button'
+						accessibilityState={{ selected: currentProfileId === 'main' }}>
+						<View style={styles.mainText}>
+							<Text style={styles.mainName}>Main</Text>
+							<Text style={styles.caption}>Your flag list</Text>
+						</View>
+						{currentProfileId === 'main' ? <Feather name='check' size={20} color={colors.ink} /> : null}
+					</TouchableOpacity>
+					{active.map(row)}
+					{ended.length ? (
+						<AppButton
+							title={showEnded ? 'Hide ended' : `Show ended (${ended.length})`}
+							variant='link'
+							onPress={() => setShowEnded(!showEnded)}
+						/>
+					) : null}
+					{showEnded ? ended.map(row) : null}
+					<AddPerson />
+				</ScrollView>
+			</SafeAreaView>
+			{/* The app's own toast sits under this sheet, so the sheet shows its own (duplicate name, guest limit). */}
+			<Toast />
+		</Modal>
+	);
+};
 
 const styles = StyleSheet.create({
-	container: {
-		padding: 16,
-	},
-	dropdown: {
-		height: 50,
-		width: 200,
-		borderColor: colors.outline,
-		borderWidth: 0.5,
-		borderRadius: 8,
-		paddingHorizontal: 8,
-	},
-	icon: {
-		marginRight: 5,
-	},
-	placeholderStyle: {
-		...typeScale.body,
-	},
-	selectedTextStyle: {
-		...typeScale.body,
-	},
-	iconStyle: {
-		width: 20,
-		height: 20,
-	},
-	inputSearchStyle: {
-		height: 40,
-		...typeScale.body,
-	},
-	modalContainer: {
-		flex: 1,
-		justifyContent: 'center',
-		alignItems: 'center',
-		gap: 10,
-	},
-	modalContainerHorizontal: {
-		flex: 1,
-		justifyContent: 'center',
-		alignItems: 'center',
-		gap: 10,
-		paddingHorizontal: 40,
-	},
-	buttonContainer: {
-		flexDirection: 'column',
-		width: '100%',
-		justifyContent: 'center',
-		alignItems: 'stretch',
-		marginTop: 20,
-		gap: 10,
-	},
-	buttonContainerHorizontal: {
+	container: { flex: 1, backgroundColor: colors.surface },
+	header: {
 		flexDirection: 'row',
-		width: '100%',
-		justifyContent: 'center',
 		alignItems: 'center',
-		marginTop: 20,
-		gap: 15,
+		justifyContent: 'space-between',
+		paddingHorizontal: 16,
+		paddingTop: 8,
+		borderBottomWidth: 1,
+		borderBottomColor: colors.hairline,
 	},
-	modalInnerContainer: {
-		justifyContent: 'center',
+	title: { ...typeScale.heading, color: colors.ink },
+	list: { paddingHorizontal: 16, paddingBottom: 24 },
+	// Matches PersonRow's spacing and divider.
+	mainRow: {
+		flexDirection: 'row',
 		alignItems: 'center',
-		gap: 10,
+		gap: 8,
+		paddingVertical: 10,
+		borderBottomWidth: 1,
+		borderBottomColor: colors.hairline,
 	},
-	modalInnerContainerHorizontal: {
-		justifyContent: 'center',
-		alignItems: 'center',
-		gap: 10,
-		width: '100%',
-	},
-	modalTitle: {
-		...typeScale.heading,
-	},
+	mainText: { flex: 1 },
+	mainName: { ...typeScale.emphasis, color: colors.ink },
+	caption: { ...typeScale.label, color: colors.muted },
+	add: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 16 },
+	addInput: { flex: 1 },
+	error: { ...typeScale.label, color: colors.danger, marginTop: 4 },
 });
 
 export default SwitchProfileModal;

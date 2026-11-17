@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef } from 'react';
 import { AccessibilityInfo, Alert, StyleSheet, Text, View } from 'react-native';
 import { RecordingPresets, setAudioModeAsync, useAudioRecorder, useAudioRecorderState } from 'expo-audio';
 import * as FileSystem from 'expo-file-system/legacy';
-import { colors, typeScale } from '../../libs/board/constants';
+import { colors, radius, typeScale } from '../../libs/board/constants';
 import { imageUtils } from '../../utils/functions';
 import AppButton from '../AppButton';
 
@@ -109,7 +109,7 @@ const VoiceMemoRecorder = ({
 const styles = StyleSheet.create({
 	container: {
 		backgroundColor: colors.blush,
-		borderRadius: 8,
+		borderRadius: radius.small,
 		borderWidth: 1,
 		borderColor: colors.danger,
 		padding: 12,

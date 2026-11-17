@@ -16,7 +16,7 @@ import * as AppleAuthentication from 'expo-apple-authentication';
 // Uncomment these imports
 import * as WebBrowser from 'expo-web-browser';
 import { router } from 'expo-router';
-import { colors, typeScale } from '../../libs/board/constants';
+import { colors, radius, typeScale } from '../../libs/board/constants';
 import useRegister from '../../hooks/useRegister';
 import AppButton from '../../components/AppButton';
 import AppInput from '../../components/AppInput';
@@ -247,7 +247,7 @@ const Auth: React.FC<AuthProps> = () => {
 								AppleAuthentication
 									.AppleAuthenticationButtonStyle.WHITE_OUTLINE
 							}
-							cornerRadius={8}
+							cornerRadius={radius.small}
 							style={[
 								styles.appleButton,
 								busy ? styles.buttonDisabled : null,
@@ -292,7 +292,7 @@ const styles = StyleSheet.create({
 	mark: {
 		width: 64,
 		height: 64,
-		borderRadius: 15,
+		borderRadius: radius.card,
 		alignSelf: 'center',
 		marginBottom: 16,
 	},
@@ -343,7 +343,7 @@ const styles = StyleSheet.create({
 		backgroundColor: colors.surface,
 		borderWidth: 1,
 		borderColor: colors.ink,
-		borderRadius: 8,
+		borderRadius: radius.small,
 		justifyContent: 'center',
 	},
 });

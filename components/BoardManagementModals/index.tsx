@@ -1,4 +1,3 @@
-import SwitchProfileModal from '../SwitchProfileModal';
 import ConfirmationModal from '../ConfirmationModal';
 import EditItemModal from '../EditItemModal';
 import EditProfileModal from '../EditProfileModal';
@@ -8,8 +7,6 @@ import ReasonInputModal from '../ReasonInputModal';
 import { BoardManagementModalsProps } from '../../models/modalModels';
 
 const BoardManagementModals = ({
-	visible,
-	setVisible,
 	deleteModalVisible,
 	setDeleteModalVisible,
 	itemToDelete,
@@ -49,11 +46,6 @@ const BoardManagementModals = ({
 }: BoardManagementModalsProps) => {
 	return (
 		<>
-			<SwitchProfileModal
-				visible={visible}
-				onClose={() => setVisible(false)}
-			/>
-
 			<ConfirmationModal
 				visible={deleteModalVisible}
 				onClose={() => {

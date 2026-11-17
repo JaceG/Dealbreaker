@@ -11,7 +11,7 @@ import {
 import Feather from '@expo/vector-icons/Feather';
 import { bool, func, number, object, string } from 'prop-types';
 import { FLAG_DOT_COLORS } from '../../../../components/FlagDot';
-import { colors, typeScale } from '../../constants';
+import { colors, radius, typeScale } from '../../constants';
 import { Flag, chipStyles } from '../Icons/Flag';
 import {
 	CardContainer,
@@ -74,7 +74,7 @@ const PeopleCounts = ({ counts }: PeopleCountsProps) => {
 };
 
 const Card: React.FC<CardProps> = ({
-	cardBorderRadius = 14,
+	cardBorderRadius = radius.card,
 	cardContent,
 	cardIconColor = colors.muted,
 	cardNameTextColor = colors.ink,
@@ -114,7 +114,7 @@ const Card: React.FC<CardProps> = ({
 			right: -6,
 			minWidth: 18,
 			height: 18,
-			borderRadius: 9,
+			borderRadius: radius.pill,
 			paddingHorizontal: 4,
 			backgroundColor: colors.ink,
 			alignItems: 'center',

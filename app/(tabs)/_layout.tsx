@@ -1,8 +1,6 @@
 import { router, Tabs } from 'expo-router';
-import { FontAwesome } from '@expo/vector-icons';
 import Feather from '@expo/vector-icons/Feather';
-import { Alert, View, useWindowDimensions } from 'react-native';
-import AppButton from '../../components/AppButton';
+import { Alert, useWindowDimensions } from 'react-native';
 import { useAuth } from '../../context/Auth';
 import SwitchProfileModal from '../../components/SwitchProfileModal';
 import { colors } from '../../libs/board/constants';
@@ -21,10 +19,8 @@ const Layout = () => {
 		closeSwitchProfileModal,
 	} = useLayoutModals();
 	useDealbreakerSync(user);
-	const { currentProfileId, setCurrentProfileId, profiles } =
-		useContext<any>(StoreContext);
+	const { currentProfileId, setCurrentProfileId } = useContext<any>(StoreContext);
 	const isProfileMain = () => currentProfileId === 'main';
-	const personName = profiles.find((p: any) => p.id === currentProfileId)?.name;
 	// Flags are made on Main only: from a person's board the Create Flag tab offers to switch first.
 	const createFlagFromProfile = () =>
 		Alert.alert(
@@ -58,27 +54,17 @@ const Layout = () => {
 						},
 					}}
 					options={{
-						headerTitle: isProfileMain() ? 'Main' : personName || 'Profile',
+						// The board screen sets its own header title and buttons.
 						title: 'Main',
 						tabBarIcon: ({ color }) => (
-							<FontAwesome name='home' color={color as string} size={iconSize} />
+							<Feather name='home' size={iconSize} color={color as string} />
 						),
-						headerRight: () =>
-							user?.role == 'guest' ? (
-								<View style={{ marginRight: 12 }}>
-									<AppButton
-										title='Register'
-										variant='link'
-										onPress={() => router.push('/register')}
-									/>
-								</View>
-							) : null,
 					}}
 				/>
 				<Tabs.Screen
 					name={'create-profile/index'}
 					listeners={{
-						// People opens the switcher; its New Person button leads to this screen.
+						// People opens the People sheet instead of this screen; people are added in the sheet.
 						tabPress: (e) => {
 							e.preventDefault();
 							openSwitchProfileModal();

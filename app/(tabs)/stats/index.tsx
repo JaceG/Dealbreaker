@@ -6,7 +6,7 @@ import FlagDot from '../../../components/FlagDot';
 import { CHART, Legend, StackedColumns, StackedRows, Timeline } from '../../../components/Charts';
 import { FlagsOverTime } from '../../../components/Charts/FlagsOverTime';
 import StoreContext from '../../../store';
-import { colors, typeScale } from '../../../libs/board/constants';
+import { colors, radius, typeScale } from '../../../libs/board/constants';
 import { getMyHistory } from '../../../utils/api';
 import { Board, HistoryRow, isNote, overallStats, personStats, typeChanged } from '../../../utils/stats';
 
@@ -369,7 +369,7 @@ const styles = StyleSheet.create({
 		minHeight: 44,
 		justifyContent: 'center',
 		paddingHorizontal: 14,
-		borderRadius: 22,
+		borderRadius: radius.pill,
 		borderWidth: 2,
 		borderColor: colors.ink,
 	},
