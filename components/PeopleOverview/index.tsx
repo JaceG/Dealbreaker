@@ -34,7 +34,7 @@ type Person = ReturnType<typeof rankPeople>[number];
 // One person: name, flag bar and counts. The board's list and the People sheet both draw people with it.
 export const PersonRow = ({ person: p, onPress, selected = false }: { person: Person; onPress: () => void; selected?: boolean }) => (
 	<TouchableOpacity
-		style={styles.row}
+		style={[styles.row, selected && styles.selected]}
 		onPress={onPress}
 		accessibilityRole='button'
 		accessibilityState={{ selected }}>
@@ -137,6 +137,8 @@ const styles = StyleSheet.create({
 		borderBottomColor: colors.hairline,
 		gap: 5,
 	},
+	// Only the People sheet marks a row; the tint reaches its edges past the sheet's 16pt padding.
+	selected: { backgroundColor: colors.blush, marginHorizontal: -16, paddingHorizontal: 16 },
 	nameRow: {
 		flexDirection: 'row',
 		alignItems: 'center',

@@ -86,7 +86,7 @@ const CompareProfilesModal = ({
 							accessibilityState={{ selected: selected.includes(p.id) }}
 							style={[styles.chip, selected.includes(p.id) && styles.chipOn]}
 							onPress={() => toggle(p.id)}>
-							<Text style={[styles.chipText, selected.includes(p.id) && styles.chipTextOn]}>{p.name}</Text>
+							<Text style={styles.chipText}>{p.name}</Text>
 						</TouchableOpacity>
 					))}
 				</View>
@@ -159,17 +159,17 @@ const styles = StyleSheet.create({
 		paddingVertical: 5,
 		borderRadius: radius.pill,
 		borderWidth: 1,
-		borderColor: colors.ink,
+		borderColor: colors.hairline,
+		backgroundColor: colors.surface,
 	},
+	// Selected: the tint, and an ink edge that tells it apart from the hairline ones.
 	chipOn: {
-		backgroundColor: colors.ink,
+		backgroundColor: colors.blush,
+		borderColor: colors.ink,
 	},
 	chipText: {
 		...typeScale.label,
 		color: colors.ink,
-	},
-	chipTextOn: {
-		color: colors.onFill,
 	},
 	legend: {
 		flexDirection: 'row',
@@ -216,7 +216,13 @@ const styles = StyleSheet.create({
 	empty: {
 		...typeScale.body,
 		color: colors.muted,
-		paddingVertical: 10,
+		textAlign: 'center',
+		backgroundColor: colors.blush,
+		borderRadius: radius.card,
+		overflow: 'hidden',
+		paddingVertical: 22,
+		paddingHorizontal: 12,
+		marginTop: 10,
 	},
 });
 

@@ -104,7 +104,7 @@ const ProfileOverview = ({
 							) : null}
 						</TouchableOpacity>
 					))}
-					{listed.length === 0 ? <Text style={styles.footer}>No flags of this color yet.</Text> : null}
+					{listed.length === 0 ? <Text style={styles.empty}>No flags of this color yet.</Text> : null}
 					{since ? <Text style={styles.footer}>Profile started {since}</Text> : null}
 					<AppButton title='Compare with Others' onPress={onCompare} />
 				</View>
@@ -173,6 +173,17 @@ const styles = StyleSheet.create({
 		...typeScale.label,
 		color: colors.muted,
 		paddingVertical: 5,
+	},
+	empty: {
+		...typeScale.label,
+		color: colors.muted,
+		textAlign: 'center',
+		backgroundColor: colors.blush,
+		borderRadius: radius.card,
+		overflow: 'hidden',
+		paddingVertical: 16,
+		paddingHorizontal: 12,
+		marginVertical: 5,
 	},
 });
 

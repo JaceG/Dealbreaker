@@ -94,14 +94,14 @@ export const AuthProvider = ({
 				}, 100);
 				return;
 			}
-			// Add delay to ensure navigation is ready
+			// The launch splash (app/index) stays a moment for people on their way to login.
 			setTimeout(() => {
 				try {
 					router.replace('/login/');
 				} catch (error) {
 					console.log('Navigation error to login:', error);
 				}
-			}, 100);
+			}, 1200);
 		} catch (error) {
 			setError(
 				error instanceof Error
@@ -109,6 +109,8 @@ export const AuthProvider = ({
 					: 'An unknown error occurred'
 			);
 			console.error('Error checking auth status:', error);
+			// Without a saved sign-in that can be read, go to login rather than stay on the launch splash.
+			setTimeout(() => router.replace('/login/'), 100);
 		} finally {
 			setIsLoading(false);
 		}

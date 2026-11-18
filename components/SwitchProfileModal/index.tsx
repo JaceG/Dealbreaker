@@ -81,7 +81,7 @@ const SwitchProfileModal = ({ visible, onClose }: SwitchProfileModalProps) => {
 					keyboardShouldPersistTaps='handled'
 					automaticallyAdjustKeyboardInsets>
 					<TouchableOpacity
-						style={styles.mainRow}
+						style={[styles.mainRow, currentProfileId === 'main' && styles.selected]}
 						onPress={() => open('main')}
 						accessibilityRole='button'
 						accessibilityState={{ selected: currentProfileId === 'main' }}>
@@ -131,6 +131,8 @@ const styles = StyleSheet.create({
 		borderBottomWidth: 1,
 		borderBottomColor: colors.hairline,
 	},
+	// The tint reaches the sheet's edges; the list's own padding is 16.
+	selected: { backgroundColor: colors.blush, marginHorizontal: -16, paddingHorizontal: 16 },
 	mainText: { flex: 1 },
 	mainName: { ...typeScale.emphasis, color: colors.ink },
 	caption: { ...typeScale.label, color: colors.muted },

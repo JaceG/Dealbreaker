@@ -1,6 +1,6 @@
 import React from 'react';
 import { number, string } from 'prop-types';
-import { colors, typeScale } from '../../constants';
+import { colors, radius, typeScale } from '../../constants';
 import { Empty } from '../Icons';
 import { EmptyWrapper, Paragraph } from './EmptyColumn.styled';
 
@@ -21,7 +21,15 @@ const EmptyColumn: React.FC<EmptyColumnProps> = ({
 	emptyTextFontSize = typeScale.body.fontSize,
 	marginTop,
 }) => (
-	<EmptyWrapper style={{ marginTop }}>
+	<EmptyWrapper
+		style={{
+			marginTop,
+			marginHorizontal: 8, // level with the cards
+			paddingVertical: 24,
+			gap: 6,
+			borderRadius: radius.card,
+			backgroundColor: colors.blush,
+		}}>
 		<Empty color={emptyIconColor} />
 		<Paragraph
 			style={{

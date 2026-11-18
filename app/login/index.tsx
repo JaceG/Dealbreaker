@@ -343,7 +343,7 @@ const Auth: React.FC<AuthProps> = () => {
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
-		backgroundColor: colors.paper,
+		backgroundColor: colors.blush,
 	},
 	scrollContainer: {
 		flexGrow: 1,
@@ -383,11 +383,16 @@ const styles = StyleSheet.create({
 		...typeScale.body,
 		color: colors.ink,
 	},
+	// On white: the red is 4.8:1 there, and only 4.0:1 on the tint behind the form.
 	errorText: {
 		...typeScale.body,
 		color: colors.danger,
 		textAlign: 'center',
 		marginBottom: 12,
+		padding: 10,
+		backgroundColor: colors.surface,
+		borderRadius: radius.small,
+		overflow: 'hidden',
 	},
 	note: {
 		...typeScale.label,

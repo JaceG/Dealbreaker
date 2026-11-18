@@ -3,7 +3,7 @@
     "name": "Dealbreaker",
     "slug": "dealbreaker",
     "scheme": "dealbreaker",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "orientation": "default",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -58,9 +58,10 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/splash-icon.png",
+          "image": "./assets/splash-heart.png",
+          "imageWidth": 160,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff"
+          "backgroundColor": "#E6B0B3"
         }
       ],
       [

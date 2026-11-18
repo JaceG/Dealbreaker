@@ -622,7 +622,7 @@ const FlagHistoryTimeline = ({
 						<Text style={styles.loadingText}>Loading history...</Text>
 					</View>
 				) : everyone.length === 0 ? (
-					<View style={styles.emptyContainer}>
+					<View style={[styles.emptyContainer, styles.tinted]}>
 						<Text style={styles.emptyText}>
 							No one else has history on this card yet.
 						</Text>
@@ -643,7 +643,7 @@ const FlagHistoryTimeline = ({
 					<Text style={styles.loadingText}>Loading history...</Text>
 				</View>
 			) : history.length === 0 ? (
-				<View style={styles.emptyContainer}>
+				<View style={[styles.emptyContainer, styles.tinted]}>
 					<Text style={styles.emptyText}>
 						No history found for this flag.
 					</Text>
@@ -754,6 +754,8 @@ const styles = StyleSheet.create({
 		...typeScale.body,
 		color: colors.muted,
 	},
+	// "Nothing here yet" sits on the tint; the load error above keeps the plain container.
+	tinted: { backgroundColor: colors.blush, borderRadius: radius.card, margin: 16 },
 	listContent: {
 		padding: 16,
 	},
@@ -926,7 +928,7 @@ const styles = StyleSheet.create({
 		flexDirection: 'row',
 		alignItems: 'center',
 		padding: 10,
-		backgroundColor: colors.blush,
+		backgroundColor: colors.surface,
 		borderRadius: radius.small,
 		borderWidth: 1,
 		borderColor: colors.hairline,

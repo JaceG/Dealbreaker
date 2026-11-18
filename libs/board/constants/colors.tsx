@@ -7,7 +7,8 @@ const colors = {
 	muted: '#6B6165', // secondary text and icons
 	hairline: '#EAE3E0', // dividers, card edges and text fields (Jace chose it for fields over outline)
 	outline: '#8F8589', // edges that must be seen: white flags, bars (3.5:1 on white)
-	blush: '#F7E6E2', // soft tint: notices, selected and empty states
+	blush: '#F8E7E8', // the icon's blush at 30%: login backdrop, notices, selected and empty states; never buttons or flags
+	iconBlush: '#E6B0B3', // the app icon's own background, for the splash only (muted text on it is 3.2:1)
 	onFill: '#FFFFFF', // text and icons on an ink, danger or flag fill
 	danger: '#DC2626', // destructive actions and errors (4.5:1 as text on paper)
 	scrim: 'rgba(0, 0, 0, 0.5)', // behind popups

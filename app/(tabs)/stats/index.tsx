@@ -91,7 +91,7 @@ const Stats = () => {
 						accessibilityState={{ selected: selected === p.id }}
 						style={[styles.chip, selected === p.id && styles.chipOn]}
 						onPress={() => setSelected(p.id)}>
-						<Text style={[styles.chipText, selected === p.id && styles.chipTextOn]}>
+						<Text style={styles.chipText}>
 							{p.name}
 							{board[p.id]?.ended ? ' (ended)' : ''}
 						</Text>
@@ -153,7 +153,7 @@ const Overall = ({ board, history, names }: { board: Board; history: HistoryRow[
 					Each person from their first day to the end, or today, with a dot each time a flag showed up.
 				</Text>
 				{s.timeline.people.length === 0 ? (
-					<Text style={styles.muted}>No people yet.</Text>
+					<Text style={styles.empty}>No people yet.</Text>
 				) : (
 					<Timeline from={s.timeline.from} to={s.timeline.to} people={s.timeline.people} />
 				)}
@@ -162,7 +162,7 @@ const Overall = ({ board, history, names }: { board: Board; history: HistoryRow[
 			<Section title='Flags Over Time'>
 				<Text style={styles.hint}>How many flags had shown up with each person, added up over time.</Text>
 				{s.timeline.people.every((p) => p.events.length === 0) ? (
-					<Text style={styles.muted}>{s.timeline.people.length ? 'No flags raised yet.' : 'No people yet.'}</Text>
+					<Text style={styles.empty}>{s.timeline.people.length ? 'No flags raised yet.' : 'No people yet.'}</Text>
 				) : (
 					<FlagsOverTime from={s.timeline.from} people={s.timeline.people} />
 				)}
@@ -171,7 +171,7 @@ const Overall = ({ board, history, names }: { board: Board; history: HistoryRow[
 			<Section title='Yellow to Red'>
 				<Text style={styles.hint}>How long a card took to go from yellow to red with the same person.</Text>
 				{s.yellowToRedCount === 0 ? (
-					<Text style={styles.muted}>No card has gone from yellow to red yet.</Text>
+					<Text style={styles.empty}>No card has gone from yellow to red yet.</Text>
 				) : (
 					<StackedRows
 						labelWidth={130}
@@ -188,7 +188,7 @@ const Overall = ({ board, history, names }: { board: Board; history: HistoryRow[
 			<Section title='Flags by Person'>
 				<Text style={styles.hint}>Where each board stands today.</Text>
 				{s.byPerson.length === 0 ? (
-					<Text style={styles.muted}>No people yet.</Text>
+					<Text style={styles.empty}>No people yet.</Text>
 				) : (
 					<>
 						<FlagLegend />
@@ -211,7 +211,7 @@ const Overall = ({ board, history, names }: { board: Board; history: HistoryRow[
 			<Section title='Cards That Come Up Most'>
 				<Text style={styles.hint}>How many people each card ever reached yellow, red or a dealbreaker with.</Text>
 				{s.perCard.length === 0 ? (
-					<Text style={styles.muted}>No flags raised yet.</Text>
+					<Text style={styles.empty}>No flags raised yet.</Text>
 				) : (
 					<>
 						<FlagLegend />
@@ -236,7 +236,7 @@ const Overall = ({ board, history, names }: { board: Board; history: HistoryRow[
 					Cards you flagged on at least 3 in 4 people. Worth asking whether they're about them or about you.
 				</Text>
 				{s.yourPatterns.length === 0 ? (
-					<Text style={styles.muted}>
+					<Text style={styles.empty}>
 						{s.people < 3 ? 'Shows once you have 3 or more people.' : 'Nothing stands out.'}
 					</Text>
 				) : (
@@ -246,7 +246,7 @@ const Overall = ({ board, history, names }: { board: Board; history: HistoryRow[
 
 			<Section title='When It Ended'>
 				<Text style={styles.hint}>Red flags and dealbreakers on each ended person.</Text>
-				{s.endings.length === 0 ? <Text style={styles.muted}>No ended profiles.</Text> : null}
+				{s.endings.length === 0 ? <Text style={styles.empty}>No ended profiles.</Text> : null}
 				{s.endings.map((e) => (
 					<View key={e.id} style={styles.ending}>
 						<Text style={styles.endingName}>{e.name}</Text>
@@ -287,7 +287,7 @@ const Person = ({ board, history, id, name }: { board: Board; history: HistoryRo
 			</Section>
 
 			<Section title='Latest Changes'>
-				{p.latest.length === 0 ? <Text style={styles.muted}>Nothing yet.</Text> : null}
+				{p.latest.length === 0 ? <Text style={styles.empty}>Nothing yet.</Text> : null}
 				{p.latest.map((h, i) => (
 					<View key={i} style={styles.latest}>
 						<Text style={styles.latestDate}>{day(h.timestamp)}</Text>
@@ -321,8 +321,8 @@ const FlagLegend = () => (
 const MonthChart = ({ months }: { months: { key: string; label: string; changes: number; notes: number }[] }) => {
 	const shown = months.slice(-12);
 	const empty = (list: typeof months) => list.every((m) => m.changes + m.notes === 0);
-	if (empty(months)) return <Text style={styles.muted}>No history yet.</Text>;
-	if (empty(shown)) return <Text style={styles.muted}>Nothing in the last 12 months.</Text>;
+	if (empty(months)) return <Text style={styles.empty}>No history yet.</Text>;
+	if (empty(shown)) return <Text style={styles.empty}>Nothing in the last 12 months.</Text>;
 	return (
 		<>
 			<Legend
@@ -371,11 +371,12 @@ const styles = StyleSheet.create({
 		paddingHorizontal: 14,
 		borderRadius: radius.pill,
 		borderWidth: 2,
-		borderColor: colors.ink,
+		borderColor: colors.hairline,
+		backgroundColor: colors.surface,
 	},
-	chipOn: { backgroundColor: colors.ink },
+	// Selected: the tint, and an ink edge that tells it apart from the hairline ones.
+	chipOn: { backgroundColor: colors.blush, borderColor: colors.ink },
 	chipText: { ...typeScale.label, color: colors.ink },
-	chipTextOn: { color: colors.onFill },
 	center: {
 		flex: 1,
 		alignItems: 'center',
@@ -392,6 +393,17 @@ const styles = StyleSheet.create({
 	},
 	hint: { ...typeScale.body, color: colors.ink, marginBottom: 8 },
 	muted: { ...typeScale.body, color: colors.ink, textAlign: 'center' },
+	// "Nothing here yet" messages sit on the tint.
+	empty: {
+		...typeScale.body,
+		color: colors.ink,
+		textAlign: 'center',
+		backgroundColor: colors.blush,
+		borderRadius: radius.card,
+		overflow: 'hidden',
+		paddingVertical: 22,
+		paddingHorizontal: 12,
+	},
 	line: {
 		flexDirection: 'row',
 		justifyContent: 'space-between',

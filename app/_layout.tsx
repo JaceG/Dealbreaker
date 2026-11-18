@@ -1,4 +1,5 @@
 import { SplashScreen, Stack } from 'expo-router';
+import * as NativeSplash from 'expo-splash-screen';
 // Add polyfills for React Native
 import 'react-native-get-random-values';
 import { Buffer } from 'buffer';
@@ -16,6 +17,9 @@ import {
 
 // Make Buffer available globally
 (global as any).Buffer = Buffer;
+
+// The native splash fades into app/index, which looks the same, so the heart never blinks while it loads.
+NativeSplash.setOptions({ fade: true });
 
 import * as SecureStore from 'expo-secure-store';
 import { useState, useRef, useEffect } from 'react';
@@ -152,18 +156,13 @@ const Layout = () => {
 					profiles={profiles}
 					setDealbreaker={setDealbreaker as any}>
 					<Stack>
-						<Stack.Screen
-							name='index'
-							options={{
-								headerTitle: 'Login',
-								title: 'Login',
-							}}
-						/>
+						<Stack.Screen name='index' options={{ headerShown: false }} />
 						<Stack.Screen
 							name='login/index'
 							options={{
 								headerTitle: 'Login',
 								title: 'Login',
+								animation: 'fade', // out of the launch splash
 							}}
 						/>
 						<Stack.Screen
@@ -178,6 +177,7 @@ const Layout = () => {
 							options={{
 								headerShown: false,
 								headerTitle: 'Back',
+								animation: 'fade', // out of the launch splash
 							}}
 						/>
 					</Stack>
