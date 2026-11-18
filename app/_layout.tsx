@@ -29,6 +29,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { FlagProvider } from '../context/FlagContext';
 import { AuthProvider } from '../context/Auth';
 import { addDealbreakers } from '../utils/mongodbapi';
+import { setList } from '../utils/storage';
 
 const Layout = () => {
 	const { debugLog } = useConsoleManager();
@@ -47,6 +48,8 @@ const Layout = () => {
 	const isMountRef = useRef(false);
 	// Saving waits until the server's board has loaded once, so a phone's stale copy can't overwrite it.
 	const boardLoadedRef = useRef(false);
+	// True once a board is on screen (the phone's copy or the server's); until then the board says it's loading, not empty.
+	const [boardReady, setBoardReady] = useState(false);
 	const isDealbreakerTimeoutRef = useRef<
 		boolean | ReturnType<typeof setTimeout>
 	>(false);
@@ -68,7 +71,8 @@ const Layout = () => {
 			setCurrentProfileId,
 			debugLog,
 			syncOfflineData,
-			boardLoadedRef
+			boardLoadedRef,
+			setBoardReady
 		);
 
 	// Profile manager hook
@@ -94,6 +98,8 @@ const Layout = () => {
 	);
 	const updateDealbreakers = async () => {
 		if (!boardLoadedRef.current) return;
+		// The phone keeps a copy so the next launch shows the board at once (useDataLoader).
+		setList('dealbreaker', dealbreaker);
 		const userData = await SecureStore.getItem('userData');
 		if (userData) {
 			if (isDealbreakerTimeoutRef.current) {
@@ -145,6 +151,8 @@ const Layout = () => {
 					setProfileEnded,
 					ensureProfileExists,
 					boardLoadedRef,
+					boardReady,
+					setBoardReady,
 					isOnline,
 					syncData: syncOfflineData,
 					isValidNoCardItems,

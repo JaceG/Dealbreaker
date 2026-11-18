@@ -1,4 +1,5 @@
 import {
+	ActivityIndicator,
 	StyleSheet,
 	Text,
 	View,
@@ -95,7 +96,10 @@ export default function Lists() {
 		setColorFilter,
 		setRefreshKey,
 	} = useBoardManagement();
-	const { setCurrentProfileId, ensureProfileExists } = useContext<any>(StoreContext);
+	const { setCurrentProfileId, ensureProfileExists, boardReady, isOnline } = useContext<any>(StoreContext);
+	const hasCards =
+		dealbreaker?.[currentProfileId]?.flag?.length > 0 ||
+		dealbreaker?.[currentProfileId]?.dealbreaker?.length > 0;
 	const [compareVisible, setCompareVisible] = useState(false);
 	const mainDealbreakerIds = new Set<string>(
 		(dealbreaker?.main?.dealbreaker || []).map((item: any) => item.id)
@@ -181,11 +185,7 @@ export default function Lists() {
 				setHistoryModalVisible={setHistoryModalVisible}
 			/>
 
-			{list &&
-			!isRemount &&
-			dealbreaker?.[currentProfileId] &&
-			(dealbreaker[currentProfileId]?.flag?.length > 0 ||
-				dealbreaker[currentProfileId]?.dealbreaker?.length > 0) ? (
+			{list && !isRemount && hasCards ? (
 				<>
 					{currentProfileId === 'main' ? (
 						<PeopleOverview
@@ -306,6 +306,14 @@ export default function Lists() {
 						/>
 					) : null}
 				</>
+			) : !boardReady || (hasCards && !isRemount) ? (
+				// Not known yet (or the board is a frame from drawing): "No Flags Yet" here would be wrong for an account with flags.
+				<View style={[styles.noDealbreakerContainer, styles.loading]}>
+					<ActivityIndicator size='large' color={colors.ink} />
+					<Text style={styles.loadingText}>
+						{boardReady || isOnline ? 'Loading flags…' : "You're offline. Your flags will load when you're back online."}
+					</Text>
+				</View>
 			) : (
 				<>
 				{/* Main keeps its people list even before it has any cards. */}
@@ -357,6 +365,8 @@ const styles = StyleSheet.create({
 	noDealbreakerText: {
 		...typeScale.heading,
 	},
+	loading: { gap: 12, paddingHorizontal: 32 },
+	loadingText: { ...typeScale.body, color: colors.muted, textAlign: 'center' },
 	headerRight: {
 		flexDirection: 'row',
 		alignItems: 'center',

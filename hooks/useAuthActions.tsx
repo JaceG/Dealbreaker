@@ -10,13 +10,14 @@ import { useAuth } from '../context/Auth';
 import { AuthActionsReturn } from '../models/authModels';
 
 export const useAuthActions = (): AuthActionsReturn => {
-	const { setDealbreaker, setProfiles, setCurrentProfileId, boardLoadedRef } =
+	const { setDealbreaker, setProfiles, setCurrentProfileId, boardLoadedRef, setBoardReady } =
 		useContext<any>(StoreContext);
 	const { clearAuth } = useAuth() as any;
 
 	const clearSecureStore = async () => {
 		// Stop saving first, so the emptied board below never reaches the server.
 		boardLoadedRef.current = false;
+		setBoardReady(false);
 		// The board log is per account: stop it and forget what it recorded.
 		setBoardLogEnabled(false);
 		await resetBoardLog();
@@ -26,6 +27,10 @@ export const useAuthActions = (): AuthActionsReturn => {
 		for (const key of ['authToken', 'userData']) {
 			await SecureStore.deleteItemAsync(key);
 		}
+		// Again, in case a board request landed during the awaits above (none can now: the account is gone), so
+		// neither its board nor the emptied one below is saved, here or as the phone's copy.
+		boardLoadedRef.current = false;
+		setBoardReady(false);
 		await clearKeys(['dealbreaker', 'profiles']);
 		clearAuth();
 		setDealbreaker({ main: { flag: [], dealbreaker: [] } });

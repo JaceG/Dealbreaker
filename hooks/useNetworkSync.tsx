@@ -73,10 +73,11 @@ export const useNetworkSync = (
 
 		// Check network status and only sync periodically if online
 		const networkCheck = NetInfo.addEventListener((state) => {
-			setIsOnline(state.isConnected === true);
 			// Offline mode follows the network both ways; queued history syncs once it's back.
 			const offline =
 				!state.isConnected || state.isInternetReachable === false;
+			// Wi-Fi without internet counts as offline too.
+			setIsOnline(!offline);
 			setAtomicValue('offlineMode', offline ? 'true' : 'false').then(() => {
 				if (!offline) syncOfflineData();
 			});

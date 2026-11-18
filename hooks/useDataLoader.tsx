@@ -3,6 +3,7 @@ import {
 	setList,
 	getList,
 	setAtomicValue,
+	getAtomicValue,
 } from '../utils';
 import { DealbreakerState, Profile } from '../models/boardManagementModel';
 
@@ -15,7 +16,8 @@ export const useDataLoader = (
 	setCurrentProfileId: (id: string) => void,
 	debugLog: (...args: any[]) => void,
 	syncOfflineData: (forceSync?: boolean) => Promise<void>,
-	boardLoadedRef: { current: boolean }
+	boardLoadedRef: { current: boolean },
+	setBoardReady: (ready: boolean) => void
 ) => {
 	const [isLoaded, setIsLoaded] = useState(false);
 	const isProfileMountRef = useRef(false);
@@ -45,6 +47,7 @@ export const useDataLoader = (
 
 				// Load dealbreaker data
 				const savedDealbreaker = await getList('dealbreaker');
+				const lastProfileId = await getAtomicValue('currentProfileId');
 				// Once the server's board is in, the phone's saved copy is older; don't let it replace it.
 				if (
 					savedDealbreaker &&
@@ -57,6 +60,11 @@ export const useDataLoader = (
 					);
 
 					setDealbreaker(savedDealbreaker);
+					// Open on the profile that was open last, so the saved board looks as it was left.
+					if (lastProfileId && savedDealbreaker[lastProfileId]) {
+						setCurrentProfileId(lastProfileId);
+					}
+					setBoardReady(true);
 				}
 
 				// Load profiles
@@ -66,8 +74,6 @@ export const useDataLoader = (
 					// Profiles the board has but this list lacks are added by the effect below.
 					setProfiles(savedProfiles);
 				}
-
-				// The last open profile comes back once the server's board loads (useDealbreakerSync).
 
 				setIsLoaded(true);
 			} catch (error) {
