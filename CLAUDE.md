@@ -1,8 +1,8 @@
 # Dealbreaker app: notes for Claude sessions
 
 Expo SDK 58 app (expo-router). The API base URL is hardcoded to production in `constants/api.tsx`
-(`https://dealbreaker-api.onrender.com`, the `JaceG/Dealbreaker-Backend` repo on Render). Render's free plan sleeps after
-about 15 idle minutes, so the first request can take 20 to 45 seconds.
+(`https://dealbreaker-api.onrender.com`, the `JaceG/Dealbreaker-Backend` repo on Render). It runs on a paid instance
+(`0.5c-512mb`, since 2026-11-18) that stays awake, so requests answer in about 0.2 seconds.
 
 ## Showing Jace a change on his iPhone (EAS Update)
 

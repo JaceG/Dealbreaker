@@ -107,7 +107,7 @@ const Stats = () => {
 			) : !history ? (
 				<View style={styles.center}>
 					<ActivityIndicator size='large' color={colors.ink} />
-					<Text style={styles.muted}>Loading (the server can take up to a minute to wake)</Text>
+					<Text style={styles.muted}>Loading…</Text>
 				</View>
 			) : (
 				<ScrollView contentContainerStyle={styles.body}>
