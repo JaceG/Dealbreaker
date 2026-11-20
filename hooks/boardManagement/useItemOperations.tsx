@@ -1,6 +1,5 @@
 import { useRef } from 'react';
 import { showToast } from '../../utils/functions';
-import { setList as saveToStorage } from '../../utils/storage';
 import { boardLog } from '../../utils/boardLog';
 
 export const useItemOperations = (
@@ -98,9 +97,8 @@ export const useItemOperations = (
 			}
 		});
 
-		// Update the state and the phone's saved copy, as updateDealbreaker does for other board changes
+		// app/_layout saves it and keeps the phone's copy, as for every board change
 		setDealbreaker(updatedDealbreaker);
-		saveToStorage('dealbreaker', updatedDealbreaker);
 
 		// Close the modal
 		setEditModalVisible(false);

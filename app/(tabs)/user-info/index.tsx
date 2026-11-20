@@ -25,7 +25,8 @@ import AppButton from '../../../components/AppButton';
 import AppInput from '../../../components/AppInput';
 import BoardLogModal from '../../../components/BoardLogModal';
 import { boardLogAllowed, diagnosticsActive, useAuth } from '../../../context/Auth';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useContext } from 'react';
+import StoreContext from '../../../store';
 import { useFocusEffect } from 'expo-router';
 import {
 	saveMyAccount,
@@ -33,7 +34,7 @@ import {
 	changeSignInMethod,
 } from '../../../utils/api';
 import { useAuthActions } from '../../../hooks/useAuthActions';
-import { forgetFaceIdLogin, getSecureItem } from '../../../utils/storage';
+import { clearKeys, forgetFaceIdLogin, getSecureItem, setAtomicValue } from '../../../utils/storage';
 import { dropPendingChangesFor } from '../../../utils/api';
 import { SignInMethods, SignInType } from '../../../models/apiModels';
 
@@ -71,6 +72,7 @@ export const UserInfo = () => {
 	const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 	const [deleteConfirmationText, setDeleteConfirmationText] = useState('');
 	const { logout, confirmLogout } = useAuthActions();
+	const { boardSyncRef, resetBoardSync } = useContext<any>(StoreContext);
 	const [boardLogVisible, setBoardLogVisible] = useState(false);
 	// undefined while loading, null if loading failed
 	const [methods, setMethods] = useState<SignInMethods | null>();
@@ -262,6 +264,13 @@ export const UserInfo = () => {
 		// starts during the delete can't send them; if the delete fails they are lost, which is acceptable here.
 		const deletingId = JSON.parse((await getSecureItem('userData')) || 'null')?.id;
 		if (deletingId) await dropPendingChangesFor(deletingId);
+		// Unsaved board changes too: no save may recreate the board afterwards (one already out is waited for), and
+		// logout mustn't keep them for a sign-in. A failed delete puts them back.
+		const boardSync = boardSyncRef.current;
+		resetBoardSync();
+		// Up to 5 s: the board client has no timeout, and a hung save mustn't block the delete.
+		for (let i = 0; boardSync.saving && i < 50; i++) await new Promise((resolve) => setTimeout(resolve, 100));
+		await clearKeys(['boardUnsaved']);
 		const response = await saveMyAccount(3, '', '', '', authToken || '');
 		console.log(response);
 		setShowDeleteConfirmation(false);
@@ -270,6 +279,8 @@ export const UserInfo = () => {
 			await forgetFaceIdLogin();
 			logout();
 		} else {
+			boardSyncRef.current = boardSync;
+			if (boardSync.unsavedBy) setAtomicValue('boardUnsaved', boardSync.unsavedBy);
 			alert('Failed to delete account');
 		}
 	};

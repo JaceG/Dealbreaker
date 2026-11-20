@@ -13,20 +13,23 @@ const dealbreakerClient = axios.create({
 // Board routes need the login token, same as the flag-history client in utils/api.
 dealbreakerClient.interceptors.request.use(async (config) => {
 	const token = await getSecureItem('authToken');
-	if (token) config.headers['x-auth-token'] = token;
+	if (token && !config.headers['x-auth-token']) config.headers['x-auth-token'] = token;
 	return config;
 });
 
 export const addDealbreakers = async (
 	dealbreaker: any,
-	userId: string | number
+	userId: string | number,
+	// The login to save under; the interceptor's own read could come after a sign-in to another account.
+	token?: string
 ): Promise<boolean | undefined> => {
 	const started = Date.now();
 	try {
-		await dealbreakerClient.post('/add-dealbreaker', {
-			dealbreaker,
-			userId,
-		});
+		await dealbreakerClient.post(
+			'/add-dealbreaker',
+			{ dealbreaker, userId },
+			token ? { headers: { 'x-auth-token': token } } : undefined
+		);
 		boardLog('net.boardSave', { ok: true, ms: Date.now() - started });
 		return true;
 	} catch (error: unknown) {

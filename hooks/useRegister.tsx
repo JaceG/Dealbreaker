@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
+import StoreContext from '../store';
 import { useAuth } from '../context/Auth';
 import { API_BASE_URL } from '../constants/api';
 import * as SecureStore from 'expo-secure-store';
@@ -15,6 +16,7 @@ const useRegister = () => {
 	// Get auth functions from context
 	const { isLoading, error, checkAuthStatus, loginAuth } =
 		useAuth();
+	const { resetBoardSync } = useContext<any>(StoreContext);
 
 	// Clear error when switching between login/register
 	useEffect(() => {
@@ -86,6 +88,8 @@ const useRegister = () => {
 			// The backend only returns a token, so we need to fetch user info
 			const token = data.token;
 
+			// A guest's board may still be up (Register from the board): stop saving it before the new login is stored.
+			resetBoardSync();
 			// Save token first
 			await SecureStore.setItemAsync('authToken', token);
 

@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
+import StoreContext from '../store';
 import { Alert } from 'react-native';
 import { API_BASE_URL } from '../constants/api';
 import { useAuth } from '../context/Auth';
@@ -26,6 +27,7 @@ const useLogin = (): LoginHookReturn => {
 	// Get auth functions from context
 	const { isLoading, error, checkAuthStatus, loginAuth } =
 		useAuth();
+	const { resetBoardSync } = useContext<any>(StoreContext);
 
 	useEffect(() => {
 		SecureStore.getItemAsync(FACE_ID_READY)
@@ -243,6 +245,8 @@ const useLogin = (): LoginHookReturn => {
 
 	// The backend only returns a token, so fetch the user, save both and sign in.
 	const finishLogin = async (token: string) => {
+		// A guest's board may still be up (Register, then Sign in): stop saving it before the new login is stored.
+		resetBoardSync();
 		// Save token first
 		await SecureStore.setItemAsync('authToken', token);
 

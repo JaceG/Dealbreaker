@@ -5,6 +5,7 @@ import {
 	setAtomicValue,
 	getAtomicValue,
 } from '../utils';
+import * as SecureStore from 'expo-secure-store';
 import { DealbreakerState, Profile } from '../models/boardManagementModel';
 
 export const useDataLoader = (
@@ -17,17 +18,16 @@ export const useDataLoader = (
 	debugLog: (...args: any[]) => void,
 	syncOfflineData: (forceSync?: boolean) => Promise<void>,
 	boardLoadedRef: { current: boolean },
-	setBoardReady: (ready: boolean) => void
+	setBoardReady: (ready: boolean) => void,
+	boardSyncRef: { current: { account: string | null; serverJson: string | null } }
 ) => {
 	const [isLoaded, setIsLoaded] = useState(false);
 	const isProfileMountRef = useRef(false);
 	const isCurrentProfileMountRef = useRef(false);
 
-	// Update dealbreaker state and save to storage
+	// The phone's copy is written by app/_layout once the change is on screen.
 	const updateDealbreaker = (newState: DealbreakerState) => {
 		setDealbreaker(newState);
-		setList('dealbreaker', newState);
-		debugLog('Saved dealbreaker state to storage:', newState);
 	};
 
 	// Load all data at app initialization
@@ -36,18 +36,14 @@ export const useDataLoader = (
 			setIsLoaded(false);
 
 			try {
-				// Force sync with MongoDB first to ensure latest data
-				debugLog('Forcing initial sync with MongoDB...');
-				try {
-					await syncOfflineData(true); // Pass true to indicate it's a force sync
-					debugLog('Initial MongoDB sync complete');
-				} catch (syncError) {
-					debugLog('Error during initial MongoDB sync:', syncError);
-				}
-
-				// Load dealbreaker data
+				// The phone's copy before anything goes to the network, so it's on screen before the server's board can
+				// arrive: with unsaved changes it must be there to win over it (useDealbreakerSync).
 				const savedDealbreaker = await getList('dealbreaker');
 				const lastProfileId = await getAtomicValue('currentProfileId');
+				// The account whose changes in the copy the server doesn't have yet.
+				const unsavedBy = await getAtomicValue('boardUnsaved');
+				const userData = SecureStore.getItem('userData');
+				const me: string | null = userData ? JSON.parse(userData).id : null;
 				// Once the server's board is in, the phone's saved copy is older; don't let it replace it.
 				if (
 					savedDealbreaker &&
@@ -59,6 +55,9 @@ export const useDataLoader = (
 						savedDealbreaker
 					);
 
+					// A copy without this account's mark is what the server had; with it, app/_layout sends it as unsaved.
+					boardSyncRef.current.account = me;
+					if (!me || unsavedBy !== me) boardSyncRef.current.serverJson = JSON.stringify(savedDealbreaker);
 					setDealbreaker(savedDealbreaker);
 					// Open on the profile that was open last, so the saved board looks as it was left.
 					if (lastProfileId && savedDealbreaker[lastProfileId]) {
@@ -73,6 +72,13 @@ export const useDataLoader = (
 					debugLog('Loaded profiles from storage:', savedProfiles);
 					// Profiles the board has but this list lacks are added by the effect below.
 					setProfiles(savedProfiles);
+				}
+
+				// Send flag notes queued offline.
+				try {
+					await syncOfflineData(true);
+				} catch (syncError) {
+					debugLog('Error during initial MongoDB sync:', syncError);
 				}
 
 				setIsLoaded(true);

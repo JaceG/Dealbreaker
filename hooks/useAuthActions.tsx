@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import { Alert } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { clearKeys } from '../utils/storage';
 import { syncPendingChanges } from '../utils/api';
 import { resetBoardLog, setBoardLogEnabled } from '../utils/boardLog';
@@ -10,12 +11,22 @@ import { useAuth } from '../context/Auth';
 import { AuthActionsReturn } from '../models/authModels';
 
 export const useAuthActions = (): AuthActionsReturn => {
-	const { setDealbreaker, setProfiles, setCurrentProfileId, boardLoadedRef, setBoardReady } =
+	const { setDealbreaker, setProfiles, setCurrentProfileId, boardLoadedRef, resetBoardSync, setBoardReady } =
 		useContext<any>(StoreContext);
 	const { clearAuth } = useAuth() as any;
 
 	const clearSecureStore = async () => {
-		// Stop saving first, so the emptied board below never reaches the server.
+		// Board changes the server doesn't have yet wait for this account's next sign-in (useDealbreakerSync), like queued
+		// flag notes: an expired login signs out by itself, offline edits included.
+		await AsyncStorage.multiGet(['dealbreaker', 'boardUnsaved'])
+			.then(([[, copy], [, owner]]) =>
+				owner && copy
+					? AsyncStorage.setItem(`unsavedBoard_${owner}`, `{"at":${Date.now()},"board":${copy}}`)
+					: undefined
+			)
+			.catch(console.log);
+		// Stop saving, so the emptied board below never reaches the server.
+		resetBoardSync();
 		boardLoadedRef.current = false;
 		setBoardReady(false);
 		// The board log is per account: stop it and forget what it recorded.
@@ -31,7 +42,7 @@ export const useAuthActions = (): AuthActionsReturn => {
 		// neither its board nor the emptied one below is saved, here or as the phone's copy.
 		boardLoadedRef.current = false;
 		setBoardReady(false);
-		await clearKeys(['dealbreaker', 'profiles']);
+		await clearKeys(['dealbreaker', 'boardUnsaved', 'profiles']);
 		clearAuth();
 		setDealbreaker({ main: { flag: [], dealbreaker: [] } });
 		// The in-memory profile list would otherwise bring old profiles back on the next sign-in.

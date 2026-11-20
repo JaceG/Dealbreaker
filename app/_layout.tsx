@@ -28,8 +28,9 @@ import Toast from 'react-native-toast-message';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { FlagProvider } from '../context/FlagContext';
 import { AuthProvider } from '../context/Auth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { addDealbreakers } from '../utils/mongodbapi';
-import { setList } from '../utils/storage';
+import { setAtomicValue } from '../utils/storage';
 
 const Layout = () => {
 	const { debugLog } = useConsoleManager();
@@ -45,14 +46,24 @@ const Layout = () => {
 		{ id: 'main', name: 'Main Profile' },
 	]);
 	const [currentProfileId, setCurrentProfileId] = useState('main');
-	const isMountRef = useRef(false);
-	// Saving waits until the server's board has loaded once, so a phone's stale copy can't overwrite it.
+	// True once a server answer has come in (applied, or skipped for unsaved changes); logout resets it.
 	const boardLoadedRef = useRef(false);
 	// True once a board is on screen (the phone's copy or the server's); until then the board says it's loading, not empty.
 	const [boardReady, setBoardReady] = useState(false);
-	const isDealbreakerTimeoutRef = useRef<
-		boolean | ReturnType<typeof setTimeout>
-	>(false);
+	// account: whose board is on screen. serverJson: that board as the server last had it (its answer, or our last save
+	// that went through); a board on screen that differs is unsaved. unsavedBy: the account whose changes those are.
+	// saves: counts saves that went through. saving: a save is out. Logout and sign-in replace the whole object.
+	const newBoardSync = () => ({
+		account: null as string | null,
+		serverJson: null as string | null,
+		unsavedBy: null as string | null,
+		saves: 0,
+		saving: false,
+	});
+	const boardSyncRef = useRef(newBoardSync());
+	const dealbreakerRef = useRef(dealbreaker);
+	dealbreakerRef.current = dealbreaker;
+	const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	// Network sync hook
 	const { isOnline, syncOfflineData } = useNetworkSync(
 		setProfiles,
@@ -72,7 +83,8 @@ const Layout = () => {
 			debugLog,
 			syncOfflineData,
 			boardLoadedRef,
-			setBoardReady
+			setBoardReady,
+			boardSyncRef
 		);
 
 	// Profile manager hook
@@ -96,34 +108,69 @@ const Layout = () => {
 		currentProfileId,
 		setCurrentProfileId
 	);
-	const updateDealbreakers = async () => {
-		if (!boardLoadedRef.current) return;
-		// The phone keeps a copy so the next launch shows the board at once (useDataLoader).
-		setList('dealbreaker', dealbreaker);
-		const userData = await SecureStore.getItem('userData');
-		if (userData) {
-			if (isDealbreakerTimeoutRef.current) {
-				clearTimeout(
-					isDealbreakerTimeoutRef.current as ReturnType<
-						typeof setTimeout
-					>
-				);
+	const signedInId = (): string | null => {
+		const userData = SecureStore.getItem('userData');
+		return userData ? JSON.parse(userData).id : null;
+	};
+
+	// Sends the board on screen until the server has it: one save at a time, and a failed one tries again in 15 s.
+	const saveBoard = (delay: number) => {
+		if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+		saveTimerRef.current = setTimeout(async () => {
+			saveTimerRef.current = null;
+			const sync = boardSyncRef.current;
+			if (sync.saving) return saveBoard(1000);
+			const owner = sync.unsavedBy;
+			// Nothing unsaved, or signed out / into another account since: never send one account's board to another.
+			if (!owner || signedInId() !== owner) return;
+			const board = dealbreakerRef.current;
+			// Read with the account check: sign-in stores the new login before its account, so a token read later could be another account's.
+			const token = SecureStore.getItem('authToken');
+			if (!token) return;
+			sync.saving = true;
+			const saved = await addDealbreakers(board, owner, token);
+			sync.saving = false;
+			// Logout replaces boardSyncRef: what happens to this save no longer matters.
+			if (sync !== boardSyncRef.current || signedInId() !== owner) return;
+			if (saved) {
+				sync.serverJson = JSON.stringify(board);
+				sync.saves++;
+				// Changes made while it was out (an undo too) can differ from what was just saved: send those next.
+				sync.unsavedBy =
+					JSON.stringify(dealbreakerRef.current) === sync.serverJson ? null : owner;
+				setAtomicValue('boardUnsaved', sync.unsavedBy || '');
+				if (sync.unsavedBy && !saveTimerRef.current) saveBoard(1000);
+			} else if (!saveTimerRef.current) {
+				saveBoard(15000);
 			}
-			isDealbreakerTimeoutRef.current = setTimeout(async () => {
-				isDealbreakerTimeoutRef.current = false;
-				const userDataObject = JSON.parse(userData);
-				const userId = userDataObject.id;
-				await addDealbreakers(dealbreaker, userId);
-			}, 1000);
-		}
+		}, delay);
 	};
 
 	useEffect(() => {
-		if (isMountRef.current) {
-			updateDealbreakers();
-		}
-		isMountRef.current = true;
+		// Before a board is on screen (or after logout) there's nothing to keep: an edit to the empty board would
+		// replace the whole saved one.
+		if (!boardReady) return;
+		const sync = boardSyncRef.current;
+		// Only the account whose board this is: after a switch without logout (a guest's Register, then Sign in), the
+		// old board stays up until the new account's answer, and changes to it must not be saved under that account.
+		sync.unsavedBy =
+			JSON.stringify(dealbreaker) !== sync.serverJson && sync.account === signedInId()
+				? sync.account
+				: null;
+		// The phone keeps a copy so the next launch shows the board at once (useDataLoader), marked while the server
+		// lacks it. One write, so the copy and its mark can't disagree.
+		AsyncStorage.multiSet([
+			['dealbreaker', JSON.stringify(dealbreaker)],
+			['boardUnsaved', sync.unsavedBy || ''],
+		]).catch(console.log);
+		// The 1 s wait gathers quick repeats into one save.
+		if (sync.unsavedBy) saveBoard(1000);
 	}, [dealbreaker]);
+
+	// Back online: send unsaved changes now, not at the next 15 s retry.
+	useEffect(() => {
+		if (isOnline && boardSyncRef.current.unsavedBy) saveBoard(0);
+	}, [isOnline]);
 
 	useEffect(() => {
 		SplashScreen.hideAsync();
@@ -151,6 +198,10 @@ const Layout = () => {
 					setProfileEnded,
 					ensureProfileExists,
 					boardLoadedRef,
+					boardSyncRef,
+					resetBoardSync: () => {
+						boardSyncRef.current = newBoardSync();
+					},
 					boardReady,
 					setBoardReady,
 					isOnline,
