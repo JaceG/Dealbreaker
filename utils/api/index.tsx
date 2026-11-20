@@ -9,8 +9,9 @@ import {
 	SignInType,
 } from '../../models/apiModels';
 import { getSecureItem } from '../storage';
+import { API_BASE_URL } from '../../constants/api';
 
-const API_URL = 'https://dealbreaker-api.onrender.com/api';
+const API_URL = `${API_BASE_URL}/api`;
 
 // Create axios instance
 const api = axios.create({
